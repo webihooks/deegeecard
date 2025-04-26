@@ -1,0 +1,119 @@
+
+.fl {
+float: left;
+}
+.fr {
+float: right;
+}
+.red {
+color: red;
+cursor: pointer;
+}
+
+.star-rating {
+color: #ffc107;
+font-size: 1.2rem;
+}
+
+.rating-input .form-check-input {
+display: none;
+}
+
+.rating-input .form-check-label {
+cursor: pointer;
+padding: 5px 10px;
+border-radius: 4px;
+transition: all 0.2s;
+}
+
+.rating-input .form-check-input:checked + .form-check-label {
+background-color: #f8f9fa;
+font-weight: bold;
+}
+
+.rating-summary {
+border-left: 4px solid #0d6efd;
+}
+
+
+/* Table Styles */
+.table-responsive {
+overflow-x: auto;
+}
+.table th, .table td {
+vertical-align: middle;
+}
+.address-cell {
+max-width: 200px;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+
+/* Badge System */
+.role-badge {
+display: inline-block;
+padding: 0.35em 0.65em;
+font-size: 0.75rem;
+font-weight: 600;
+line-height: 1;
+text-align: center;
+white-space: nowrap;
+vertical-align: baseline;
+border-radius: 50rem;
+text-transform: uppercase;
+letter-spacing: 0.5px;
+transition: all 0.2s ease;
+}
+
+/* Admin Badge */
+.badge-admin {
+color: #fff;
+background-color: #10b759;
+box-shadow: 0 0 0 1px rgba(16, 183, 89, 0.2);
+}
+.badge-admin:hover {
+background-color: #0e9f4e;
+}
+
+/* User Badge */
+.badge-user {
+color: #fff;
+background-color: #3b7ddd;
+box-shadow: 0 0 0 1px rgba(59, 125, 221, 0.2);
+}
+.badge-user:hover {
+background-color: #326ec9;
+}
+
+/* Other Roles */
+.badge-other {
+color: #fff;
+background-color: #6c757d;
+box-shadow: 0 0 0 1px rgba(108, 117, 125, 0.2);
+}
+.badge-other:hover {
+background-color: #5a6268;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

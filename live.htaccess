@@ -1,0 +1,12 @@
+RewriteEngine On
+RewriteBase /deegeecard/
+
+# Redirect old ID-based URLs to new business name URLs if possible
+RewriteCond %{QUERY_STRING} ^id=([0-9]+)$
+RewriteRule ^post\.php$ /deegeecard/%1? [R=301,L]
+
+# Internal rewrite for business name URLs
+RewriteRule ^([a-zA-Z0-9_-]+)/?$ post.php?business_name=$1 [L,QSA]
+
+# Fallback to ID if business name not found (optional)
+RewriteRule ^([0-9]+)/?$ post.php?id=$1 [L,QSA]

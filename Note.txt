@@ -1,0 +1,14 @@
+
+
+change database credential - db_connection.php
+change database credential - config/db_connection.php
+change database credential - register.php
+change database credential - login.php
+change deegeecard url - dashboard.php
+
+
+// Database configuration
+$host = 'localhost'; // Replace with your database host
+$username = 'doctorie_webihooks'; // Replace with your database username
+$password = 'S@g@r4834'; // Replace with your database password
+$database = 'doctorie_webihooks_card'; // Replace with your database name
