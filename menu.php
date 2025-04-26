@@ -119,11 +119,11 @@
                <li class="menu-title">Themes</li>
 
                <li class="nav-item">
-                    <a class="nav-link" href="templates.php">
+                    <a class="nav-link" href="theme.php">
                          <span class="nav-icon">
                               <iconify-icon icon="solar:bill-list-line-duotone"></iconify-icon>
                          </span>
-                         <span class="nav-text"> Templates  </span>
+                         <span class="nav-text"> Theme  </span>
                     </a>
                </li>
 

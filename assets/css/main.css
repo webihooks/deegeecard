@@ -163,8 +163,25 @@ h6 {
   padding: 20px;
   box-shadow: 0px 0px 3px #B5B5B5;
   border-radius: 10px;
-  background: #fff;
   margin-bottom: 15px;
+}
+
+.personal_contact,
+.business_details,
+.products,
+.services,
+.gallery,
+.display_ratings,
+.rating,
+.bank_details,
+.qr_code_details,
+.form-control,
+.product-card {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.product-card {
+  background: none;
 }
 
 .personal_contact {
@@ -378,7 +395,8 @@ h6 {
 .share-section {
   margin: 20px 0;
   padding: 15px;
-  background: #f8f9fa;
+  background: #fff;
+  box-shadow: 0px 0px 3px #B5B5B5;
   border-radius: 10px;
   text-align: center;
 }
