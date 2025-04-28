@@ -1,3 +1,35 @@
+
+  <!-- call to action -->
+    <section class="cta_section new white_text" id="support_sec">
+      <!-- container start -->
+      <div class="container">
+          <div class="cta_box"> 
+            <div class="element">
+            <span class="element1"> <img src="images/element_white_3.webp" alt="image"> </span>
+            <span class="element2"> <img src="images/element_white_4.webp" alt="image"> </span>
+          </div>          
+          <div class="left">
+            <div class="section_title" data-aos="fade-in" data-aos-duration="1500" data-aos-delay="100">
+                  <img src="images/customer-icon.webp" class="customer_icon" alt="image">
+                <!-- h2 -->
+                 <h3>Need support?</h3>
+                <!-- p -->
+                <p>Get fast, reliable assistance via call and email!</p>
+                </div>                
+          </div>  
+          <div class="right">         
+            <div class="btn_block ">
+                    <a href="tel:123-456-7890" class="btn puprple_btn aos-init aos-animate call_btn" ><i class="icofont-ui-call"></i> Call us now</a>
+                    <a href="mailto:someone@example.com" class="btn aos-init aos-animate email_btn" ><i class="icofont-envelope-open"></i> Email us</a>
+            </div>  
+          </div>              
+          </div>
+      </div>
+      <!-- container end -->
+    </section>
+    <!-- call to action -->   
+
+
 <!-- Footer-Section start -->
     <footer>
         <div class="top_footer" id="contact">
@@ -14,8 +46,8 @@
                   <div class="col-lg-5 col-md-6 col-12">
                       <div class="abt_side">
                         <div class="logo"> <img src="images/logo-white.png" alt="image" ></div>
-                        <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry lorem sum has been the industrys standard dummytext ever since the when an unknown printer took. </p>
-                        <ul class="app_btn">
+                        <p>Deegeecard.com is an innovative platform offering customizable digital greeting cards for various occasions, combining creativity with convenience for personal and professional use.  </p>
+                        <!-- <ul class="app_btn">
                           <li>
                             <a href="index.php">
                               <img src="images/appstorebtn.webp" alt="image" >
@@ -26,7 +58,7 @@
                               <img src="images/googleplay.webp" alt="image" >
                             </a>
                           </li>
-                        </ul>
+                        </ul> -->
 
                       </div>
                   </div>
@@ -37,9 +69,9 @@
                         <h5>Quick Links</h5>
                           <ul>
                             <li><a href="index.php">Home</a></li>
-                            <li><a href="about.php">About us</a></li>
-                            <li><a href="pricing.php">Pricing</a></li>
-                            <li><a href="blog-list.php">Blog</a></li>
+                            <!-- <li><a href="about.php">About us</a></li> -->
+                            <!-- <li><a href="pricing.php">Pricing</a></li> -->
+                            <!-- <li><a href="blog-list.php">Blog</a></li> -->
                             <li><a href="contact.php">Contact us</a></li>
                           </ul>
                       </div>
@@ -50,11 +82,13 @@
                     <div class="links">
                       <h5>Support</h5>
                         <ul>
-                        <li><a href="index.php">FAQs</a></li>
+                        <!-- <li><a href="index.php">FAQs</a></li>
                         <li><a href="index.php">Support</a></li>
-                        <li><a href="index.php">How it works</a></li>
-                        <li><a href="index.php">Terms & conditions</a></li>
-                        <li><a href="index.php">Privacy policy</a></li>
+                        <li><a href="index.php">How it works</a></li> -->
+                        <li><a href="terms-and-conditions.php">Terms & conditions</a></li>
+                        <li><a href="privacy-policy.php">Privacy policy</a></li>
+                        <li><a href="cancellation-refund-policy.php">Cancellation & Refund Policy</a></li>
+                        <li><a href="shipping-delivery.php">Shipping and Delivery</a></li>
                         </ul>
                     </div>
                   </div>
