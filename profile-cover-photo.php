@@ -18,7 +18,7 @@ $user_sql = "SELECT name FROM users WHERE id = ?";
 $user_stmt = $conn->prepare($user_sql);
 $user_stmt->bind_param("i", $user_id);
 $user_stmt->execute();
-$user_stmt->bind_result($name);
+$user_stmt->bind_result($user_name);
 $user_stmt->fetch();
 $user_stmt->close();
 

@@ -1,0 +1,208 @@
+<?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+session_start();
+require 'db_connection.php';
+
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
+$message = '';
+$error = '';
+
+// Fetch user details
+$user_name = '';
+$sql_name = "SELECT name FROM users WHERE id = ?";
+$stmt_name = $conn->prepare($sql_name);
+if ($stmt_name) {
+    $stmt_name->bind_param("i", $user_id);
+    $stmt_name->execute();
+    $stmt_name->bind_result($user_name);
+    $stmt_name->fetch();
+    $stmt_name->close();
+}
+
+// Fetch available packages (only basic columns)
+$packages = [];
+$sql_packages = "SELECT id, name, price FROM packages"; // Only absolutely essential columns
+$result_packages = $conn->query($sql_packages);
+if ($result_packages) {
+    while ($row = $result_packages->fetch_assoc()) {
+        $packages[] = $row;
+    }
+}
+
+// Fetch current subscription (only basic columns)
+$current_subscription = null;
+$sql_subscription = "SELECT s.package_id, s.start_date, s.end_date, s.status, 
+                    p.name as package_name, p.price 
+                    FROM subscriptions s
+                    JOIN packages p ON s.package_id = p.id
+                    WHERE s.user_id = ? AND s.status = 'active'";
+$stmt_sub = $conn->prepare($sql_subscription);
+if ($stmt_sub) {
+    $stmt_sub->bind_param("i", $user_id);
+    $stmt_sub->execute();
+    $result = $stmt_sub->get_result();
+    $current_subscription = $result->fetch_assoc();
+    $stmt_sub->close();
+}
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (isset($_POST['subscribe'])) {
+        $package_id = intval($_POST['package_id']);
+        
+        // Validate package exists
+        $valid_package = false;
+        foreach ($packages as $package) {
+            if ($package['id'] == $package_id) {
+                $valid_package = true;
+                break;
+            }
+        }
+        
+        if ($valid_package) {
+            $start_date = date('Y-m-d H:i:s');
+            $end_date = date('Y-m-d H:i:s', strtotime('+1 month'));
+            
+            // Using only the most basic columns that must exist
+            $sql = "INSERT INTO subscriptions 
+                    (user_id, package_id, start_date, end_date, status) 
+                    VALUES (?, ?, ?, ?, 'active')";
+            
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("iiss", $user_id, $package_id, $start_date, $end_date);
+            
+            if ($stmt->execute()) {
+                $message = "Subscription activated successfully!";
+                // Refresh current subscription
+                $stmt_sub = $conn->prepare($sql_subscription);
+                $stmt_sub->bind_param("i", $user_id);
+                $stmt_sub->execute();
+                $result = $stmt_sub->get_result();
+                $current_subscription = $result->fetch_assoc();
+                $stmt_sub->close();
+            } else {
+                $error = "Error creating subscription: " . $conn->error;
+            }
+            $stmt->close();
+        } else {
+            $error = "Invalid package selected";
+        }
+    } elseif (isset($_POST['cancel_subscription'])) {
+        // Cancel subscription
+        $sql = "UPDATE subscriptions SET status = 'canceled', end_date = NOW() 
+                WHERE user_id = ? AND status = 'active'";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $user_id);
+        
+        if ($stmt->execute()) {
+            $message = "Subscription canceled successfully";
+            $current_subscription = null;
+        } else {
+            $error = "Error canceling subscription: " . $conn->error;
+        }
+        $stmt->close();
+    }
+}
+
+$conn->close();
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Subscription Management</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="assets/css/vendor.min.css" rel="stylesheet" type="text/css" />
+    <link href="assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+    <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" />
+    <link href="assets/css/style.css" rel="stylesheet" type="text/css" />
+    <script src="assets/js/config.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="wrapper">
+        <?php include 'toolbar.php'; ?>
+        <?php include 'menu.php'; ?>
+
+        <div class="page-content">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xl-9">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="card-title">Subscription Management</h4>
+                            </div>
+                            <div class="card-body">
+                                <?php if ($message): ?>
+                                    <div class="alert alert-success"><?php echo $message; ?></div>
+                                <?php endif; ?>
+                                <?php if ($error): ?>
+                                    <div class="alert alert-danger"><?php echo $error; ?></div>
+                                <?php endif; ?>
+
+                                <?php if ($current_subscription): ?>
+                                    <div class="current-subscription mb-4">
+                                        <h5>Your Current Subscription</h5>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6><?php echo htmlspecialchars($current_subscription['package_name']); ?></h6>
+                                                <p>
+                                                    <strong>Price:</strong> ₹<?php echo number_format($current_subscription['price']); ?><br>
+                                                    <strong>Status:</strong> Active<br>
+                                                    <strong>Start Date:</strong> <?php echo date('M d, Y', strtotime($current_subscription['start_date'])); ?><br>
+                                                    <strong>Renewal Date:</strong> <?php echo date('M d, Y', strtotime($current_subscription['end_date'])); ?>
+                                                </p>
+                                                <form method="post">
+                                                    <button type="submit" name="cancel_subscription" class="btn btn-danger">Cancel Subscription</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="alert alert-info">
+                                        You don't have an active subscription.
+                                    </div>
+                                <?php endif; ?>
+
+                                <div class="available-packages">
+                                    <h5>Available Subscription Plans</h5>
+                                    <form><script src="https://checkout.razorpay.com/v1/payment-button.js" data-payment_button_id="pl_QOVN0eOTc5A8w6" async> </script> </form>
+                                    <div class="row">
+                                        <?php foreach ($packages as $package): ?>
+                                            <div class="col-md-4 mb-4">
+                                                <div class="card">
+                                                    <div class="card-header">
+                                                        <h5><?php echo htmlspecialchars($package['name']); ?></h5>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <h3>₹<?php echo number_format($package['price']); ?></h3>
+                                                        <form method="post">
+                                                            <input type="hidden" name="package_id" value="<?php echo $package['id']; ?>">
+                                                            <button type="submit" name="subscribe" class="btn btn-primary">Subscribe Now</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php include 'footer.php'; ?>
+        </div>
+    </div>
+
+    <script src="assets/js/vendor.js"></script>
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

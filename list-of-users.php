@@ -22,7 +22,7 @@ if ($role !== 'admin') {
 }
 
 // Pagination
-$records_per_page = 4;
+$records_per_page = 20;
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $page = max(1, $page);
 $offset = ($page - 1) * $records_per_page;
@@ -46,7 +46,7 @@ $sql = "SELECT name FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
-$stmt->bind_result($name);
+$stmt->bind_result($user_name);
 $stmt->fetch();
 $stmt->close();
 
@@ -76,8 +76,10 @@ $conn->close();
                 <div class="row">
                     <div class="col-xl-12">
                         <div class="card">
+                            <div class="card-header">
+                                    <h4 class="card-title">List of Users</h4>
+                                </div>
                             <div class="card-body">
-                                <h4 class="card-title">User Management</h4>
                                 
                                 <div class="table-responsive">
                                     <table class="table table-centered table-striped table-hover">

@@ -82,7 +82,7 @@
                       </div>
                       <div class="text">
                         <span>Email Us</span>
-                        <a href="mailto:example@gmail.com">support@gmail.com</a>
+                        <a href="mailto:support@deegeecard.com">support@deegeecard.com</a>
                       </div>
                     </li>
                     <li>
@@ -91,7 +91,7 @@
                       </div>
                       <div class="text">
                         <span>Call Us</span>
-                        <a href="tel:+1(888)553-46-11"> +1 (456) 125-45-678 </a>
+                        <a href="tel:+1(888)553-46-11"> +91 93735 01199 </a>
                       </div>
                     </li>
                     <li>
@@ -100,12 +100,12 @@
                       </div>
                       <div class="text">
                         <span>Visit Us</span>
-                        <p>Fincop Ltd. 185, Finance Hub, Chikago, USA 4647</p>
+                        <p>1404, Vasudev Sky High, Mira Road East, Thane - 401105</p>
                       </div>
                     </li>
                   </ul>
 
-                  <div class="ticket_box">
+                  <!-- <div class="ticket_box">
                     <div class="pattern-rotate">
                       <img src="https://kalanidhithemes.com/live-preview/landing-page/appiq/all-demo/multipage/01-food-delivery-static-hero/images/pattern-rotate1.webp" alt="image">
                     </div>
@@ -115,7 +115,7 @@
                       <p>Need support for our application, service, payment or company, Please generate ticket.</p>
                     </div>
                     <a href="contact.php" class="btn puprple_btn">Generate Ticket Now</a>
-                  </div>
+                  </div> -->
               </div>
             </div>
             <!-- left colom -->
@@ -165,44 +165,16 @@
 
 
     <!-- Map Section Start -->
-    <section class="row_am map_section">
+    <!-- <section class="row_am map_section">
       <div class="container">
           <div class="map_inner">
             <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d387190.2799160891!2d-74.25987584510595!3d40.69767006338158!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c24fa5d33f083b%3A0xc80b8f06e177fe62!2sNew%20York%2C%20NY%2C%20USA!5e0!3m2!1sen!2sin!4v1664399300741!5m2!1sen!2sin" width="100%" height="510" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
           </div>
       </div>
-    </section>
+    </section> -->
     <!-- Map Section End -->
 
-  <!-- call to action -->
-    <section class="cta_section new white_text" id="support_sec">
-      <!-- container start -->
-      <div class="container">
-          <div class="cta_box"> 
-            <div class="element">
-            <span class="element1"> <img src="images/element_white_3.webp" alt="image"> </span>
-            <span class="element2"> <img src="images/element_white_4.webp" alt="image"> </span>
-          </div>          
-          <div class="left">
-            <div class="section_title" data-aos="fade-in" data-aos-duration="1500" data-aos-delay="100">
-                  <img src="images/customer-icon.webp" class="customer_icon" alt="image">
-                <!-- h2 -->
-                 <h3>Need support?</h3>
-                <!-- p -->
-                <p>Lorem Ipsum is simply dummy text of the printing.</p>
-                </div>                
-          </div>  
-          <div class="right">         
-            <div class="btn_block ">
-                    <a href="tel:123-456-7890" class="btn puprple_btn aos-init aos-animate call_btn" ><i class="icofont-ui-call"></i> Call us now</a>
-                    <a href="mailto:someone@example.com" class="btn aos-init aos-animate email_btn" ><i class="icofont-envelope-open"></i> Email us</a>
-            </div>  
-          </div>              
-          </div>
-      </div>
-      <!-- container end -->
-    </section>
-    <!-- call to action -->   
+   
 
     <?php include "main_footer.php" ?>
 

@@ -20,7 +20,7 @@ $sql = "SELECT name FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
-$stmt->bind_result($name);
+$stmt->bind_result($user_name);
 $stmt->fetch();
 $stmt->close();
 

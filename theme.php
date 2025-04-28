@@ -22,7 +22,7 @@ if ($stmt_name === false) {
 }
 $stmt_name->bind_param("i", $user_id);
 $stmt_name->execute();
-$stmt_name->bind_result($name);
+$stmt_name->bind_result($user_name);
 $stmt_name->fetch();
 $stmt_name->close();
 

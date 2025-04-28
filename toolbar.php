@@ -12,7 +12,7 @@
                     <!-- Menu Toggle Button -->
                     <div class="topbar-item">
                          <h4 class="fw-bold topbar-button pe-none text-uppercase mb-0">Welcome,
-                         <?php echo htmlspecialchars($name); ?>!</h4>
+                         <?php echo htmlspecialchars($user_name); ?>!</h4>
                     </div>
                </div>
 
@@ -35,7 +35,7 @@
                          </a>
                          <div class="dropdown-menu dropdown-menu-end">
                               <!-- item-->
-                              <h6 class="dropdown-header">Welcome, <?php echo htmlspecialchars($name); ?>!</h6>
+                              <h6 class="dropdown-header">Welcome, <?php echo htmlspecialchars($user_name); ?>!</h6>
 
 
                               <a class="dropdown-item" href="profile.php">

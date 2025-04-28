@@ -90,7 +90,7 @@ $sql = "SELECT name FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
-$stmt->bind_result($name);
+$stmt->bind_result($user_name);
 $stmt->fetch();
 $stmt->close();
 
@@ -131,6 +131,9 @@ $conn->close();
                 <div class="row">
                     <div class="col-xl-12">
                         <div class="card">
+                            <div class="card-header">
+                                    <h4 class="card-title">Dashboard</h4>
+                                </div>
                             <div class="card-body">
                                 
                             </div>

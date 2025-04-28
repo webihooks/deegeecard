@@ -51,7 +51,7 @@ $sql = "SELECT name, email, phone, address, role FROM users WHERE id = ?";  // A
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
-$stmt->bind_result($name, $email, $phone, $address, $role);  // Added role to bind_result
+$stmt->bind_result($user_name, $email, $phone, $address, $role);  // Added role to bind_result
 $stmt->fetch();
 $stmt->close();
 
