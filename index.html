@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Razorpay Payment Integration</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+
+<h2>Pay ₹500</h2>
+<button id="payButton">Pay Now</button>
+
+<script>
+$(document).ready(function(){
+    $('#payButton').click(function(e){
+        e.preventDefault();
+        
+        // 1. Create order by AJAX
+        $.ajax({
+            url: 'create_order.php',
+            method: 'GET',
+            success: function(data) {
+                var order = JSON.parse(data);
+                
+                var options = {
+                    "key": "<?php echo RAZORPAY_KEY_ID; ?>",
+                    "amount": order.amount,
+                    "currency": order.currency,
+                    "name": "Your Company",
+                    "description": "Test Transaction",
+                    "order_id": order.order_id,
+                    "handler": function (response){
+                        // After payment success
+                        $.ajax({
+                            url: 'verify_payment.php',
+                            method: 'POST',
+                            data: {
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_signature: response.razorpay_signature
+                            },
+                            success: function(data) {
+                                alert(data); // Show server response
+                            }
+                        });
+                    },
+                    "theme": {
+                        "color": "#3399cc"
+                    }
+                };
+                
+                var rzp = new Razorpay(options);
+                rzp.open();
+            }
+        });
+    });
+});
+</script>
+
+</body>
+</html>

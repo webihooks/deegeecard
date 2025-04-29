@@ -1,4 +1,6 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 session_start();
 require 'db_connection.php';
 
@@ -34,7 +36,7 @@ $total_records = $count_result->fetch_assoc()['total'];
 $total_pages = ceil($total_records / $records_per_page);
 
 // Fetch subscriptions with users
-$sub_sql = "SELECT s.subscription_id, u.name, u.email, s.start_date, s.end_date, s.status, s.payment_method, s.auto_renewal
+$sub_sql = "SELECT s.subscription_id, u.name, u.email, s.start_date, s.end_date, s.status, s.subscription_type
             FROM subscriptions s
             JOIN users u ON s.user_id = u.id
             ORDER BY s.created_at DESC
@@ -80,63 +82,80 @@ $conn->close();
                                             <tr>
                                                 <th>Sr. No.</th>
                                                 <th>Subscription ID</th>
+                                                <th>Subscription Type</th>
                                                 <th>User Name</th>
                                                 <th>Email</th>
                                                 <th>Start Date</th>
                                                 <th>End Date</th>
                                                 <th>Status</th>
-                                                <th>Payment Method</th>
-                                                <th>Auto Renewal</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-    <?php 
-    if ($sub_result->num_rows > 0): 
-        $sr_no = $offset + 1; // start Sr. No. based on page
-        while ($row = $sub_result->fetch_assoc()): 
-    ?>
-        <tr>
-            <td><?php echo $sr_no++; ?></td>
-            <td><?php echo htmlspecialchars($row['subscription_id']); ?></td>
-            <td><?php echo htmlspecialchars($row['name']); ?></td>
-            <td><?php echo htmlspecialchars($row['email']); ?></td>
-            <td><?php echo htmlspecialchars($row['start_date']); ?></td>
-            <td><?php echo htmlspecialchars($row['end_date']); ?></td>
-            <td>
-                <?php if ($row['status'] === 'active'): ?>
-                    <span class="badge bg-success">Active</span>
-                <?php elseif ($row['status'] === 'expired'): ?>
-                    <span class="badge bg-danger">Expired</span>
-                <?php else: ?>
-                    <span class="badge bg-secondary"><?php echo htmlspecialchars($row['status']); ?></span>
-                <?php endif; ?>
-            </td>
-            <td><?php echo htmlspecialchars($row['payment_method']); ?></td>
-            <td><?php echo $row['auto_renewal'] ? 'Yes' : 'No'; ?></td>
-        </tr>
-    <?php 
-        endwhile; 
-    else: 
-    ?>
-        <tr>
-            <td colspan="9" class="text-center">No subscriptions found.</td>
-        </tr>
-    <?php endif; ?>
+
+<tbody>
+<?php 
+if ($sub_result->num_rows > 0): 
+    $sr_no = $offset + 1;
+    while ($row = $sub_result->fetch_assoc()): 
+?>
+    <tr>
+        <td><?php echo $sr_no++; ?></td>
+        <td><?php echo htmlspecialchars($row['subscription_id']); ?></td>
+        <td><?php echo htmlspecialchars($row['subscription_type']); ?></td>
+        <td><?php echo htmlspecialchars($row['name']); ?></td>
+        <td><?php echo htmlspecialchars($row['email']); ?></td>
+        <td><?php echo htmlspecialchars($row['start_date']); ?></td>
+        <td><?php echo htmlspecialchars($row['end_date']); ?></td>
+        <td>
+            <?php if ($row['status'] === 'active'): ?>
+                <span class="badge bg-success">Active</span>
+            <?php elseif ($row['status'] === 'expired'): ?>
+                <span class="badge bg-danger">Expired</span>
+            <?php else: ?>
+                <span class="badge bg-secondary"><?php echo htmlspecialchars($row['status']); ?></span>
+            <?php endif; ?>
+        </td>
+    </tr>
+<?php 
+    endwhile; 
+else: 
+?>
+    <tr>
+        <td colspan="7" class="text-center">No subscriptions found.</td>
+    </tr>
+<?php endif; ?>
 </tbody>
+
 
                                     </table>
                                 </div>
 
-                                <!-- Pagination -->
-                                <nav>
-                                    <ul class="pagination justify-content-center">
-                                        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                                            <li class="page-item <?php if ($i == $page) echo 'active'; ?>">
-                                                <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
-                                            </li>
-                                        <?php endfor; ?>
-                                    </ul>
-                                </nav>
+
+<!-- Pagination -->
+<nav aria-label="Page navigation example">
+    <ul class="pagination justify-content-center mb-0">
+        <!-- Previous Button -->
+        <li class="page-item <?php if ($page <= 1) echo 'disabled'; ?>">
+            <a class="page-link" href="<?php if ($page > 1) echo '?page=' . ($page - 1); else echo 'javascript:void(0);'; ?>" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+
+        <!-- Page Numbers -->
+        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+            <li class="page-item <?php if ($i == $page) echo 'active'; ?>">
+                <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+            </li>
+        <?php endfor; ?>
+
+        <!-- Next Button -->
+        <li class="page-item <?php if ($page >= $total_pages) echo 'disabled'; ?>">
+            <a class="page-link" href="<?php if ($page < $total_pages) echo '?page=' . ($page + 1); else echo 'javascript:void(0);'; ?>" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+    </ul>
+</nav>
+
 
                             </div> <!-- card-body -->
                         </div> <!-- card -->

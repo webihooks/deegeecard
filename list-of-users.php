@@ -132,29 +132,33 @@ $conn->close();
                                         </tbody>
                                     </table>
 
-                                    <?php if ($total_pages > 1): ?>
-                                    <nav aria-label="User pagination">
-                                        <ul class="pagination justify-content-center mt-4">
-                                            <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
-                                                <a class="page-link" href="?page=<?= $page - 1 ?>" aria-label="Previous">
-                                                    <span aria-hidden="true">&laquo;</span>
-                                                </a>
-                                            </li>
-                                            
-                                            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                                                <li class="page-item <?= $i == $page ? 'active' : '' ?>">
-                                                    <a class="page-link" href="?page=<?= $i ?>"><?= $i ?></a>
-                                                </li>
-                                            <?php endfor; ?>
-                                            
-                                            <li class="page-item <?= $page >= $total_pages ? 'disabled' : '' ?>">
-                                                <a class="page-link" href="?page=<?= $page + 1 ?>" aria-label="Next">
-                                                    <span aria-hidden="true">&raquo;</span>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </nav>
-                                    <?php endif; ?>
+<?php if ($total_pages > 1): ?>
+<nav aria-label="Page navigation example">
+    <ul class="pagination justify-content-center mb-0">
+        <!-- Previous Button -->
+        <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+            <a class="page-link" href="<?= $page > 1 ? '?page=' . ($page - 1) : 'javascript:void(0);' ?>" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+
+        <!-- Page Numbers -->
+        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+            <li class="page-item <?= $i == $page ? 'active' : '' ?>">
+                <a class="page-link" href="?page=<?= $i ?>"><?= $i ?></a>
+            </li>
+        <?php endfor; ?>
+
+        <!-- Next Button -->
+        <li class="page-item <?= $page >= $total_pages ? 'disabled' : '' ?>">
+            <a class="page-link" href="<?= $page < $total_pages ? '?page=' . ($page + 1) : 'javascript:void(0);' ?>" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+    </ul>
+</nav>
+<?php endif; ?>
+
                                 </div>
                             </div>
                         </div>

@@ -2,6 +2,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 session_start();
+require 'config.php';
 require 'db_connection.php';
 
 if (!isset($_SESSION['user_id'])) {
@@ -25,9 +26,9 @@ if ($stmt_name) {
     $stmt_name->close();
 }
 
-// Fetch available packages (only basic columns)
+// Fetch available packages including description and duration
 $packages = [];
-$sql_packages = "SELECT id, name, price FROM packages"; // Only absolutely essential columns
+$sql_packages = "SELECT id, name, price, description, duration FROM packages";
 $result_packages = $conn->query($sql_packages);
 if ($result_packages) {
     while ($row = $result_packages->fetch_assoc()) {
@@ -35,10 +36,9 @@ if ($result_packages) {
     }
 }
 
-// Fetch current subscription (only basic columns)
+// Fetch current subscription
 $current_subscription = null;
-$sql_subscription = "SELECT s.package_id, s.start_date, s.end_date, s.status, 
-                    p.name as package_name, p.price 
+$sql_subscription = "SELECT s.package_id, s.start_date, s.end_date, s.status, p.name as package_name, p.price 
                     FROM subscriptions s
                     JOIN packages p ON s.package_id = p.id
                     WHERE s.user_id = ? AND s.status = 'active'";
@@ -51,63 +51,20 @@ if ($stmt_sub) {
     $stmt_sub->close();
 }
 
-// Handle form submission
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (isset($_POST['subscribe'])) {
-        $package_id = intval($_POST['package_id']);
-        
-        // Validate package exists
-        $valid_package = false;
-        foreach ($packages as $package) {
-            if ($package['id'] == $package_id) {
-                $valid_package = true;
-                break;
-            }
-        }
-        
-        if ($valid_package) {
-            $start_date = date('Y-m-d H:i:s');
-            $end_date = date('Y-m-d H:i:s', strtotime('+1 month'));
-            
-            // Using only the most basic columns that must exist
-            $sql = "INSERT INTO subscriptions 
-                    (user_id, package_id, start_date, end_date, status) 
-                    VALUES (?, ?, ?, ?, 'active')";
-            
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("iiss", $user_id, $package_id, $start_date, $end_date);
-            
-            if ($stmt->execute()) {
-                $message = "Subscription activated successfully!";
-                // Refresh current subscription
-                $stmt_sub = $conn->prepare($sql_subscription);
-                $stmt_sub->bind_param("i", $user_id);
-                $stmt_sub->execute();
-                $result = $stmt_sub->get_result();
-                $current_subscription = $result->fetch_assoc();
-                $stmt_sub->close();
-            } else {
-                $error = "Error creating subscription: " . $conn->error;
-            }
-            $stmt->close();
-        } else {
-            $error = "Invalid package selected";
-        }
-    } elseif (isset($_POST['cancel_subscription'])) {
-        // Cancel subscription
-        $sql = "UPDATE subscriptions SET status = 'canceled', end_date = NOW() 
-                WHERE user_id = ? AND status = 'active'";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $user_id);
-        
-        if ($stmt->execute()) {
-            $message = "Subscription canceled successfully";
-            $current_subscription = null;
-        } else {
-            $error = "Error canceling subscription: " . $conn->error;
-        }
-        $stmt->close();
+// Handle subscription cancel
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cancel_subscription'])) {
+    $sql = "UPDATE subscriptions SET status = 'canceled', end_date = NOW() 
+            WHERE user_id = ? AND status = 'active'";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $user_id);
+
+    if ($stmt->execute()) {
+        $message = "Subscription canceled successfully";
+        $current_subscription = null;
+    } else {
+        $error = "Error canceling subscription: " . $conn->error;
     }
+    $stmt->close();
 }
 
 $conn->close();
@@ -125,6 +82,61 @@ $conn->close();
     <link href="assets/css/style.css" rel="stylesheet" type="text/css" />
     <script src="assets/js/config.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('.subscribe-btn').click(function() {
+        var packageId = $(this).data('package-id');
+        var packageName = $(this).data('package-name');
+        var packagePrice = $(this).data('package-price') * 100; // In paise
+
+        $.ajax({
+            url: 'create_order.php',
+            method: 'POST',
+            data: { amount: packagePrice },
+            success: function(order) {
+                var options = {
+                    "key": "<?php echo RAZORPAY_KEY_ID; ?>", // Ensure your Razorpay key is correct
+                    "amount": packagePrice,
+                    "currency": "INR",
+                    "name": "DeeGeeCard",
+                    "description": packageName,
+                    "order_id": JSON.parse(order).order_id,
+                    "handler": function (response) {
+                        // This is where the AJAX call to process the subscription happens
+                        $.ajax({
+                            url: 'process_subscription.php',
+                            method: 'POST',
+                            data: {
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_signature: response.razorpay_signature,
+                                package_id: packageId
+                            },
+                            success: function(data) {
+                                alert(data); // You can replace this with a success message on the page itself
+                                location.reload(); // Optional: refresh the page to show the updated subscription
+                            },
+                            error: function(err) {
+                                alert('Payment processing failed. Please try again or contact support.');
+                                console.error(err); // Log the error to the console for debugging
+                            }
+                        });
+                    },
+                    "theme": { "color": "#3399cc" }
+                };
+                var rzp1 = new Razorpay(options);
+                rzp1.open();
+            },
+            error: function(err) {
+                alert('Unable to initiate payment.');
+            }
+        });
+    });
+});
+</script>
+
 </head>
 <body>
     <div class="wrapper">
@@ -151,8 +163,10 @@ $conn->close();
                                     <div class="current-subscription mb-4">
                                         <h5>Your Current Subscription</h5>
                                         <div class="card">
+                                            <div class="card-header">
+                                                <h5><?php echo htmlspecialchars($current_subscription['package_name']); ?></h5>
+                                            </div>
                                             <div class="card-body">
-                                                <h6><?php echo htmlspecialchars($current_subscription['package_name']); ?></h6>
                                                 <p>
                                                     <strong>Price:</strong> ₹<?php echo number_format($current_subscription['price']); ?><br>
                                                     <strong>Status:</strong> Active<br>
@@ -171,28 +185,33 @@ $conn->close();
                                     </div>
                                 <?php endif; ?>
 
+
                                 <div class="available-packages">
                                     <h5>Available Subscription Plans</h5>
-                                    <form><script src="https://checkout.razorpay.com/v1/payment-button.js" data-payment_button_id="pl_QOVN0eOTc5A8w6" async> </script> </form>
                                     <div class="row">
                                         <?php foreach ($packages as $package): ?>
                                             <div class="col-md-4 mb-4">
                                                 <div class="card">
                                                     <div class="card-header">
-                                                        <h5><?php echo htmlspecialchars($package['name']); ?></h5>
+                                                        <h5 class="text-center"><?php echo htmlspecialchars($package['name']); ?></h5>
                                                     </div>
-                                                    <div class="card-body">
+                                                    <div class="card-body text-center">
                                                         <h3>₹<?php echo number_format($package['price']); ?></h3>
-                                                        <form method="post">
-                                                            <input type="hidden" name="package_id" value="<?php echo $package['id']; ?>">
-                                                            <button type="submit" name="subscribe" class="btn btn-primary">Subscribe Now</button>
-                                                        </form>
+                                                        <p><?php echo nl2br(htmlspecialchars($package['description'])); ?></p>
+                                                        <button class="btn btn-primary subscribe-btn" 
+                                                            data-package-id="<?php echo $package['id']; ?>"
+                                                            data-package-name="<?php echo htmlspecialchars($package['name']); ?>"
+                                                            data-package-price="<?php echo $package['price']; ?>">
+                                                            Subscribe Now
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
                                         <?php endforeach; ?>
                                     </div>
                                 </div>
+
+
                             </div>
                         </div>
                     </div>

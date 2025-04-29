@@ -31,17 +31,6 @@
                     </a>
                </li>
 
-               <li class="menu-title">User</li>
-
-               <li class="nav-item">
-                    <a class="nav-link" href="list-of-users.php">
-                         <span class="nav-icon">
-                              <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
-                         </span>
-                         <span class="nav-text"> List of Users </span>
-                    </a>
-               </li>
-
                <li class="nav-item">
                     <a class="nav-link" href="packages.php">
                          <span class="nav-icon">
@@ -51,12 +40,23 @@
                     </a>
                </li>
 
+               <li class="menu-title">User</li>
+
+               <li class="nav-item">
+                    <a class="nav-link" href="list-of-users.php">
+                         <span class="nav-icon">
+                              <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
+                         </span>
+                         <span class="nav-text"> Users </span>
+                    </a>
+               </li>
+
                <li class="nav-item">
                     <a class="nav-link" href="list-of-subscribers.php">
                          <span class="nav-icon">
                               <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
                          </span>
-                         <span class="nav-text"> List of Subscribers </span>
+                         <span class="nav-text"> Subscribers </span>
                     </a>
                </li>
 
