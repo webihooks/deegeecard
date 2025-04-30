@@ -19,8 +19,8 @@
           </div>  
           <div class="right">         
             <div class="btn_block ">
-                    <a href="tel:123-456-7890" class="btn puprple_btn aos-init aos-animate call_btn" ><i class="icofont-ui-call"></i> Call us now</a>
-                    <a href="mailto:someone@example.com" class="btn aos-init aos-animate email_btn" ><i class="icofont-envelope-open"></i> Email us</a>
+                    <a href="tel:919373501199" class="btn puprple_btn aos-init aos-animate call_btn" ><i class="icofont-ui-call"></i> Call us now</a>
+                    <a href="mailto:support@deegeecard.com" class="btn aos-init aos-animate email_btn" ><i class="icofont-envelope-open"></i> Email us</a>
             </div>  
           </div>              
           </div>

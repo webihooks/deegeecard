@@ -241,61 +241,61 @@
     <!-- Trusted Section ends -->
 
     <!-- why us new section start -->
-    <section class="row_am why_new_section" id="why_sec">
-        <!-- inner section start -->
+    <!-- <section class="row_am why_new_section" id="why_sec">
+        
         <div class="why_new_section_inner">
-        <!-- container start -->
+        
         <div class="container">
-          <!-- row start -->
+          
           <div class="row">
 
-            <!-- section title -->
+            
             <div class="section_title" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="100">
               <span class="title_badge">why use DeeGee Card</span>
-              <!-- h2 -->
+              
               <h2>Why choose us</h2>
-              <!-- p -->
+              
               <p>DeeGee Card makes dining effortless with instant WhatsApp ordering, paperless menus, and real-time feedback—saving time</p>
             </div>
 
             <div class="dtat_box">
               <div class="col-lg-6 col-md-12">
-                <!-- why us new box left -->
+                
                 <div class="why_new_left_data">
 
-                  <!-- block 1 -->
+                  
                   <div class="why_data_block " data-aos="fade-right" data-aos-duration="1500">
-                    <!-- icon -->
+                    
                     <div class="icon">
                       <img src="images/whyicon1.webp" alt="image" >
                     </div>
-                    <!-- text -->
+                    
                     <div class="text">
                       <h6>Paperless Menu Card</h6>
                       <p>Ditch paper menus — Go Digital! With a simple scan, customers access your full menu, place orders via WhatsApp, and enjoy faster service. Save costs, reduce waste, and impress diners with a seamless, contactless experience!</p>
                     </div>
                   </div>
 
-                  <!-- block 2 -->
+                  
                   <div class="why_data_block " data-aos="fade-right" data-aos-duration="1500">
-                    <!-- icon -->
+                    
                     <div class="icon">
                       <img src="images/whyicon2.webp" alt="image" >
                     </div>
-                    <!-- text -->
+                    
                     <div class="text">
                       <h6>Instant Inventory Management</h6>
                       <p>Eliminate stock surprises! Our system auto-updates inventory in real-time as orders flow in via WhatsApp. Know exactly what’s available, what’s running low, and what’s sold out—no manual tracking or spreadsheets needed!</p>
                     </div>
                   </div>
 
-                  <!-- block 3 -->
+                  
                   <div class="why_data_block " data-aos="fade-right" data-aos-duration="1500">
-                    <!-- icon -->
+                    
                     <div class="icon">
                       <img src="images/whyicon3.webp" alt="image" >
                     </div>
-                    <!-- text -->
+                    
                     <div class="text">
                       <h6>All in One Link</h6>
                       <p>Share everything with one link! Your social profiles, products & services, latest offers, and Google Maps location—all in a single, smart DeeGee Card link for customers to explore effortlessly!</p>
@@ -306,7 +306,7 @@
               </div>
 
               <div class="col-lg-6 col-md-12">
-                <!-- why us new image -->
+                
                 <div class="why_us_new_img" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="100">
                   <img src="images/features_frame.webp" alt="image" >
                 </div>
@@ -314,31 +314,31 @@
             </div>
 
           </div>
-          <!-- row end -->
+           
         </div>
-        <!-- container end -->
+        
       </div>
       
-    </section>
+    </section> -->
     <!-- why us new section end -->
 
     <!-- Dishes-Section-Start -->
-    <section class="row_am dishes_section">
-      <!-- container start -->
+    <!-- <section class="row_am dishes_section">
+      
       <div class="container">
 
-        <!-- section title -->
+        
         <div class="section_title" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="100">
           <span class="title_badge">Customize Themes</span>
-          <!-- h2 -->
+          
           <h2>Access over 100+ themes with just a tap</h2>
-          <!-- p -->
+          
           <p>Switch up your style instantly—access 100+ stunning themes with just one tap!</p>
         </div>
       </div>
-      <!-- container end -->
+      
 
-      <!-- dishes list slide  -->
+      
       <div class="dish_slider" data-aos="fade-in" data-aos-duration="1500">
         <div class="owl-carousel owl-theme" id="about_slider">
           <div class="item">
@@ -394,8 +394,8 @@
         </div>
       </div>
 
-        <!-- app buttons -->
-      <!-- <div class="ctr_app_btn_block">
+        
+       <div class="ctr_app_btn_block">
         <p> <strong> Free food delivery for first 5 orders! </strong> </p>
           <ul class="app_btn">
             <li>
@@ -409,9 +409,9 @@
               </a>
             </li>
           </ul>
-      </div> -->
+      </div> 
 
-    </section>
+    </section> -->
     <!-- Dishes-Section-end -->
 
     <!-- Service Section Start -->
@@ -583,9 +583,9 @@
     </div>
 
     <!-- device image -->
-    <div class="device">
+    <!-- <div class="device">
       <img src="images/device.webp" alt="image">
-    </div>
+    </div> -->
 
     </section>
     <!-- How it Works Section End -->
@@ -706,11 +706,11 @@
             </div>
 
             <!-- button  -->
-            <div class="ctr_cta">
+            <!-- <div class="ctr_cta">
               <div class="btn_block">
               <a href="blog-detail.php" class="btn puprple_btn ml-0">Read More Success Story</a>
               </div>
-            </div>
+            </div> -->
 
           </div>
         </div>
@@ -820,10 +820,10 @@
     <!-- Register Restaurant Section end -->
 
     <!-- Blog Section Start -->
-    <section class="blog_section row_am">
+    <!-- <section class="blog_section row_am">
       <div class="container">
 
-        <!-- section title -->
+        
         <div class="section_title" data-aos="fade-up" data-aos-duration="1500">
           <span class="title_badge">Blog Post</span>
           <h2>Insights & inspirations</h2>
@@ -831,20 +831,20 @@
 
         <div class="blog_listing">
 
-          <!-- Blog block 1 -->
+          
           <div class="blog_post" data-aos="fade-up" data-aos-duration="1500">
-            <!-- image -->
+            
             <a href="index.php" class="img">
               <img src="images/blog1.webp" alt="image">
             </a>
             <div class="text">
-              <!-- info -->
+              
               <ul class="blog_info">
                 <li>Admim</li>
                 <li>Oct 13, 2024</li>
                 <li>25 Comments</li>
               </ul>
-              <!-- blog title -->
+              
               <h5><a href="index.php">Top Tips for Choosing the Best Food Delivery App for Your Needs.</a></h5>
               <div class="tag_more">
                 <span class="tag">Food at home</span>
@@ -853,20 +853,20 @@
             </div>
           </div>
 
-          <!-- Blog block 2 -->
+          
           <div class="blog_post" data-aos="fade-up" data-aos-duration="1500">
-            <!-- image -->
+            
             <a href="index.php" class="img">
               <img src="images/blog2.webp" alt="image">
             </a>
             <div class="text">
-              <!-- info -->
+              
               <ul class="blog_info">
                 <li>Cyrus</li>
                 <li>Oct 05, 2024</li>
                 <li>19 Comments</li>
               </ul>
-              <!-- blog title -->
+              
               <h5><a href="index.php">How Our App Supporting Local Restaurants and Small Businesses.</a></h5>
               <div class="tag_more">
                 <span class="tag">Free Delivery</span>
@@ -878,42 +878,10 @@
         </div>
 
       </div>
-    </section>
+    </section> -->
     <!-- Blog Section End -->
 
-    <!-- call to action -->
-    <section class="cta_section new white_text" id="contact_sec">
-      <!-- container start -->
-      <div class="container">
-          <div class="cta_box"> 
-            <div class="element">
-            <span class="element1"> <img src="images/element_white_3.webp" alt="image"> </span>
-            <span class="element2"> <img src="images/element_white_4.webp" alt="image"> </span>
-          </div>          
-          <div class="left">
-
-            <!-- section title -->
-            <div class="section_title" data-aos="fade-in" data-aos-duration="1500" data-aos-delay="100">
-               <img src="images/customer-icon.webp" class="customer_icon" alt="image">
-                <!-- h2 -->
-                 <h3>Need support?</h3>
-                <!-- p -->
-                <p>Lorem Ipsum is simply dummy text of the printing.</p>
-            </div>
-
-          </div>  
-          <!-- cta buttons -->
-          <div class="right">         
-            <div class="btn_block ">
-                    <a href="tel:123-456-7890" class="btn puprple_btn aos-init aos-animate call_btn" ><i class="icofont-ui-call"></i> Call us now</a>
-                    <a href="mailto:someone@example.com" class="btn aos-init aos-animate email_btn" ><i class="icofont-envelope-open"></i> Email us</a>
-            </div>  
-          </div>              
-          </div>
-      </div>
-      <!-- container end -->
-    </section>
-    <!-- call to action -->   
+     
 
     <?php include "main_footer.php" ?>
 
