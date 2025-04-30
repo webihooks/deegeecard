@@ -1,6 +1,6 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
 session_start();
 
 require 'db_connection.php';
@@ -151,13 +151,13 @@ $conn->close();
                                         <label for="primary_color" class="form-label">Primary Color</label>
                                         <div class="input-group">
                                             <input type="color" class="form-control form-control-color" id="primary_color" 
-                                                   name="primary_color" value="<?php echo htmlspecialchars($current_theme['primary_color'] ?: '#4e73df'); ?>"
+                                                   name="primary_color" value="<?php echo htmlspecialchars($current_theme['primary_color'] ?: '#000000'); ?>"
                                                    title="Choose primary color">
                                             <input type="text" class="form-control" id="primary_color_text" 
-                                                   value="<?php echo htmlspecialchars($current_theme['primary_color'] ?: '#4e73df'); ?>" 
+                                                   value="<?php echo htmlspecialchars($current_theme['primary_color'] ?: '#000000'); ?>" 
                                                    pattern="^#[a-fA-F0-9]{6}$">
                                             <span class="color-preview" id="primary_preview" 
-                                                  style="background-color: <?php echo htmlspecialchars($current_theme['primary_color'] ?: '#4e73df'); ?>"></span>
+                                                  style="background-color: <?php echo htmlspecialchars($current_theme['primary_color'] ?: '#000000'); ?>"></span>
                                         </div>
                                     </div>
                                     
@@ -165,13 +165,13 @@ $conn->close();
                                         <label for="secondary_color" class="form-label">Secondary Color</label>
                                         <div class="input-group">
                                             <input type="color" class="form-control form-control-color" id="secondary_color" 
-                                                   name="secondary_color" value="<?php echo htmlspecialchars($current_theme['secondary_color'] ?: '#858796'); ?>"
+                                                   name="secondary_color" value="<?php echo htmlspecialchars($current_theme['secondary_color'] ?: '#ffffff'); ?>"
                                                    title="Choose secondary color">
                                             <input type="text" class="form-control" id="secondary_color_text" 
-                                                   value="<?php echo htmlspecialchars($current_theme['secondary_color'] ?: '#858796'); ?>" 
+                                                   value="<?php echo htmlspecialchars($current_theme['secondary_color'] ?: '#ffffff'); ?>" 
                                                    pattern="^#[a-fA-F0-9]{6}$">
                                             <span class="color-preview" id="secondary_preview" 
-                                                  style="background-color: <?php echo htmlspecialchars($current_theme['secondary_color'] ?: '#858796'); ?>"></span>
+                                                  style="background-color: <?php echo htmlspecialchars($current_theme['secondary_color'] ?: '#ffffff'); ?>"></span>
                                         </div>
                                     </div>
                                     
@@ -233,11 +233,11 @@ $conn->close();
             messages: {
                 primary_color: {
                     required: "Please enter a primary color",
-                    pattern: "Please enter a valid hex color (e.g., #4e73df)"
+                    pattern: "Please enter a valid hex color (e.g., #000000)"
                 },
                 secondary_color: {
                     required: "Please enter a secondary color",
-                    pattern: "Please enter a valid hex color (e.g., #858796)"
+                    pattern: "Please enter a valid hex color (e.g., #ffffff)"
                 }
             },
             errorElement: "div",

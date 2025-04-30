@@ -33,7 +33,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Store user data in the session
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['role'] = $user['role']; // Assuming you have a 'role' column in your users table
-
+            
+            // Check if trial has ended
+            if (isset($user['trial_end']) && strtotime($user['trial_end']) < time()) {
+                // Trial has ended, redirect to subscription page
+                header("Location: subscription.php");
+                exit();
+            }
+            
             // Redirect based on user role
             if ($user['role'] === 'admin') {
                 header("Location: admin-dashboard.php");

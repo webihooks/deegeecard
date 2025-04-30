@@ -15,15 +15,29 @@ $user_id = $_SESSION['user_id'];
 $success_message = '';
 $error_message = '';
 $current_profile_url = '';
+$trial_notification = '';
 
-// Get user role
-$role_sql = "SELECT role FROM users WHERE id = ?";
-$role_stmt = $conn->prepare($role_sql);
-$role_stmt->bind_param("i", $user_id);
-$role_stmt->execute();
-$role_stmt->bind_result($role);
-$role_stmt->fetch();
-$role_stmt->close();
+// Get user details including trial information
+$user_sql = "SELECT name, role, is_trial, trial_end FROM users WHERE id = ?";
+$user_stmt = $conn->prepare($user_sql);
+$user_stmt->bind_param("i", $user_id);
+$user_stmt->execute();
+$user_stmt->bind_result($user_name, $role, $is_trial, $trial_end);
+$user_stmt->fetch();
+$user_stmt->close();
+
+// Check trial status and prepare notification
+if ($is_trial) {
+    $current_date = new DateTime();
+    $trial_end_date = new DateTime($trial_end);
+    $days_remaining = $current_date->diff($trial_end_date)->days;
+    
+    if ($current_date > $trial_end_date) {
+        $trial_notification = '<div class="alert alert-danger">Your trial period has ended. <a href="subscription.php" class="alert-link">Subscribe now</a> to continue using our services.</div>';
+    } else {
+        $trial_notification = '<div class="alert alert-info">You have ' . $days_remaining . ' day(s) remaining in your free trial. <a href="subscription.php" class="alert-link">Subscribe now</a> for full access.</div>';
+    }
+}
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -121,15 +135,6 @@ if ($get_result->num_rows > 0) {
 }
 $get_stmt->close();
 
-// Fetch user name
-$sql = "SELECT name FROM users WHERE id = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$stmt->bind_result($user_name);
-$stmt->fetch();
-$stmt->close();
-
 $conn->close();
 ?>
 
@@ -162,19 +167,25 @@ $conn->close();
         }
         ?>
 
+<!-- menu start -->
+
+
+
+<!-- menu end  -->
+
         <div class="page-content">
             <div class="container">
                 <div class="row">
                     <div class="col-xl-9">
+                        <!-- Display trial notification if user is on trial -->
+                        <?php if (!empty($trial_notification)) echo $trial_notification; ?>
+                        
                         <div class="card">
-
                             <div class="card-header">
                                 <h4 class="card-title">Profile URL</h4>
                             </div>
                             
                             <div class="card-body">
-                                
-                                
                                 <?php if (!empty($success_message)): ?>
                                     <div class="alert alert-success"><?php echo $success_message; ?></div>
                                 <?php endif; ?>

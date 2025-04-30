@@ -19,10 +19,24 @@
 
      <div class="scrollbar" data-simplebar>
           <ul class="navbar-nav" id="navbar-nav">
+<?php
+    $current_date = new DateTime();
+    $trial_end_date = new DateTime($trial_end ?? ''); // fallback if null
 
-
-
-               <li class="nav-item">
+    if ($is_trial && $current_date > $trial_end_date): 
+?>
+    <!-- Only show Subscription link when trial is over -->
+    <li class="nav-item">
+        <a class="nav-link" href="subscription.php">
+            <span class="nav-icon">
+                <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
+            </span>
+            <span class="nav-text"> Subscription </span>
+        </a>
+    </li>
+<?php else: ?>
+    <!-- Show full menu as normal -->
+    <li class="nav-item">
                     <a class="nav-link" href="dashboard.php">
                          <span class="nav-icon">
                               <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
@@ -146,41 +160,8 @@
                          <span class="nav-text"> Customer Reviews  </span>
                     </a>
                </li>
+<?php endif; ?>
+</ul>
 
-               
-
-               <!-- <li class="nav-item">
-                    <a class="nav-link menu-arrow" href="dashboard.php#sidebarProducts" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarProducts">
-                         <span class="nav-icon">
-                              <iconify-icon icon="solar:t-shirt-bold-duotone"></iconify-icon>
-                         </span>
-                         <span class="nav-text"> Products </span>
-                    </a>
-                    <div class="collapse" id="sidebarProducts">
-                         <ul class="nav sub-navbar-nav">
-                              <li class="sub-nav-item">
-                                   <a class="sub-nav-link" href="product-list.html">List</a>
-                              </li>
-                              <li class="sub-nav-item">
-                                   <a class="sub-nav-link" href="product-grid.html">Grid</a>
-                              </li>
-                              <li class="sub-nav-item">
-                                   <a class="sub-nav-link" href="product-details.html">Details</a>
-                              </li>
-                              <li class="sub-nav-item">
-                                   <a class="sub-nav-link" href="product-edit.html">Edit</a>
-                              </li>
-                              <li class="sub-nav-item">
-                                   <a class="sub-nav-link" href="product-add.html">Create</a>
-                              </li>
-                         </ul>
-                    </div>
-               </li> -->
-
-              
-
-
-
-          </ul>
      </div>
 </div>

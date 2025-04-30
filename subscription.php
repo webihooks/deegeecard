@@ -67,6 +67,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cancel_subscription'])
     $stmt->close();
 }
 
+// Determine trial status before including menu
+$is_trial = false;
+$trial_end = null;
+
+$sql_trial = "SELECT is_trial, trial_end FROM users WHERE id = ?";
+$stmt_trial = $conn->prepare($sql_trial);
+if ($stmt_trial) {
+    $stmt_trial->bind_param("i", $user_id);
+    $stmt_trial->execute();
+    $stmt_trial->bind_result($is_trial_db, $trial_end_db);
+    if ($stmt_trial->fetch()) {
+        $is_trial = (bool)$is_trial_db;
+        $trial_end = $trial_end_db;
+    }
+    $stmt_trial->close();
+}
+
 $conn->close();
 ?>
 

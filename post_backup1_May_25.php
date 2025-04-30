@@ -127,6 +127,9 @@ $conn = null;
         .btn-success {
             background: var(--primary-color) !important;
         }
+        /*.personal_contact, .business_details, .products, .services, .gallery, .display_ratings, .rating, .bank_details, .qr_code_details, .share-section, .product-card, .form-control {
+            background-color: var(--secondary-color);
+        }*/
         body {
             background-color: var(--secondary-color);
         }

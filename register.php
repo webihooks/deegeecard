@@ -1,9 +1,9 @@
 <?php
 // Database connection details
-$host = 'localhost'; // Replace with your database host
-$dbname = 'doctorie_webihooks_card'; // Replace with your database name
-$username = 'root'; // Replace with your database username
-$password = ''; // Replace with your database password
+$host = 'localhost';
+$dbname = 'doctorie_webihooks_card';
+$username = 'root';
+$password = '';
 
 // Connect to the database
 try {
@@ -17,24 +17,56 @@ try {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = htmlspecialchars($_POST['name']);
     $email = htmlspecialchars($_POST['email']);
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT); // Hash the password
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
     $phone = htmlspecialchars($_POST['phone']);
     $address = htmlspecialchars($_POST['address']);
-    $role = 'user'; // Default role for new registrations
+    $role = 'user';
+    
+    // Calculate trial dates
+    $trialStart = date('Y-m-d H:i:s');
+    $trialEnd = date('Y-m-d H:i:s', strtotime('+7 days'));
+    $isTrial = 1; // 1 for true, user is in trial
 
-    // Insert user data into the database
+    // Begin transaction for atomic operations
+    $conn->beginTransaction();
+    
     try {
-        $stmt = $conn->prepare("INSERT INTO users (Name, Email, Password, Phone, Address, Role) VALUES (:name, :email, :password, :phone, :address, :role)");
+        // Insert user data into the users table
+        $stmt = $conn->prepare("INSERT INTO users (Name, Email, Password, Phone, Address, Role, is_trial, trial_start, trial_end) 
+                               VALUES (:name, :email, :password, :phone, :address, :role, :is_trial, :trial_start, :trial_end)");
+        
         $stmt->bindParam(':name', $name);
         $stmt->bindParam(':email', $email);
         $stmt->bindParam(':password', $password);
         $stmt->bindParam(':phone', $phone);
         $stmt->bindParam(':address', $address);
         $stmt->bindParam(':role', $role);
+        $stmt->bindParam(':is_trial', $isTrial);
+        $stmt->bindParam(':trial_start', $trialStart);
+        $stmt->bindParam(':trial_end', $trialEnd);
+        
         $stmt->execute();
-
-        echo "<script>alert('Registration successful!'); window.location.href='login.php';</script>";
+        
+        // Get the last inserted user ID
+        $userId = $conn->lastInsertId();
+        
+        // Insert trial record into trial_subscriptions table
+        $stmtTrial = $conn->prepare("INSERT INTO trial_subscriptions 
+                                    (user_id, start_date, end_date, is_active) 
+                                    VALUES (:user_id, :start_date, :end_date, 1)");
+        
+        $stmtTrial->bindParam(':user_id', $userId);
+        $stmtTrial->bindParam(':start_date', $trialStart);
+        $stmtTrial->bindParam(':end_date', $trialEnd);
+        $stmtTrial->execute();
+        
+        // Commit the transaction
+        $conn->commit();
+        
+        echo "<script>alert('Registration successful! You have a 7-day free trial.'); window.location.href='login.php';</script>";
     } catch (PDOException $e) {
+        // Roll back the transaction if something failed
+        $conn->rollBack();
         echo "<script>alert('Error: " . $e->getMessage() . "');</script>";
     }
 }
@@ -89,6 +121,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         <h2 class="fw-bold fs-24">Sign Up</h2>
 
                                         <p class="text-muted mt-1 mb-4">New to our platform? Sign up now! It only takes a minute</p>
+                                        <div class="alert alert-info mb-4">
+                                            <strong>7-Day Free Trial!</strong> Enjoy full access for 7 days with no commitment.
+                                        </div>
 
                                         <div>
                                              <form action="" method="POST" class="authentication-form">
@@ -115,12 +150,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                   <div class="mb-3">
                                                        <div class="form-check">
                                                             <input type="checkbox" class="form-check-input" id="checkbox-signin" required>
-                                                            <label class="form-check-label" for="checkbox-signin">I accept Terms and Condition</label>
+                                                            <label class="form-check-label" for="checkbox-signin">I accept Terms and Conditions and agree to the 7-day trial</label>
                                                        </div>
                                                   </div>
 
                                                   <div class="mb-1 text-center d-grid">
-                                                       <button class="btn btn-soft-primary" type="submit">Sign Up</button>
+                                                       <button class="btn btn-soft-primary" type="submit">Start Free Trial</button>
                                                   </div>
                                              </form>
                                         </div>
