@@ -17,6 +17,15 @@ $error_message = '';
 $current_profile_url = '';
 $trial_notification = '';
 
+// First, check if user has an active subscription
+$subscription_sql = "SELECT status FROM subscriptions WHERE user_id = ? AND status = 'active' LIMIT 1";
+$subscription_stmt = $conn->prepare($subscription_sql);
+$subscription_stmt->bind_param("i", $user_id);
+$subscription_stmt->execute();
+$subscription_stmt->store_result();
+$has_active_subscription = ($subscription_stmt->num_rows > 0);
+$subscription_stmt->close();
+
 // Get user details including trial information
 $user_sql = "SELECT name, role, is_trial, trial_end FROM users WHERE id = ?";
 $user_stmt = $conn->prepare($user_sql);
@@ -26,8 +35,8 @@ $user_stmt->bind_result($user_name, $role, $is_trial, $trial_end);
 $user_stmt->fetch();
 $user_stmt->close();
 
-// Check trial status and prepare notification
-if ($is_trial) {
+// Check trial status and prepare notification only if user doesn't have active subscription
+if (!$has_active_subscription && $is_trial) {
     $current_date = new DateTime();
     $trial_end_date = new DateTime($trial_end);
     $days_remaining = $current_date->diff($trial_end_date)->days;

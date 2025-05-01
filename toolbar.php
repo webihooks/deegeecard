@@ -38,9 +38,9 @@
                               <h6 class="dropdown-header">Welcome, <?php echo htmlspecialchars($user_name); ?>!</h6>
 
 
-                              <a class="dropdown-item" href="profile.php">
+                              <!-- <a class="dropdown-item" href="profile.php">
                                    <i class="bx bx-user-circle text-muted fs-18 align-middle me-1"></i><span class="align-middle">Profile</span>
-                              </a>
+                              </a> -->
 
                               <div class="dropdown-divider my-1"></div>
 

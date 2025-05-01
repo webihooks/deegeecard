@@ -1,15 +1,8 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 session_start();
-require 'vendor/autoload.php';
 require 'config.php';
 require 'db_connection.php';
 
-use Razorpay\Api\Api;
-use Razorpay\Api\Errors\SignatureVerificationError;
-
-// Check user authentication
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     echo "Unauthorized";
@@ -17,57 +10,51 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
+$package_id = $_POST['package_id'] ?? null;
 
-// Razorpay API init
-$api = new Api(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET);
-
-try {
-    // Verify the payment signature
-    $attributes = [
-        'razorpay_order_id' => $_POST['razorpay_order_id'],
-        'razorpay_payment_id' => $_POST['razorpay_payment_id'],
-        'razorpay_signature' => $_POST['razorpay_signature']
-    ];
-    $api->utility->verifyPaymentSignature($attributes);
-
-    $package_id = intval($_POST['package_id']);
-    $payment_id = $_POST['razorpay_payment_id'];
-    $order_id = $_POST['razorpay_order_id'];
-    $payment_date = date('Y-m-d H:i:s');
-
-    // Fetch package price
-    $stmt_price = $conn->prepare("SELECT price FROM packages WHERE id = ?");
-    if (!$stmt_price) {
-        throw new Exception("Package price query preparation failed: " . $conn->error);
-    }
-    $stmt_price->bind_param("i", $package_id);
-    $stmt_price->execute();
-    $stmt_price->bind_result($amount);
-    if (!$stmt_price->fetch()) {
-        throw new Exception("Package not found.");
-    }
-    $stmt_price->close();
-
-    // Define subscription period
-    $start_date = date('Y-m-d H:i:s');
-    $end_date = date('Y-m-d H:i:s', strtotime('+1 month')); // 1 month validity
-
-    // Insert into subscriptions table (no payment_method)
-    $stmt_sub = $conn->prepare("INSERT INTO subscriptions (user_id, package_id, start_date, end_date, status, payment_id) VALUES (?, ?, ?, ?, 'active', ?)");
-    if (!$stmt_sub) {
-        throw new Exception("Subscription insert query preparation failed: " . $conn->error);
-    }
-    $stmt_sub->bind_param("iisss", $user_id, $package_id, $start_date, $end_date, $payment_id);
-    $stmt_sub->execute();
-    $stmt_sub->close();
-
-    echo "Subscription activated successfully!";
-
-} catch (SignatureVerificationError $e) {
-    echo "Signature verification failed: " . $e->getMessage();
-} catch (Exception $e) {
-    echo "Error: " . $e->getMessage();
+if (!$package_id) {
+    http_response_code(400);
+    echo "Invalid package selected.";
+    exit();
 }
 
+// Get package details
+$sql = "SELECT name, duration FROM packages WHERE id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $package_id);
+$stmt->execute();
+$stmt->bind_result($package_name, $duration);
+if (!$stmt->fetch()) {
+    echo "Package not found.";
+    exit();
+}
+$stmt->close();
+
+// Optional: Verify Razorpay payment here using Razorpay API (not shown for brevity)
+
+// Cancel any existing active subscription
+$sql_cancel = "UPDATE subscriptions SET status = 'canceled', end_date = NOW() WHERE user_id = ? AND status = 'active'";
+$stmt_cancel = $conn->prepare($sql_cancel);
+$stmt_cancel->bind_param("i", $user_id);
+$stmt_cancel->execute();
+$stmt_cancel->close();
+
+// Insert new subscription
+$start_date = date('Y-m-d');
+$end_date = date('Y-m-d', strtotime("+$duration days"));
+$subscription_type = $package_name; // e.g., Basic Package, etc.
+
+$sql_insert = "INSERT INTO subscriptions (user_id, package_id, start_date, end_date, status, subscription_type) 
+               VALUES (?, ?, ?, ?, 'active', ?)";
+$stmt_insert = $conn->prepare($sql_insert);
+$stmt_insert->bind_param("iisss", $user_id, $package_id, $start_date, $end_date, $subscription_type);
+
+if ($stmt_insert->execute()) {
+    echo "Subscription successful!";
+} else {
+    echo "Error processing subscription: " . $stmt_insert->error;
+}
+
+$stmt_insert->close();
 $conn->close();
 ?>

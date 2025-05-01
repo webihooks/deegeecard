@@ -26,52 +26,6 @@ $stmt->bind_result($user_name);
 $stmt->fetch();
 $stmt->close();
 
-// Check user's subscription and product limits
-$max_products = 0;
-$current_product_count = 0;
-$subscription_active = false;
-$package_name = '';
-
-// Get user's active subscription
-$sql = "SELECT s.package_id, p.name as package_name 
-        FROM subscriptions s
-        JOIN packages p ON s.package_id = p.id
-        WHERE s.user_id = ? AND s.status = 'active' LIMIT 1";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$subscription = $result->fetch_assoc();
-$stmt->close();
-
-if ($subscription) {
-    $subscription_active = true;
-    $package_name = $subscription['package_name'];
-    switch ($subscription['package_id']) {
-        case 1:
-            $max_products = 20;
-            break;
-        case 2:
-            $max_products = 100;
-            break;
-        case 3:
-            $max_products = 500;
-            break;
-        default:
-            $max_products = 0;
-    }
-}
-
-// Get current product count
-$sql = "SELECT COUNT(*) as count FROM products WHERE user_id = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$count_data = $result->fetch_assoc();
-$current_product_count = $count_data['count'];
-$stmt->close();
-
 // Handle form submission for add/update
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $product_id = isset($_POST['product_id']) ? $_POST['product_id'] : null;
@@ -84,76 +38,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($product_name) || empty($price) || empty($quantity)) {
         $error_message = "Product Name, price and quantity are required fields.";
     } else {
-        // Check product limit for new products only (not for updates)
-        if (!$product_id && $subscription_active && $current_product_count >= $max_products) {
-            $error_message = "You have reached the maximum number of products ($max_products) allowed by your $package_name plan.";
-        } elseif (!$product_id && !$subscription_active) {
-            $error_message = "You need an active subscription to add products. Please subscribe first.";
-        } else {
-            // Handle image upload
-            $image_path = '';
-            if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] === UPLOAD_ERR_OK) {
-                $upload_dir = 'uploads/products/';
-                if (!file_exists($upload_dir)) {
-                    mkdir($upload_dir, 0755, true);
-                }
-                
-                $file_extension = pathinfo($_FILES['product_image']['name'], PATHINFO_EXTENSION);
-                $file_name = uniqid() . '.' . $file_extension;
-                $target_path = $upload_dir . $file_name;
-                
-                // Validate image file
-                $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
-                if (!in_array(strtolower($file_extension), $allowed_types)) {
-                    $error_message = "Only JPG, JPEG, PNG & GIF files are allowed.";
-                } elseif ($_FILES['product_image']['size'] > 5000000) { // 5MB limit
-                    $error_message = "File size must be less than 5MB.";
-                } elseif (move_uploaded_file($_FILES['product_image']['tmp_name'], $target_path)) {
-                    $image_path = $target_path;
-                    
-                    // Delete old image if updating
-                    if ($product_id && !empty($_POST['existing_image'])) {
-                        if (file_exists($_POST['existing_image'])) {
-                            unlink($_POST['existing_image']);
-                        }
-                    }
-                } else {
-                    $error_message = "Error uploading image.";
-                }
-            } elseif ($product_id && !empty($_POST['existing_image'])) {
-                $image_path = $_POST['existing_image'];
+        // Handle image upload
+        $image_path = '';
+        if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] === UPLOAD_ERR_OK) {
+            $upload_dir = 'uploads/products/';
+            if (!file_exists($upload_dir)) {
+                mkdir($upload_dir, 0755, true);
             }
             
-            if (empty($error_message)) {
-                if ($product_id) {
-                    // Update existing product
-                    if (!empty($image_path)) {
-                        $sql = "UPDATE products SET product_name = ?, description = ?, price = ?, quantity = ?, image_path = ? WHERE id = ? AND user_id = ?";
-                        $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("ssdssii", $product_name, $description, $price, $quantity, $image_path, $product_id, $user_id);
-                    } else {
-                        $sql = "UPDATE products SET product_name = ?, description = ?, price = ?, quantity = ? WHERE id = ? AND user_id = ?";
-                        $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("ssdiii", $product_name, $description, $price, $quantity, $product_id, $user_id);
+            $file_extension = pathinfo($_FILES['product_image']['name'], PATHINFO_EXTENSION);
+            $file_name = uniqid() . '.' . $file_extension;
+            $target_path = $upload_dir . $file_name;
+            
+            // Validate image file
+            $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
+            if (!in_array(strtolower($file_extension), $allowed_types)) {
+                $error_message = "Only JPG, JPEG, PNG & GIF files are allowed.";
+            } elseif ($_FILES['product_image']['size'] > 5000000) { // 5MB limit
+                $error_message = "File size must be less than 5MB.";
+            } elseif (move_uploaded_file($_FILES['product_image']['tmp_name'], $target_path)) {
+                $image_path = $target_path;
+                
+                // Delete old image if updating
+                if ($product_id && !empty($_POST['existing_image'])) {
+                    if (file_exists($_POST['existing_image'])) {
+                        unlink($_POST['existing_image']);
                     }
-                } else {
-                    // Add new product
-                    $sql = "INSERT INTO products (user_id, product_name, description, price, quantity, image_path) VALUES (?, ?, ?, ?, ?, ?)";
-                    $stmt = $conn->prepare($sql);
-                    $stmt->bind_param("issdis", $user_id, $product_name, $description, $price, $quantity, $image_path);
                 }
-
-                if ($stmt->execute()) {
-                    $success_message = $product_id ? "Product updated successfully!" : "Product added successfully!";
-                    // Update product count after successful addition
-                    if (!$product_id) {
-                        $current_product_count++;
-                    }
-                } else {
-                    $error_message = "Error saving product: " . $conn->error;
-                }
-                $stmt->close();
+            } else {
+                $error_message = "Error uploading image.";
             }
+        } elseif ($product_id && !empty($_POST['existing_image'])) {
+            $image_path = $_POST['existing_image'];
+        }
+        
+        if (empty($error_message)) {
+            if ($product_id) {
+                // Update existing product
+                if (!empty($image_path)) {
+                    $sql = "UPDATE products SET product_name = ?, description = ?, price = ?, quantity = ?, image_path = ? WHERE id = ? AND user_id = ?";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("ssdssii", $product_name, $description, $price, $quantity, $image_path, $product_id, $user_id);
+                } else {
+                    $sql = "UPDATE products SET product_name = ?, description = ?, price = ?, quantity = ? WHERE id = ? AND user_id = ?";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("ssdiii", $product_name, $description, $price, $quantity, $product_id, $user_id);
+                }
+            } else {
+                // Add new product
+                $sql = "INSERT INTO products (user_id, product_name, description, price, quantity, image_path) VALUES (?, ?, ?, ?, ?, ?)";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("issdis", $user_id, $product_name, $description, $price, $quantity, $image_path);
+            }
+
+            if ($stmt->execute()) {
+                $success_message = $product_id ? "Product updated successfully!" : "Product added successfully!";
+            } else {
+                $error_message = "Error saving product: " . $conn->error;
+            }
+            $stmt->close();
         }
     }
 }
@@ -198,8 +141,6 @@ if (isset($_GET['delete'])) {
             unlink($image_path);
         }
         $success_message = "Product deleted successfully!";
-        // Update product count after successful deletion
-        $current_product_count--;
     } else {
         $error_message = "Error deleting product: " . $conn->error;
     }
@@ -255,22 +196,6 @@ $conn->close();
                                 <h4 class="card-title">Products</h4>
                             </div>
                             <div class="card-body">
-                                <?php if ($subscription_active): ?>
-                                    <div class="alert alert-info">
-                                        <strong><?php echo $package_name; ?> Plan:</strong> 
-                                        You can add up to <?php echo $max_products; ?> products. 
-                                        You currently have <?php echo $current_product_count; ?> products.
-                                        <?php if ($current_product_count >= $max_products): ?>
-                                            <br><strong>You've reached your limit!</strong> Upgrade your plan to add more products.
-                                        <?php endif; ?>
-                                    </div>
-                                <?php else: ?>
-                                    <div class="alert alert-warning">
-                                        <strong>No active subscription!</strong> You need to subscribe to add products.
-                                        <a href="subscriptions.php" class="alert-link">View subscription plans</a>
-                                    </div>
-                                <?php endif; ?>
-                                
                                 <h4 class="card-title"><?php echo $is_edit_mode ? 'Edit Product' : 'Add New Product'; ?></h4>
                                 <form id="productForm" method="POST" action="products.php" enctype="multipart/form-data">
                                     <input type="hidden" name="product_id" value="<?php echo $is_edit_mode ? $product_data['id'] : ''; ?>">
@@ -313,9 +238,7 @@ $conn->close();
                                             </div>
                                         <?php endif; ?>
                                     </div>
-                                    <button type="submit" class="btn btn-primary" <?php echo (!$subscription_active && !$is_edit_mode) ? 'disabled' : ''; ?>>
-                                        <?php echo $is_edit_mode ? 'Update' : 'Save'; ?> Product
-                                    </button>
+                                    <button type="submit" class="btn btn-primary"><?php echo $is_edit_mode ? 'Update' : 'Save'; ?> Product</button>
                                     <?php if ($is_edit_mode): ?>
                                         <a href="products.php" class="btn btn-secondary">Cancel</a>
                                     <?php endif; ?>
@@ -332,7 +255,7 @@ $conn->close();
                                 <br>
 
                                 <?php if (empty($products)): ?>
-                                    <p>No products found. <?php echo $subscription_active ? 'Add your first product above.' : 'Subscribe to add products.'; ?></p>
+                                    <p>No products found. Add your first product above.</p>
                                 <?php else: ?>
                                     <div class="table-responsive">
                                         <table class="table table-striped">
