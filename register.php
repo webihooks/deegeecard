@@ -120,30 +120,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                                         <h2 class="fw-bold fs-24">Sign Up</h2>
 
-                                        <p class="text-muted mt-1 mb-4">New to our platform? Sign up now! It only takes a minute</p>
-                                        <div class="alert alert-info mb-4">
+                                        <p class="text-muted mt-1 mb-1">New to our platform? Sign up now! It only takes a minute</p>
+                                        <div class="alert alert-info mb-2">
                                             <strong>7-Day Free Trial!</strong> Enjoy full access for 7 days with no commitment.
                                         </div>
 
                                         <div>
                                              <form action="" method="POST" class="authentication-form">
-                                                  <div class="mb-3">
+                                                  <div class="mb-1">
                                                        <label class="form-label" for="example-name">Name</label>
                                                        <input type="text" id="example-name" name="name" class="form-control" placeholder="Enter your name" required>
                                                   </div>
-                                                  <div class="mb-3">
+                                                  <div class="mb-1">
                                                        <label class="form-label" for="example-email">Email</label>
                                                        <input type="email" id="example-email" name="email" class="form-control" placeholder="Enter your email" required>
                                                   </div>
-                                                  <div class="mb-3">                                                      
+                                                  <div class="mb-1">                                                      
                                                        <label class="form-label" for="example-password">Password</label>
                                                        <input type="password" id="example-password" name="password" class="form-control" placeholder="Enter your password" required>
                                                   </div>
-                                                  <div class="mb-3">
+                                                  <div class="mb-1">
                                                        <label class="form-label" for="example-phone">Phone Number</label>
                                                        <input type="tel" id="example-phone" name="phone" class="form-control" placeholder="Enter your phone number" required>
                                                   </div>
-                                                  <div class="mb-3">
+                                                  <div class="mb-1">
                                                        <label class="form-label" for="example-address">Address</label>
                                                        <textarea id="example-address" name="address" class="form-control" placeholder="Enter your address" required></textarea>
                                                   </div>

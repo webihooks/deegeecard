@@ -267,7 +267,7 @@ $conn->close();
                                 <?php else: ?>
                                     <div class="alert alert-warning">
                                         <strong>No active subscription!</strong> You need to subscribe to add products.
-                                        <a href="subscriptions.php" class="alert-link">View subscription plans</a>
+                                        <a href="subscription.php" class="alert-link">View subscription plans</a>
                                     </div>
                                 <?php endif; ?>
                                 
