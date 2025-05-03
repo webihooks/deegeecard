@@ -60,6 +60,15 @@
                     </a>
                </li>
 
+               <li class="nav-item">
+                    <a class="nav-link" href="qr.php">
+                         <span class="nav-icon">
+                              <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
+                         </span>
+                         <span class="nav-text"> QR Code </span>
+                    </a>
+               </li>
+
               
               
 

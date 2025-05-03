@@ -9,4 +9,7 @@ return array(
     'WpOrg\\Requests\\' => array($vendorDir . '/rmccue/requests/src'),
     'Razorpay\\Tests\\' => array($vendorDir . '/razorpay/razorpay/tests'),
     'Razorpay\\Api\\' => array($vendorDir . '/razorpay/razorpay/src'),
+    'Endroid\\QrCode\\' => array($vendorDir . '/endroid/qr-code/src'),
+    'DASPRiD\\Enum\\' => array($vendorDir . '/dasprid/enum/src'),
+    'BaconQrCode\\' => array($vendorDir . '/bacon/bacon-qr-code/src'),
 );

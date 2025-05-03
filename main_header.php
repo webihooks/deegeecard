@@ -41,7 +41,7 @@
             </li>
 
             <li class="nav-item">
-              <a class="nav-link" href="contact.php">Register</a>
+              <a class="nav-link" href="register.php">Register</a>
             </li>
 
             <li class="nav-item">
