@@ -19,14 +19,6 @@ if (!$profile_data) {
 
 $user_id = $profile_data['user_id'];
 
-// Check for active subscription
-$subscription_sql = "SELECT * FROM subscriptions WHERE user_id = ? AND status = 'active' AND end_date >= CURDATE()";
-$subscription_stmt = $conn->prepare($subscription_sql);
-$subscription_stmt->execute([$user_id]);
-$active_subscription = $subscription_stmt->fetch(PDO::FETCH_ASSOC);
-
-$show_subscription_popup = !$active_subscription;
-
 // Get all profile data
 $user = getUserById($conn, $user_id);
 if (!$user) {
@@ -103,83 +95,59 @@ $conn = null;
             --secondary-color: <?= $secondary_color ?>;
         }
         
-        /* Your existing styles... */
-        
-        /* Add these new styles for overlay and popup */
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            display: none;
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
         }
         
-        .subscription-popup {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            z-index: 9999999;
-            max-width: 90%;
-            width: 400px;
-            text-align: center;
-            display: none;
-        }
-        
-        .subscription-popup h3 {
+        .btn-outline-primary {
             color: var(--primary-color);
-            margin-bottom: 15px;
+            border-color: var(--primary-color);
         }
         
-        .subscription-popup p {
-            margin-bottom: 20px;
+        .text-primary {
+            color: var(--primary-color) !important;
         }
         
-        .subscription-popup .btn-close {
-            position: absolute;
-            top: 10px;
-            right: 10px;
+        .bg-primary {
+            background-color: var(--primary-color) !important;
+        }
+        
+        .border-primary {
+            border-color: var(--primary-color) !important;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        .social_networks li a {
+            background: var(--primary-color) !important;
+        }
+        .btn-success {
+            background: var(--primary-color) !important;
+        }
+        body {
+            background-color: var(--secondary-color);
         }
     </style>
+    <script>
+        window.addEventListener('scroll', function() {
+            const coverPhoto = document.querySelector('.cover_photo');
+            const profilePhoto = document.querySelector('.profile_photo');
+            const burgerMenu = document.querySelector('.burger-menu');
+            
+            if (window.scrollY > 50) {
+                coverPhoto?.classList.add('small');
+                profilePhoto?.classList.add('small', 'with-burger');
+                burgerMenu?.classList.add('show');
+            } else {
+                coverPhoto?.classList.remove('small');
+                profilePhoto?.classList.remove('small', 'with-burger');
+                burgerMenu?.classList.remove('show');
+            }
+        });
+    </script>
 </head>
 <body class="restaurant">
-    <?php if ($show_subscription_popup): ?>
-    <!-- Overlay -->
-    <div class="overlay" id="subscriptionOverlay"></div>
-    
-    <!-- Subscription Popup -->
-    <div class="subscription-popup" id="subscriptionPopup">
-        <!-- <button type="button" class="btn-close" onclick="closeSubscriptionPopup()"></button> -->
-        <h3>Subscription Expired</h3>
-        <p>You don't have any active subscription. Please subscribe to continue using our services.</p>
-        <button class="btn btn-primary" onclick="redirectToSubscription()">Subscribe Now</button>
-    </div>
-    
-    <script>
-        // Show the popup when page loads
-        window.onload = function() {
-            document.getElementById('subscriptionOverlay').style.display = 'block';
-            document.getElementById('subscriptionPopup').style.display = 'block';
-        };
-        
-        function closeSubscriptionPopup() {
-            document.getElementById('subscriptionOverlay').style.display = 'none';
-            document.getElementById('subscriptionPopup').style.display = 'none';
-        }
-        
-        function redirectToSubscription() {
-            // Replace with your actual subscription page URL
-            window.location.href = 'subscription.php';
-        }
-    </script>
-    <?php endif; ?>
-    
     <div class="main">
-        <!-- Rest of your existing HTML content -->
