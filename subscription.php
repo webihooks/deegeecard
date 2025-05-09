@@ -26,6 +26,15 @@ if ($stmt_name) {
     $stmt_name->close();
 }
 
+// First, check if user has an active subscription
+$subscription_sql = "SELECT status FROM subscriptions WHERE user_id = ? AND status = 'active' LIMIT 1";
+$subscription_stmt = $conn->prepare($subscription_sql);
+$subscription_stmt->bind_param("i", $user_id);
+$subscription_stmt->execute();
+$subscription_stmt->store_result();
+$has_active_subscription = ($subscription_stmt->num_rows > 0);
+$subscription_stmt->close();
+
 // Fetch available packages including description and duration
 $packages = [];
 $sql_packages = "SELECT id, name, price, description, duration FROM packages";
@@ -59,12 +68,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cancel_subscription'])
     $stmt->bind_param("i", $user_id);
 
     if ($stmt->execute()) {
-        $message = "Subscription canceled successfully";
+        $_SESSION['message'] = "Subscription canceled successfully";
         $current_subscription = null;
+        $stmt->close();
+        header("Location: subscription.php");
+        exit();
     } else {
         $error = "Error canceling subscription: " . $conn->error;
+        $stmt->close();
     }
-    $stmt->close();
 }
 
 // Determine trial status before including menu
@@ -158,7 +170,23 @@ $(document).ready(function() {
 <body>
     <div class="wrapper">
         <?php include 'toolbar.php'; ?>
-        <?php include 'menu.php'; ?>
+        
+
+
+
+<?php
+// Check subscription or active trial (not expired) status
+$is_active_trial = $is_trial && (strtotime($trial_end) > time());
+if ($has_active_subscription || $is_active_trial) {
+    include 'menu.php';
+} else {
+    include 'unsubscriber_menu.php';
+}
+?>
+
+
+
+
 
         <div class="page-content">
             <div class="container">
@@ -193,6 +221,16 @@ $(document).ready(function() {
                                                 <form method="post">
                                                     <button type="submit" name="cancel_subscription" class="btn btn-danger">Cancel Subscription</button>
                                                 </form>
+
+<div class="mt-3">
+<strong class="red">Before you cancel your subscription, please note:</strong>
+<ul>
+<li>Immediate loss of access to all premium features and content.</li>
+<li>No refunds for unused portions of your billing cycle.</li>
+<li>Saved data or preferences may be permanently deleted.</li>
+</ul>
+</div>
+
                                             </div>
                                         </div>
                                     </div>

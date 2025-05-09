@@ -168,18 +168,18 @@ $conn->close();
     <div class="wrapper">
         <?php include 'toolbar.php'; ?>
         
+        <?php 
+            if ($role === 'admin') {
+                include 'admin_menu.php';
+            } else {
+                include 'menu.php';
+            }
+        ?>
 
-<?php
-if ($role === 'admin') {
-    include 'admin_menu.php';
-} else {
-    if ($has_active_subscription || ($is_trial && strtotime($trial_end) > time())) {
-        include 'menu.php';
-    } else {
-        include 'unsubscriber_menu.php';
-    }
-}
-?>
+
+
+
+
 
 
         <div class="page-content">

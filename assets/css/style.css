@@ -51,7 +51,7 @@ text-overflow: ellipsis;
 }
 
 /* Badge System */
-.role-badge {
+.role-badge, .badge {
 display: inline-block;
 padding: 0.35em 0.65em;
 font-size: 0.75rem;
@@ -67,7 +67,7 @@ transition: all 0.2s ease;
 }
 
 /* Admin Badge */
-.badge-admin {
+.badge-admin, .badge-success {
 color: #fff;
 background-color: #10b759;
 box-shadow: 0 0 0 1px rgba(16, 183, 89, 0.2);
