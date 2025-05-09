@@ -108,11 +108,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                    <div class="d-flex flex-column h-100 justify-content-center">
                                         <div class="auth-logo mb-4">
                                              <a href="index.php" class="logo-dark">
-                                                  <img src="assets/images/logo-dark.png" height="24" alt="logo dark">
+                                                  <img src="assets/images/logo-dark.png" height="60" alt="logo dark">
                                              </a>
 
                                              <a href="index.php" class="logo-light">
-                                                  <img src="assets/images/logo-light.png" height="24" alt="logo light">
+                                                  <img src="assets/images/logo-light.png" height="60" alt="logo light">
                                              </a>
                                         </div>
 

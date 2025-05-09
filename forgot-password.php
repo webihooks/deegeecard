@@ -4,7 +4,7 @@
 <head>
      <!-- Title Meta -->
      <meta charset="utf-8" />
-     <title>Reset Password | Larkon - Responsive Admin Dashboard Template</title>
+     <title>Reset Password</title>
      <meta name="viewport" content="width=device-width, initial-scale=1.0">
      <meta name="description" content="A fully responsive premium admin dashboard template" />
      <meta name="author" content="Techzaa" />
@@ -37,11 +37,11 @@
                                    <div class="d-flex flex-column h-100 justify-content-center">
                                         <div class="auth-logo mb-4">
                                              <a href="index.php" class="logo-dark">
-                                                  <img src="assets/images/logo-dark.png" height="24" alt="logo dark">
+                                                  <img src="assets/images/logo-dark.png" height="60" alt="logo dark">
                                              </a>
 
                                              <a href="index.php" class="logo-light">
-                                                  <img src="assets/images/logo-light.png" height="24" alt="logo light">
+                                                  <img src="assets/images/logo-light.png" height="60" alt="logo light">
                                              </a>
                                         </div>
 

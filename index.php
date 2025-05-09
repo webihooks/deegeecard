@@ -602,6 +602,117 @@
     </section>
     <!-- How it Works Section End -->
 
+
+
+
+
+    
+
+
+       <!-- Packages & Pricing Section Start -->
+    <section class="row_am pricing_section" id="pricing_sec">
+      <div class="container">
+        <div class="section_title" data-aos="fade-up" data-aos-duration="1500">
+          <span class="title_badge">Choose Your Plan</span>
+          <h2>Packages & Pricing</h2>
+          <p>Select the perfect package for your business needs and budget</p>
+        </div>
+
+        <div class="row">
+          <!-- Basic Package -->
+          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-duration="1500">
+            <div class="pricing-card">
+              <div class="pricing-header">
+                <h3>Basic Package</h3>
+                <div class="price"><span>₹499</span> / year</div>
+              </div>
+              <div class="pricing-body">
+                <ul class="features-list">
+                  <li><i class="icofont-check"></i> Free 7 Days Trial</li>
+                  <li><i class="icofont-check"></i> Add Upto 20 Products</li>
+                  <li><i class="icofont-check"></i> Deegeecard URL</li>
+                  <li><i class="icofont-close"></i> No Business Card</li>
+                </ul>
+              </div>
+              <div class="pricing-footer">
+                <a href="register.php" class="btn puprple_btn">Register Now!</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Regular Package -->
+          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="200">
+            <div class="pricing-card popular">
+              <div class="pricing-header">
+                <h3>Regular Package</h3>
+                <div class="price"><span>₹2,999</span> / year</div>
+              </div>
+              <div class="pricing-body">
+                <ul class="features-list">
+                  <li><i class="icofont-check"></i> Free 7 Days Trial</li>
+                  <li><i class="icofont-check"></i> Add Upto 100 Products</li>
+                  <li><i class="icofont-check"></i> Custom Domain/year</li>
+                  <li><i class="icofont-check"></i> Free 100 QR Printed Business Cards</li>
+                </ul>
+              </div>
+              <div class="pricing-footer">
+                <a href="register.php" class="btn puprple_btn">Register Now!</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Premium Package -->
+          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="400">
+            <div class="pricing-card">
+              <div class="pricing-header">
+                <h3>Premium Package</h3>
+                <div class="price"><span>₹9,999</span> / year</div>
+              </div>
+              <div class="pricing-body">
+                <ul class="features-list">
+                  <li><i class="icofont-check"></i> Free 7 Days Trial</li>
+                  <li><i class="icofont-check"></i> Add Upto 500 Products</li>
+                  <li><i class="icofont-check"></i> Custom Domain/year</li>
+                  <li><i class="icofont-check"></i> Free 1000 QR Printed Business Cards</li>
+                </ul>
+              </div>
+              <div class="pricing-footer">
+                <a href="register.php" class="btn puprple_btn">Register Now!</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="text-center mt-3" data-aos="fade-up" data-aos-duration="1500">
+          <h6>Need a custom solution? <a href="contact.php">Contact us</a> for enterprise packages</h6>
+        </div>
+      </div>
+    </section>
+    <!-- Packages & Pricing Section End -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     <!-- success stories Section Start -->
     <section class="key_feature_section row_am" id="review_sec">
 

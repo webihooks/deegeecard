@@ -121,7 +121,7 @@
                 <!-- row start -->
                 <div class="row">
                   <div class="col-md-4">
-                      <p>DeeGee Card © Copyrights 2025. All rights reserved.</p>
+                      <p>DeeGeeCard © Copyrights 2025. All rights reserved.</p>
                   </div>
 
                   <div class="col-md-4">
@@ -146,3 +146,5 @@
 
     </footer>
     <!-- Footer-Section end -->
+
+<a href="https://api.whatsapp.com/send?phone=919004998995&amp;text=Hello Deegeecard,%20I%20am%20visitor%20of%20your%20website,%20want%20some%20information%20about%20your%20Services." target="_blank"><span class="whatsapp_icon bounce2">Whatsapp Support</span></a>    
