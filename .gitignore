@@ -1,3 +1,6 @@
 .env
 *.log
 .DS_Store
+
+# Ignore uploads directory
+uploads/

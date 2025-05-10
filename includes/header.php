@@ -4,10 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title><?= htmlspecialchars($user['name']) ?> | <?= htmlspecialchars($business_info['business_name'] ?? '') ?></title>
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-81W5S4MMGY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-81W5S4MMGY');
+    </script>
+
+
     <link href="assets/css/main.css" rel="stylesheet">
     <script>
         window.addEventListener('scroll', function() {
@@ -94,9 +105,84 @@
             });
         });
 
-
-
     </script>
+
+    <style>
+        :root {
+            --primary-color: <?= $primary_color ?>;
+            --secondary-color: <?= $secondary_color ?>;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .text-primary {
+            color: var(--primary-color) !important;
+        }
+        
+        .bg-primary {
+            background-color: var(--primary-color) !important;
+        }
+        
+        .border-primary {
+            border-color: var(--primary-color) !important;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        .social_networks li a {
+            background: var(--primary-color) !important;
+        }
+        .btn-success {
+            background: var(--primary-color) !important;
+        }
+        body {
+            background-color: var(--secondary-color);
+        }
+    </style>
 </head>
 <body class="restaurant">
+
+
+<?php if ($show_subscription_popup): ?>
+<!-- Overlay -->
+<div class="overlay" id="subscriptionOverlay"></div>
+
+<!-- Subscription Popup -->
+<div class="subscription-popup" id="subscriptionPopup">
+    <!-- <button type="button" class="btn-close" onclick="closeSubscriptionPopup()"></button> -->
+    <h3>Subscription Expired</h3>
+    <p>You don't have any active subscription. Please subscribe to continue using our services.</p>
+    <button class="btn btn-primary" onclick="redirectToSubscription()">Subscribe Now</button>
+</div>
+
+<script>
+    // Show the popup when page loads
+    window.onload = function() {
+        document.getElementById('subscriptionOverlay').style.display = 'block';
+        document.getElementById('subscriptionPopup').style.display = 'block';
+    };
+    
+    function closeSubscriptionPopup() {
+        document.getElementById('subscriptionOverlay').style.display = 'none';
+        document.getElementById('subscriptionPopup').style.display = 'none';
+    }
+    
+    function redirectToSubscription() {
+        // Replace with your actual subscription page URL
+        window.location.href = 'login.php';
+    }
+</script>
+<?php endif; ?>
+
     <div class="main">
+

@@ -1,0 +1,266 @@
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+}
+
+a {
+    color: #ff3700;
+}
+
+.red {
+    color: red;
+}
+
+/* Basic Responsive Image Styles */
+.img-responsive {
+    display: block;           /* Removes extra space under image */
+    max-width: 100%;          /* Image will never exceed its container */
+    height: auto;             /* Maintain aspect ratio */
+    width: auto;              /* Prevent forced stretching */
+    margin: 0 auto;           /* Center images by default */
+}
+
+/* Optional Variations */
+.img-responsive.rounded {
+    border-radius: 6px;       /* Slightly rounded corners */
+}
+
+.img-responsive.circle {
+    border-radius: 50%;       /* Circular images (for profile pics) */
+}
+
+.img-responsive.cover {
+    object-fit: cover;        /* Cover the container (for fixed aspect ratio containers) */
+    width: 100%;             /* Full width of container */
+    height: 100%;            /* Full height of container */
+}
+
+.img-responsive.contain {
+    object-fit: contain;      /* Fit entire image within container */
+}
+
+/* For Retina/HiDPI displays */
+.img-responsive.high-dpi {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+}
+
+/* Lazy loading styles */
+.img-responsive.lazy {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.img-responsive.lazy.loaded {
+    opacity: 1;
+}
+
+/* Responsive image in flex container */
+.flex-container .img-responsive {
+    align-self: center;      /* Proper alignment in flex containers */
+}
+
+/* Media queries for specific adjustments */
+@media (max-width: 768px) {
+    .img-responsive-mobile {
+        width: 100% !important; /* Force full width on mobile */
+        height: auto !important;
+    }
+}
+
+/* For images that should maintain aspect ratio in fluid containers */
+.img-responsive.fluid {
+    width: 100%;
+    height: auto;
+}
+
+/* For background images (alternative approach) */
+.responsive-bg {
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Header */
+.mobile-header {
+    display: none;
+    background-color: #252d34;
+    color: white;
+    padding: 15px;
+    text-align: center;
+}
+
+.mobile-header .logo {
+    height: 40px;
+}
+
+.mobile-menu-btn {
+    position: absolute;
+    left: 15px;
+    top: 15px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+/* Main Content Layout */
+.main-content {
+    display: flex;
+    flex: 1;
+}
+
+/* Left Column - Navigation */
+.left-column {
+    width: 330px;
+    background-color: #252d34;
+    color: white;
+    padding: 20px 0;
+    transition: transform 0.3s ease;
+}
+
+.nav-title {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid #5a626e;
+    color: #ff3700;
+    margin-bottom: 20px;
+}
+
+.nav-title img {
+    max-width: 100%;
+}
+
+.nav-menu {
+    list-style: none;
+    overflow-y: auto;
+    max-height: calc(100vh - 120px);
+}
+
+.nav-item {
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    border-left: 4px solid transparent;
+}
+
+.nav-item:hover {
+    background-color: #fff;
+    color: #ff3700;
+}
+
+.nav-item.active {
+    background-color: #fff;
+    color: #ff3700;
+    border-left: 4px solid #ff3700;
+}
+
+/* Right Column - Content */
+.right-column {
+    flex: 1;
+    padding: 30px;
+    background-color: white;
+    overflow-y: auto;
+}
+
+.content-title {
+    font-size: 24px;
+    margin-bottom: 30px;
+    color: #252d34;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.help-content {
+    display: none;
+}
+
+.help-content.active {
+    display: block;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.help-content h2 {
+    color: #252d34;
+    margin-bottom: 20px;
+    font-size: 22px;
+}
+
+.help-content p {
+    margin-bottom: 15px;
+}
+
+.help-content ol, .help-content ul {
+    margin-bottom: 20px;
+    padding-left: 20px;
+}
+
+.help-content li {
+    margin-bottom: 10px;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .mobile-header {
+        display: block;
+    }
+    
+    .left-column {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        z-index: 1000;
+        transform: translateX(-100%);
+    }
+    
+    .left-column.active {
+        transform: translateX(0);
+    }
+    
+    .right-column {
+        padding: 20px 15px;
+    }
+
+    .help-content.active {
+        padding: 0 20px;
+    }
+    
+    .content-title {
+        font-size: 20px;
+    }
+    
+    .help-content h2 {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .right-column {
+        padding: 15px 10px;
+    }
+    
+    .help-content ol, .help-content ul {
+        padding-left: 15px;
+    }
+}
