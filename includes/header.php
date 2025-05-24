@@ -4,6 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title><?= htmlspecialchars($user['name']) ?> | <?= htmlspecialchars($business_info['business_name'] ?? '') ?></title>
+
+    <meta name="description" content="<?= htmlspecialchars($business_info['business_description']) ?>">
+    <link rel="icon" type="image/png" href="uploads/profile/<?= htmlspecialchars($photos['profile_photo']) ?>">
+
+    <!-- Open Graph Tags (for social media sharing) -->
+    <meta property="og:title" content="<?= htmlspecialchars($business_info['business_name'] ?? '') ?>">
+    <meta property="og:description" content="<?= htmlspecialchars($business_info['business_description']) ?>">
+    <meta property="og:image" content="uploads/profile/<?= htmlspecialchars($photos['profile_photo']) ?>">
+    <meta property="og:type" content="restaurant">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<?= htmlspecialchars($business_info['business_name'] ?? '') ?>">
+    <meta name="twitter:description" content="<?= htmlspecialchars($business_info['business_description']) ?>">
+    <meta name="twitter:image" content="uploads/profile/<?= htmlspecialchars($photos['profile_photo']) ?>">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>

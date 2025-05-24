@@ -4028,6 +4028,24 @@ footer .bottom_footer .developer_text a {
 }
 
 
+.original-price {
+  text-decoration: line-through;
+  color: #999;
+  font-size: 25px !important;
+}
+.offer-price {
+  font-weight: bold;
+}
+.offer-badge {
+  background: #d32f2f;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 15px;
+  font-size: 12px;
+  margin-top: 5px;
+  display: inline-block;
+}
+
 
 
 .pricing-footer {

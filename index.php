@@ -5,7 +5,8 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Meta Description -->
-  <meta name="description" content="Order your favorite meals with ease using our Food Delivery mobile app. Browse local restaurants, customize your order, and enjoy fast, reliable delivery straight to your door. Download now for convenient, delicious dining at your fingertips.">
+
+  <meta name="description" content="Create your Digital Business Card in just 10 minutes and Share your business details to your customer in one click.">
   <title>DeeGee Card | Digital Business Card | Virtual Business Card</title>
 
   <!-- icofont-css-link -->
@@ -22,6 +23,23 @@
   <link rel="stylesheet" href="css/responsive.css">
   <!-- Favicon -->
   <link rel="shortcut icon" href="images/favicon.webp" type="image/x-icon">
+  
+
+
+  <link rel="icon" type="image/png" href="https://deegeecard.com/images/logo.png">
+
+  <!-- Open Graph Tags (for social media sharing) -->
+  <meta property="og:title" content="DeeGee Card | Digital Business Card | Virtual Business Card">
+  <meta property="og:description" content="Create your Digital Business Card in just 10 minutes and Share your business details to your customer in one click.">
+  <meta property="og:image" content="https://deegeecard.com/images/logo.png">
+  <meta property="og:type" content="deegeecard">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Deegeecard">
+  <meta name="twitter:description" content="Order your favorite meals with ease using our Food Delivery mobile app. Browse local restaurants, customize your order, and enjoy fast, reliable delivery straight to your door. Download now for convenient, delicious dining at your fingertips.">
+  <meta name="twitter:image" content="https://deegeecard.com/images/logo.png">
+
+
+
   <!-- font 1 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -94,18 +112,7 @@
           </div>
 
           <!-- app buttons -->
-          <!-- <ul class="app_btn">
-            <li>
-              <a href="index.php">
-                <img class="blue_img" src="images/googleplay.webp" alt="image">
-              </a>
-            </li>
-            <li>
-              <a href="index.php">
-                <img class="blue_img" src="images/appstorebtn.webp" alt="image">
-              </a>
-            </li>
-          </ul> -->
+         
         </div>
 
         <!-- banner image start -->
@@ -250,257 +257,7 @@
     </section>
     <!-- Trusted Section ends -->
 
-    <!-- why us new section start -->
-    <!-- <section class="row_am why_new_section" id="why_sec">
-        
-        <div class="why_new_section_inner">
-        
-        <div class="container">
-          
-          <div class="row">
-
-            
-            <div class="section_title" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="100">
-              <span class="title_badge">why use DeeGee Card</span>
-              
-              <h2>Why choose us</h2>
-              
-              <p>DeeGee Card makes dining effortless with instant WhatsApp ordering, paperless menus, and real-time feedback—saving time</p>
-            </div>
-
-            <div class="dtat_box">
-              <div class="col-lg-6 col-md-12">
-                
-                <div class="why_new_left_data">
-
-                  
-                  <div class="why_data_block " data-aos="fade-right" data-aos-duration="1500">
-                    
-                    <div class="icon">
-                      <img src="images/whyicon1.webp" alt="image" >
-                    </div>
-                    
-                    <div class="text">
-                      <h6>Paperless Menu Card</h6>
-                      <p>Ditch paper menus — Go Digital! With a simple scan, customers access your full menu, place orders via WhatsApp, and enjoy faster service. Save costs, reduce waste, and impress diners with a seamless, contactless experience!</p>
-                    </div>
-                  </div>
-
-                  
-                  <div class="why_data_block " data-aos="fade-right" data-aos-duration="1500">
-                    
-                    <div class="icon">
-                      <img src="images/whyicon2.webp" alt="image" >
-                    </div>
-                    
-                    <div class="text">
-                      <h6>Instant Inventory Management</h6>
-                      <p>Eliminate stock surprises! Our system auto-updates inventory in real-time as orders flow in via WhatsApp. Know exactly what’s available, what’s running low, and what’s sold out—no manual tracking or spreadsheets needed!</p>
-                    </div>
-                  </div>
-
-                  
-                  <div class="why_data_block " data-aos="fade-right" data-aos-duration="1500">
-                    
-                    <div class="icon">
-                      <img src="images/whyicon3.webp" alt="image" >
-                    </div>
-                    
-                    <div class="text">
-                      <h6>All in One Link</h6>
-                      <p>Share everything with one link! Your social profiles, products & services, latest offers, and Google Maps location—all in a single, smart DeeGee Card link for customers to explore effortlessly!</p>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-
-              <div class="col-lg-6 col-md-12">
-                
-                <div class="why_us_new_img" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="100">
-                  <img src="images/features_frame.webp" alt="image" >
-                </div>
-              </div>
-            </div>
-
-          </div>
-           
-        </div>
-        
-      </div>
-      
-    </section> -->
-    <!-- why us new section end -->
-
-    <!-- Dishes-Section-Start -->
-    <!-- <section class="row_am dishes_section">
-      
-      <div class="container">
-
-        
-        <div class="section_title" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="100">
-          <span class="title_badge">Customize Themes</span>
-          
-          <h2>Access over 100+ themes with just a tap</h2>
-          
-          <p>Switch up your style instantly—access 100+ stunning themes with just one tap!</p>
-        </div>
-      </div>
-      
-
-      
-      <div class="dish_slider" data-aos="fade-in" data-aos-duration="1500">
-        <div class="owl-carousel owl-theme" id="about_slider">
-          <div class="item">
-            <div class="dish_slides">
-              <img src="images/dish1.webp" alt="image">
-            </div>
-          </div>
-          <div class="item">
-            <div class="dish_slides">
-              <img src="images/dish2.webp" alt="image">
-            </div>
-          </div>
-          <div class="item">
-            <div class="dish_slides">
-              <img src="images/dish3.webp" alt="image">
-            </div>
-          </div>
-          <div class="item">
-            <div class="dish_slides">
-              <img src="images/dish4.webp" alt="image">
-            </div>
-          </div>
-          <div class="item">
-            <div class="dish_slides">
-              <img src="images/dish5.webp" alt="image">
-            </div>
-          </div>
-          <div class="item">
-            <div class="dish_slides">
-              <img src="images/dish6.webp" alt="image">
-            </div>
-          </div>
-          <div class="item">
-            <div class="dish_slides">
-              <img src="images/dish7.webp" alt="image">
-            </div>
-          </div>
-          <div class="item">
-            <div class="dish_slides">
-              <img src="images/dish8.webp" alt="image">
-            </div>
-          </div>
-          <div class="item">
-            <div class="dish_slides">
-              <img src="images/dish9.webp" alt="image">
-            </div>
-          </div>
-          <div class="item">
-            <div class="dish_slides">
-              <img src="images/dish10.webp" alt="image">
-            </div>
-          </div>
-        </div>
-      </div>
-
-        
-       <div class="ctr_app_btn_block">
-        <p> <strong> Free food delivery for first 5 orders! </strong> </p>
-          <ul class="app_btn">
-            <li>
-              <a href="index.php">
-                <img class="blue_img" src="images/googleplay.webp" alt="image">
-              </a>
-            </li>
-            <li>
-              <a href="index.php">
-                <img class="blue_img" src="images/appstorebtn.webp" alt="image">
-              </a>
-            </li>
-          </ul>
-      </div> 
-
-    </section> -->
-    <!-- Dishes-Section-end -->
-
-    <!-- Service Section Start -->
-    <!-- <section class="row_am service_section" id="feature_sec">
-
-    <div class="container">
-
-      <div class="section_title" data-aos="fade-up" data-aos-duration="1500">
-        <span class="title_badge">Advanced Features</span>
-        <h2>Win-win for restaurants & users</h2>
-        <p> Lorem Ipsum is simply dummy text of the print ing andtyptting industrythe print ing andtyptting industry.</p>
-      </div>
-
-      <div class="row service_blocks flex-row-reverse">
-        <div class="col-md-6">
-          <div class="service_text right_side" data-aos="fade-up" data-aos-duration="1500">
-
-            <span class="title_badge">for restaurant</span>
-            <h3>Effortless management of restaurant operations.</h3>
-            <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry lorem Ipsum has been the industrys standard dummytext.</p>
-            <ul class="design_block">
-                <li data-aos="fade-up" data-aos-duration="1500">
-                  <h6>Handling of orders</h6>
-                  <p>Lorem Ipsum is simply dummy text of the printing and typesetting.</p>
-                </li>
-                <li data-aos="fade-up" data-aos-duration="1500">
-                  <h6>Sale system connectivity</h6>
-                  <p>Dummy text of the printing and typesetting industr lorem Ipsum is simply.</p>
-                </li>
-
-              </ul>
-            <div class="btn_block">
-              <a href="index.php" class="btn puprple_btn ml-0">Register Your Restaurant</a>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="inner_block dark_bg rotate_right" data-aos="fade-up" data-aos-duration="1500">
-            <div class="img">
-              <img src="images/for_restaurant.webp" alt="image">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="row service_blocks no_bottom_padding">
-        <div class="col-md-6">
-          <div class="service_text" data-aos="fade-up" data-aos-duration="1500">
-            <span class="title_badge">for customer</span>
-            <h3>Seamless ordering process from app </h3>
-            <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry lorem Ipsum has been the industrys standard dummytext.</p>
-            <ul class="design_block">
-                <li data-aos="fade-up" data-aos-duration="1500">
-                  <h6>Delivery within 3 min</h6>
-                  <p>Lorem Ipsum is simply dummy text of the printing and typesetting.</p>
-                </li>
-                <li data-aos="fade-up" data-aos-duration="1500">
-                  <h6>Live map tracking</h6>
-                  <p>Lorem Ipsum is simply dummy text of the printing and typesetting industr.</p>
-                </li>
-
-              </ul>
-            <div class="btn_block">
-              <a href="index.php" class="btn puprple_btn ml-0">Download App</a>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="inner_block" data-aos="fade-up" data-aos-duration="1500">
-            <div class="img">
-              <img src="images/for_customer.webp" alt="image">
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-    </section> -->
-    <!-- Service Section End -->
+    
 
     <!-- How it Works Section Start -->
     <section class="advance_feature_section row_am white_text" id="how_sec">
@@ -622,14 +379,36 @@
             <div class="pricing-card">
               <div class="pricing-header">
                 <h3>Basic Package</h3>
-                <div class="price"><span>₹499</span> / year</div>
+                <div class="price">
+                  <span class="offer-price">999</span>
+                  <span>/ year</span><br>
+                  <span class="original-price">₹1999</span>
+                </div>
+                <div class="offer-badge">
+                  50% OFF
+                </div>
               </div>
               <div class="pricing-body">
                 <ul class="features-list">
                   <li><i class="icofont-check"></i> Free 7 Days Trial</li>
-                  <li><i class="icofont-check"></i> Add Upto 20 Products</li>
+                  <li><i class="icofont-check"></i> Add Upto 500 Products</li>
                   <li><i class="icofont-check"></i> Deegeecard URL</li>
                   <li><i class="icofont-close"></i> No Business Card</li>
+
+                  <li><i class="icofont-check"></i>Customise color as per your brand</li>
+                  <li><i class="icofont-check"></i>Cover photo</li>
+                  <li><i class="icofont-check"></i>Profile photo</li>
+                  <li><i class="icofont-check"></i>Contact details with Google Map location</li>
+                  <li><i class="icofont-check"></i>Social Media Links</li>
+                  <li><i class="icofont-check"></i>Company Details</li>
+                  <li><i class="icofont-check"></i>Products with description with image</li>
+                  <li><i class="icofont-check"></i>Services with description with image</li>
+                  <li><i class="icofont-check"></i>Add Photos in Gallery</li>
+                  <li><i class="icofont-check"></i>Payment Section</li>
+                  <li><i class="icofont-check"></i>Rating and Review</li>
+                  <li><i class="icofont-check"></i>Inquiry Form</li>
+                  <li><i class="icofont-check"></i>Share card with anyone, Unlimited times</li>
+
                 </ul>
               </div>
               <div class="pricing-footer">
@@ -640,17 +419,38 @@
 
           <!-- Regular Package -->
           <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="200">
-            <div class="pricing-card popular">
+            <div class="pricing-card">
               <div class="pricing-header">
                 <h3>Regular Package</h3>
-                <div class="price"><span>₹2,999</span> / year</div>
+                <div class="price">
+                  <span class="offer-price">₹2,999</span>
+                  <span>/ year</span>
+                  <span class="original-price">₹6,999</span>
+                </div>
+                <div class="offer-badge">
+                  58% OFF
+                </div>
               </div>
               <div class="pricing-body">
                 <ul class="features-list">
                   <li><i class="icofont-check"></i> Free 7 Days Trial</li>
-                  <li><i class="icofont-check"></i> Add Upto 100 Products</li>
-                  <li><i class="icofont-check"></i> Custom Domain/year</li>
-                  <li><i class="icofont-check"></i> Free 100 QR Printed Business Cards</li>
+                  <li><i class="icofont-check"></i> Add Upto 500 Products</li>
+                  <li><i class="icofont-check"></i> Custom Domain/year (Additional Fee)</li>
+                  <li><i class="icofont-check"></i> 500 QR Printed Business Cards</li>
+
+                  <li><i class="icofont-check"></i>Customise color as per your brand</li>
+                  <li><i class="icofont-check"></i>Cover photo</li>
+                  <li><i class="icofont-check"></i>Profile photo</li>
+                  <li><i class="icofont-check"></i>Contact details with Google Map location</li>
+                  <li><i class="icofont-check"></i>Social Media Links</li>
+                  <li><i class="icofont-check"></i>Company Details</li>
+                  <li><i class="icofont-check"></i>Products with description with image</li>
+                  <li><i class="icofont-check"></i>Services with description with image</li>
+                  <li><i class="icofont-check"></i>Add Photos in Gallery</li>
+                  <li><i class="icofont-check"></i>Payment Section</li>
+                  <li><i class="icofont-check"></i>Rating and Review</li>
+                  <li><i class="icofont-check"></i>Inquiry Form</li>
+                  <li><i class="icofont-check"></i>Share card with anyone, Unlimited times</li>
                 </ul>
               </div>
               <div class="pricing-footer">
@@ -664,14 +464,35 @@
             <div class="pricing-card">
               <div class="pricing-header">
                 <h3>Premium Package</h3>
-                <div class="price"><span>₹9,999</span> / year</div>
+                <div class="price">
+                  <span class="offer-price">₹3,999</span>
+                  <span>/ year</span>
+                  <span class="original-price">₹9,999</span>
+                </div>
+                <div class="offer-badge">
+                  60% OFF
+                </div>
               </div>
               <div class="pricing-body">
                 <ul class="features-list">
                   <li><i class="icofont-check"></i> Free 7 Days Trial</li>
-                  <li><i class="icofont-check"></i> Add Upto 500 Products</li>
-                  <li><i class="icofont-check"></i> Custom Domain/year</li>
-                  <li><i class="icofont-check"></i> Free 1000 QR Printed Business Cards</li>
+                  <li><i class="icofont-check"></i> Add Unlimited Products</li>
+                  <li><i class="icofont-check"></i> Custom Domain/year (Additional Fee)</li>
+                  <li><i class="icofont-check"></i> 1000 QR Printed Business Cards</li>
+
+                  <li><i class="icofont-check"></i>Customise color as per your brand</li>
+                  <li><i class="icofont-check"></i>Cover photo</li>
+                  <li><i class="icofont-check"></i>Profile photo</li>
+                  <li><i class="icofont-check"></i>Contact details with Google Map location</li>
+                  <li><i class="icofont-check"></i>Social Media Links</li>
+                  <li><i class="icofont-check"></i>Company Details</li>
+                  <li><i class="icofont-check"></i>Products with description with image</li>
+                  <li><i class="icofont-check"></i>Services with description with image</li>
+                  <li><i class="icofont-check"></i>Add Photos in Gallery</li>
+                  <li><i class="icofont-check"></i>Payment Section</li>
+                  <li><i class="icofont-check"></i>Rating and Review</li>
+                  <li><i class="icofont-check"></i>Inquiry Form</li>
+                  <li><i class="icofont-check"></i>Share card with anyone, Unlimited times</li>
                 </ul>
               </div>
               <div class="pricing-footer">
@@ -838,170 +659,7 @@
     </section>
     <!-- success stories Section End -->
 
-    <!-- App-Download-New-Section-Start -->
-    <!-- <section class="row_am download_app_new" id="download_sec">
-      
-      <div class="dap_block" data-aos="fade-up" data-aos-duration="1500">
-
-        
-        <div class="blure_shape bs_1"> </div>
-
-        
-        <div class="row">
-
-          
-          <div class="col-lg-3 col-md-12 order-2 order-lg-1">
-            <div class="dap_image left">
-              <img class="dap_desktop_img" src="images/download_food1.webp" alt="image">
-              <img class="dap_mobile_img" src="images/download_food3.webp" alt="image">
-            </div>
-          </div>
-
-          
-          <div class="col-lg-6 col-md-12 order-1 order-lg-2">
-            
-            <div class="dap_text">
-
-              
-              <div class="section_title white_text" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="100">
-                <span class="title_badge">Download</span>
-                <h2>Download app to enjoy 4500+ foods from 1200+ restaurants </h2>
-                <p>
-                  Lorem Ipsum is simply dummy text of the printing
-                  indus orem Ipsum has been the industrys.
-                </p>
-              </div>
-              
-              <ul class="app_btn" data-aos="fade-up" data-aos-duration="1500">
-                <li>
-                  <a href="index.php">
-                    <img class="blue_img" src="images/googleplay.webp" alt="image">
-                  </a>
-                </li>
-                <li>
-                  <a href="index.php">
-                    <img class="blue_img" src="images/appstorebtn.webp" alt="image">
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          
-          <div class="col-lg-3 col-md-12 order-3 order-lg-3 d-none d-lg-block">
-            <div class="dap_image right">
-              <img src="images/download_food2.webp" alt="image">
-            </div>
-          </div>
-
-        </div>
-        
-      </div>
-      
-    </section> -->
-    <!-- App-Download-New-Section-end -->
-
-    <!-- Register Restaurant Section Start -->
-    <!-- <section class="row_am register_restaurant">
-      
-      <div class="reg_block" data-aos="fade-up" data-aos-duration="1500">
-
-        
-        <div class="row">
-
-          
-          <div class="col-lg-7 col-md-10 col-sm-12 mx-auto">
-            
-            <div class="dap_text">
-
-              
-              <div class="section_title white_text" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="100">
-                <span class="title_badge">register restaurant</span>
-                <h2>Begin gaining more customers today </h2>
-                <p>
-                  Lorem Ipsum is simply dummy text of the printing and type setting industry lorem Ipsum has been the industrys.
-                </p>
-              </div>
-
-              
-              <div class="ctr_cta">
-                <div class="btn_block">
-                <a href="blog-detail.php" class="btn puprple_btn ml-0">Register Restaurant</a>
-                </div>
-              </div>
-              
-            </div>
-          </div>
-
-        </div>
-        
-      </div>
-      
-    </section> -->
-    <!-- Register Restaurant Section end -->
-
-    <!-- Blog Section Start -->
-    <!-- <section class="blog_section row_am">
-      <div class="container">
-
-        
-        <div class="section_title" data-aos="fade-up" data-aos-duration="1500">
-          <span class="title_badge">Blog Post</span>
-          <h2>Insights & inspirations</h2>
-        </div>
-
-        <div class="blog_listing">
-
-          
-          <div class="blog_post" data-aos="fade-up" data-aos-duration="1500">
-            
-            <a href="index.php" class="img">
-              <img src="images/blog1.webp" alt="image">
-            </a>
-            <div class="text">
-              
-              <ul class="blog_info">
-                <li>Admim</li>
-                <li>Oct 13, 2024</li>
-                <li>25 Comments</li>
-              </ul>
-              
-              <h5><a href="index.php">Top Tips for Choosing the Best Food Delivery App for Your Needs.</a></h5>
-              <div class="tag_more">
-                <span class="tag">Food at home</span>
-                <a href="index.php">Read more <i class="icofont-arrow-right"></i></a>
-              </div>
-            </div>
-          </div>
-
-          
-          <div class="blog_post" data-aos="fade-up" data-aos-duration="1500">
-            
-            <a href="index.php" class="img">
-              <img src="images/blog2.webp" alt="image">
-            </a>
-            <div class="text">
-              
-              <ul class="blog_info">
-                <li>Cyrus</li>
-                <li>Oct 05, 2024</li>
-                <li>19 Comments</li>
-              </ul>
-              
-              <h5><a href="index.php">How Our App Supporting Local Restaurants and Small Businesses.</a></h5>
-              <div class="tag_more">
-                <span class="tag">Free Delivery</span>
-                <a href="index.php">Read more <i class="icofont-arrow-right"></i></a>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-    </section> -->
-    <!-- Blog Section End -->
-
+   
      
 
     <?php include "main_footer.php" ?>

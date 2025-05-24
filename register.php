@@ -2,8 +2,8 @@
 // Database connection details
 $host = 'localhost';
 $dbname = 'doctorie_webihooks_card';
-$username = 'root';
-$password = '';
+$username = 'doctorie_webihooks';
+$password = 'S@g@r4834';
 
 // Connect to the database
 try {
@@ -109,6 +109,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   gtag('config', 'G-81W5S4MMGY');
 </script>
+
+<!-- Google tag (gtag.js) event -->
+<script>
+  gtag('event', 'conversion_event_signup', {
+    // <event_parameters>
+  });
+</script>
+
 
 </head>
 
