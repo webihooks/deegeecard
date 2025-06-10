@@ -1,4 +1,4 @@
-<!-- products.php -->
+<!-- products -->
 <div class="products">
  <h6>Products</h6>
  <div class="mb-3">
@@ -15,7 +15,9 @@
        <h5>Your Cart</h5>
        <button class="btn-close" onclick="closeCart()"></button>
     </div>
-    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-items" id="cartItems">
+       <!-- Cart items will be displayed here -->
+    </div>
     <div class="customer-details">
        <h6>Customer Information</h6>
        <div class="mb-1 col-half">
@@ -86,6 +88,7 @@
     </div>
     <?php endif; ?>
  </div>
+ <!-- Cart Button -->
  <div class="cart-button-container">
     <button class="btn btn-primary cart-button" onclick="toggleCart()">
     <i class="bi bi-cart"></i> 
@@ -93,20 +96,16 @@
     </button>
  </div>
 </div>
-
 <script>
- // Detect store name from URL
- const storeName = window.location.pathname.split('/')[1] || 'default';
- const cartKey = `cart_${storeName}`;
-
+ // Cart functionality
  let cart = [];
-
- // Initialize cart from localStorage
- if (localStorage.getItem(cartKey)) {
-     cart = JSON.parse(localStorage.getItem(cartKey));
+ 
+ // Initialize cart from localStorage if available
+ if (localStorage.getItem('cart')) {
+     cart = JSON.parse(localStorage.getItem('cart'));
      updateCartUI();
  }
-
+ 
  // Add to cart button click handler
  document.querySelectorAll('.add-to-cart').forEach(button => {
      button.addEventListener('click', function() {
@@ -118,9 +117,10 @@
              quantity: 1,
              image_path: this.dataset.image
          };
-
+         
+         // Check if product already in cart
          const existingItem = cart.find(item => item.id === product.id);
-
+         
          if (existingItem) {
              if (existingItem.quantity < existingItem.max) {
                  existingItem.quantity++;
@@ -131,86 +131,95 @@
          } else {
              cart.push(product);
          }
-
+         
          saveCart();
          updateCartUI();
-         showCart();
+         showCart(); // Show cart when adding an item
      });
  });
-
+ 
  // Save cart to localStorage
  function saveCart() {
-     localStorage.setItem(cartKey, JSON.stringify(cart));
+     localStorage.setItem('cart', JSON.stringify(cart));
  }
-
+ 
  // Update cart UI
  function updateCartUI() {
-     const cartItemsContainer = document.getElementById('cartItems');
-     cartItemsContainer.innerHTML = '';
-
-     let total = 0;
-
-     cart.forEach((item, index) => {
-         total += item.price * item.quantity;
-         const productImage = item.image_path ? item.image_path : 'images/no-image.jpg';
-
-         const itemElement = document.createElement('div');
-         itemElement.className = 'cart-item';
-         itemElement.innerHTML = `
-             <div class="cart-item-info d-flex">
-                 <img src="${productImage}" alt="${item.name}" class="cart-item-img" />
-                 <div class="ms-1">
-                     <h6>${item.name}</h6>
-                     <div>₹${item.price.toFixed(2)} x ${item.quantity}</div>
-                 </div>
+ // Update cart items list
+ const cartItemsContainer = document.getElementById('cartItems');
+ cartItemsContainer.innerHTML = '';
+ 
+ let total = 0;
+ 
+ cart.forEach((item, index) => {
+     total += item.price * item.quantity;
+     
+     const itemElement = document.createElement('div');
+     itemElement.className = 'cart-item';
+     
+     // Get the product image (use default image if not available)
+     const productImage = item.image_path ? item.image_path : 'images/no-image.jpg';
+ 
+     itemElement.innerHTML = `
+         <div class="cart-item-info d-flex">
+             <img src="${productImage}" alt="${item.name}" class="cart-item-img" />
+             <div class="ms-1">
+                 <h6>${item.name}</h6>
+                 <div>₹${item.price.toFixed(2)} x ${item.quantity}</div>
              </div>
-             <div class="cart-item-controls">
-                 <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${index}, -1)">
-                     <i class="bi bi-dash"></i>
-                 </button>
-                 <input type="number" value="${item.quantity}" min="1" max="${item.max}" 
-                        onchange="updateQuantityInput(${index}, this.value)">
-                 <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${index}, 1)">
-                     <i class="bi bi-plus"></i>
-                 </button>
-                 <button class="btn btn-sm btn-outline-danger ms-2" onclick="removeFromCart(${index})">
-                     <i class="bi bi-trash"></i>
-                 </button>
-             </div>
-         `;
-         cartItemsContainer.appendChild(itemElement);
-     });
-
-     document.getElementById('cartTotal').textContent = total.toFixed(2);
-     const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-     document.querySelector('.cart-count').textContent = itemCount;
+         </div>
+         <div class="cart-item-controls">
+             <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${index}, -1)">
+                 <i class="bi bi-dash"></i>
+             </button>
+             <input type="number" value="${item.quantity}" min="1" max="${item.max}" 
+                    onchange="updateQuantityInput(${index}, this.value)">
+             <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${index}, 1)">
+                 <i class="bi bi-plus"></i>
+             </button>
+             <button class="btn btn-sm btn-outline-danger ms-2" onclick="removeFromCart(${index})">
+                 <i class="bi bi-trash"></i>
+             </button>
+         </div>
+     `;
+     
+     cartItemsContainer.appendChild(itemElement);
+ });
+ 
+ // Update total
+ document.getElementById('cartTotal').textContent = total.toFixed(2);
+ 
+ // Update cart count
+ const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+ document.querySelector('.cart-count').textContent = itemCount;
  }
-
+ 
+ 
  // Update quantity with buttons
  function updateQuantity(index, change) {
      const item = cart[index];
      const newQuantity = item.quantity + change;
-
+     
      if (newQuantity < 1) {
          removeFromCart(index);
          return;
      }
-
+     
      if (newQuantity > item.max) {
          alert('Maximum quantity reached for this product');
          return;
      }
-
+     
      item.quantity = newQuantity;
      saveCart();
      updateCartUI();
  }
-
- // Update quantity via input field
+ 
+ // Update quantity with input
  function updateQuantityInput(index, value) {
      const item = cart[index];
      const newQuantity = parseInt(value);
-
+     
      if (isNaN(newQuantity) || newQuantity < 1) {
          item.quantity = 1;
      } else if (newQuantity > item.max) {
@@ -219,78 +228,95 @@
      } else {
          item.quantity = newQuantity;
      }
-
+     
      saveCart();
      updateCartUI();
  }
-
+ 
  // Remove item from cart
  function removeFromCart(index) {
      cart.splice(index, 1);
      saveCart();
      updateCartUI();
  }
-
- // Cart toggle controls
+ 
+ // Toggle cart visibility
  function toggleCart() {
      document.querySelector('.cart-sidebar').classList.toggle('open');
  }
-
+ 
  function showCart() {
      document.querySelector('.cart-sidebar').classList.add('open');
  }
-
+ 
  function closeCart() {
      document.querySelector('.cart-sidebar').classList.remove('open');
  }
-
+ 
  // Place order on WhatsApp
  function placeOrderOnWhatsApp() {
-     if (cart.length === 0) {
-         alert('Your cart is empty');
-         return;
-     }
-
-     const customerName = document.getElementById('customerName').value;
-     const customerPhone = document.getElementById('customerPhone').value;
-     const customerAddress = document.getElementById('customerAddress').value;
-     const customerNotes = document.getElementById('customerNotes').value;
-
-     if (!customerName || !customerPhone) {
-         alert('Please provide your name and phone number');
-         return;
-     }
-
-     const whatsappLink = "<?= $social_link['whatsapp'] ?? '' ?>";
-     let phoneNumber = whatsappLink.match(/wa\.me\/(\d+)/)?.[1] || "<?= $user['phone'] ?? '' ?>";
-
-     if (!phoneNumber) {
-         alert('WhatsApp number not available');
-         return;
-     }
-
-     let message = `*##### NEW ORDER #####*\n\n`;
-     message += `--------------------------\n*Order Details:*\n--------------------------\n`;
-
-     let total = 0;
-     cart.forEach(item => {
-         message += `*${item.name}*\nPrice: ₹${item.price.toFixed(2)}\nQuantity: ${item.quantity}\nSubtotal: ₹${(item.price * item.quantity).toFixed(2)}\n\n`;
-         total += item.price * item.quantity;
-         message += `--------------------------\n`;
-     });
-
-     message += `*Total Amount: ₹${total.toFixed(2)}*\n--------------------------\n\n`;
-     message += `*Customer Details:*\nName: ${customerName}\nPhone: ${customerPhone}\n`;
-     if (customerAddress) message += `Address: ${customerAddress}\n`;
-     if (customerNotes) message += `*Notes:* ${customerNotes}\n\n`;
-     message += `*Please confirm this order.*`;
-
-     window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
-
-     // Optional: Clear cart after order
-     cart = [];
-     saveCart();
-     updateCartUI();
-     closeCart();
+ if (cart.length === 0) {
+     alert('Your cart is empty');
+     return;
+ }
+ 
+ // Get customer details
+ const customerName = document.getElementById('customerName').value;
+ const customerPhone = document.getElementById('customerPhone').value;
+ const customerAddress = document.getElementById('customerAddress').value;
+ const customerNotes = document.getElementById('customerNotes').value;
+ 
+ // Validate required fields
+ if (!customerName || !customerPhone) {
+     alert('Please provide your name and phone number');
+     return;
+ }
+ 
+ const whatsappLink = "<?= $social_link['whatsapp'] ?? '' ?>";
+ let phoneNumber = whatsappLink.match(/wa\.me\/(\d+)/)?.[1] || "<?= $user['phone'] ?? '' ?>";
+ 
+ if (!phoneNumber) {
+     alert('WhatsApp number not available');
+     return;
+ }
+ 
+ let message = `*##### NEW ORDER #####*\n\n`;
+ 
+ message += `--------------------------\n`;
+ message += `*Order Details:*\n`;
+ message += `--------------------------\n`;
+ let total = 0;
+ 
+ cart.forEach(item => {
+     message += `*${item.name}*\n`;
+     message += `Price: ₹${item.price.toFixed(2)}\n`;
+     message += `Quantity: ${item.quantity}\n`;
+     message += `Subtotal: ₹${(item.price * item.quantity).toFixed(2)}\n\n`;
+     total += item.price * item.quantity;
+     message += `--------------------------\n`;
+ });
+ 
+ 
+ message += `*Total Amount: ₹${total.toFixed(2)}*\n`;
+ message += `--------------------------\n\n`;
+ 
+ 
+ message += `*Customer Details:*\n`;
+ message += `Name: ${customerName}\n`;
+ message += `Phone: ${customerPhone}\n`;
+ if (customerAddress) message += `Address: ${customerAddress}\n`;
+ if (customerNotes) message += `*Notes:* ${customerNotes}\n\n`;
+ 
+ 
+ 
+ message += `*Please confirm this order.*`;
+ 
+ window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+ 
+ // Optional: Clear cart after order
+ cart = [];
+ saveCart();
+ updateCartUI();
+ closeCart();
  }
 </script>
