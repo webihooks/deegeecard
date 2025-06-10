@@ -1,11 +1,23 @@
 <?php
-// Start the session
+// Error reporting at the very top
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+
 session_start();
 
-// Include the database connection file
+// Verify db_connection.php exists
+if (!file_exists('db_connection.php')) {
+    die("Database connection file missing");
+}
 require 'db_connection.php';
 
-// Check if the user is logged in
+// Check database connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Check login
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
@@ -18,85 +30,237 @@ $error_message = '';
 // Fetch user name
 $sql = "SELECT name FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
+if (!$stmt) {
+    die("Prepare failed: " . $conn->error);
+}
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $stmt->bind_result($user_name);
 $stmt->fetch();
 $stmt->close();
 
-// Handle CSV import
-if (isset($_POST['import_csv'])) {
-    if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] == UPLOAD_ERR_OK) {
-        $file = $_FILES['csv_file']['tmp_name'];
-        
-        // Check if file is CSV
-        $file_ext = strtolower(pathinfo($_FILES['csv_file']['name'], PATHINFO_EXTENSION));
-        if ($file_ext != 'csv') {
+// Handle CSV file upload
+if (isset($_POST['import_csv']) && isset($_FILES['csv_file'])) {
+    $file = $_FILES['csv_file'];
+    
+    // Check for upload errors
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        $error_message = "File upload error: " . $file['error'];
+    } else {
+        // Check file extension
+        $file_ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        if (strtolower($file_ext) !== 'csv') {
             $error_message = "Please upload a valid CSV file.";
         } else {
-            // Open the file
-            if (($handle = fopen($file, "r")) !== FALSE) {
-                $conn->begin_transaction();
+            // Process the CSV file
+            $handle = fopen($file['tmp_name'], 'r');
+            if ($handle !== false) {
+                // Get header row to check for product_id
+                $header = fgetcsv($handle);
+                $has_product_id = in_array('product_id', array_map('strtolower', $header)) 
+                                || in_array('id', array_map('strtolower', $header));
                 
-                try {
-                    $insert_stmt = $conn->prepare("INSERT INTO products (user_id, product_name, description, price, quantity) VALUES (?, ?, ?, ?, ?)");
-                    $insert_stmt->bind_param("issdi", $user_id, $product_name, $description, $price, $quantity);
-                    
-                    $row = 0;
-                    while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-                        // Skip header row
-                        if ($row == 0) {
-                            $row++;
+                // Reset file pointer if we checked the header
+                if ($has_product_id) {
+                    rewind($handle);
+                    fgetcsv($handle); // Skip header again
+                }
+                
+                $success_count = 0;
+                $update_count = 0;
+                $error_count = 0;
+                $errors = [];
+                
+                // Prepare insert and update statements
+                $insert_sql = "INSERT INTO products (
+                    user_id, 
+                    product_name, 
+                    description, 
+                    price, 
+                    quantity, 
+                    image_path
+                ) VALUES (?, ?, ?, ?, ?, ?)";
+                
+                $update_sql = "UPDATE products SET 
+                    product_name = ?, 
+                    description = ?, 
+                    price = ?, 
+                    quantity = ?, 
+                    image_path = ?,
+                    updated_at = NOW()
+                WHERE id = ? AND user_id = ?";
+                
+                $insert_stmt = $conn->prepare($insert_sql);
+                $update_stmt = $conn->prepare($update_sql);
+                
+                if (!$insert_stmt) {
+                    $error_message = "Insert prepare failed: " . $conn->error;
+                } elseif (!$update_stmt) {
+                    $error_message = "Update prepare failed: " . $conn->error;
+                } else {
+                    while (($data = fgetcsv($handle)) !== false) {
+                        // Skip empty rows
+                        if (empty(array_filter($data))) {
                             continue;
                         }
                         
-                        // Validate data
-                        if (count($data) >= 4) {
-                            $product_name = trim($data[0]);
-                            $description = trim($data[1]);
-                            $price = floatval($data[2]);
-                            $quantity = intval($data[3]);
+                        // Check if this is an update or insert operation
+                        if ($has_product_id) {
+                            // Update operation - CSV has product_id
+                            if (count($data) < 6) {
+                                $errors[] = "Row with data: " . implode(',', $data) . " - Insufficient columns for update (needs product_id)";
+                                $error_count++;
+                                continue;
+                            }
                             
-                            // Basic validation
-                            if (!empty($product_name) && $price >= 0 && $quantity >= 0) {
-                                $insert_stmt->execute();
+                            $product_id = trim($data[0] ?? '');
+                            $product_name = trim($data[1] ?? '');
+                            $description = trim($data[2] ?? '');
+                            $price = trim($data[3] ?? '');
+                            $quantity = trim($data[4] ?? '');
+                            $image_path = trim($data[5] ?? '');
+                        } else {
+                            // Insert operation - no product_id in CSV
+                            if (count($data) < 5) {
+                                $errors[] = "Row with data: " . implode(',', $data) . " - Insufficient columns";
+                                $error_count++;
+                                continue;
+                            }
+                            
+                            $product_id = null;
+                            $product_name = trim($data[0] ?? '');
+                            $description = trim($data[1] ?? '');
+                            $price = trim($data[2] ?? '');
+                            $quantity = trim($data[3] ?? '');
+                            $image_path = trim($data[4] ?? '');
+                        }
+                        
+                        // Validate required fields
+                        if (empty($product_name)) {
+                            $errors[] = "Row with data: " . implode(',', $data) . " - Product name is required";
+                            $error_count++;
+                            continue;
+                        }
+                        
+                        // Clean and validate price
+                        $price = str_replace(['₹', '$', ',', ' '], '', $price);
+                        if (!is_numeric($price)) {
+                            $errors[] = "Row with data: " . implode(',', $data) . " - Invalid price format";
+                            $error_count++;
+                            continue;
+                        }
+                        $price = (float)$price;
+                        if ($price <= 0) {
+                            $errors[] = "Row with data: " . implode(',', $data) . " - Price must be greater than 0";
+                            $error_count++;
+                            continue;
+                        }
+                        
+                        // Validate quantity
+                        $quantity = str_replace(',', '', $quantity);
+                        if (!is_numeric($quantity)) {
+                            $errors[] = "Row with data: " . implode(',', $data) . " - Invalid quantity format";
+                            $error_count++;
+                            continue;
+                        }
+                        $quantity = (int)$quantity;
+                        if ($quantity < 0) {
+                            $errors[] = "Row with data: " . implode(',', $data) . " - Quantity cannot be negative";
+                            $error_count++;
+                            continue;
+                        }
+                        
+                        // Process based on whether we have a product_id or not
+                        if ($product_id) {
+                            // Update existing product
+                            $update_stmt->bind_param("ssdisii", 
+                                $product_name, 
+                                $description, 
+                                $price, 
+                                $quantity, 
+                                $image_path,
+                                $product_id,
+                                $user_id
+                            );
+                            
+                            if ($update_stmt->execute()) {
+                                if ($update_stmt->affected_rows > 0) {
+                                    $update_count++;
+                                } else {
+                                    $errors[] = "Row with product_id: $product_id - No changes made or product not found";
+                                    $error_count++;
+                                }
+                            } else {
+                                $errors[] = "Row with product_id: $product_id - Update error: " . $update_stmt->error;
+                                $error_count++;
+                            }
+                        } else {
+                            // Insert new product
+                            $insert_stmt->bind_param("issdis", 
+                                $user_id, 
+                                $product_name, 
+                                $description, 
+                                $price, 
+                                $quantity, 
+                                $image_path
+                            );
+                            
+                            if ($insert_stmt->execute()) {
+                                $success_count++;
+                            } else {
+                                $errors[] = "Row with data: " . implode(',', $data) . " - Insert error: " . $insert_stmt->error;
+                                $error_count++;
                             }
                         }
-                        $row++;
                     }
                     
-                    $conn->commit();
-                    $success_message = "Successfully imported " . ($row - 1) . " products!";
-                } catch (Exception $e) {
-                    $conn->rollback();
-                    $error_message = "Error importing products: " . $e->getMessage();
+                    $insert_stmt->close();
+                    $update_stmt->close();
                 }
-                
                 fclose($handle);
-                $insert_stmt->close();
+                
+                // Set success/error message
+                $message_parts = [];
+                if ($success_count > 0) {
+                    $message_parts[] = "Successfully added $success_count new products.";
+                }
+                if ($update_count > 0) {
+                    $message_parts[] = "Successfully updated $update_count existing products.";
+                }
+                $success_message = implode(' ', $message_parts);
+                
+                if ($error_count > 0) {
+                    $error_message = "$error_count rows had errors. First few errors: " . implode('<br>', array_slice($errors, 0, 5));
+                    if (count($errors) > 5) {
+                        $error_message .= "<br>... and " . (count($errors) - 5) . " more errors";
+                    }
+                }
             } else {
-                $error_message = "Could not open the uploaded file.";
+                $error_message = "Could not read the uploaded file.";
             }
         }
-    } else {
-        $error_message = "Please select a CSV file to upload.";
     }
 }
 
 // Handle sample CSV download
 if (isset($_GET['download_sample'])) {
+    $type = isset($_GET['type']) ? $_GET['type'] : 'new';
+    
     header('Content-Type: text/csv');
-    header('Content-Disposition: attachment; filename="sample_products.csv"');
     
-    $output = fopen('php://output', 'w');
-    
-    // Write header
-    fputcsv($output, ['Product Name', 'Description', 'Price', 'Quantity']);
-    
-    // Write sample data
-    fputcsv($output, ['Sample Product', 'This is a sample product', '19.99', '100']);
-    fputcsv($output, ['Another Product', 'Another description', '29.50', '50']);
-    fputcsv($output, ['Premium Product', 'High quality item', '99.99', '25']);
+    if ($type === 'update') {
+        header('Content-Disposition: attachment; filename="products_update_sample.csv"');
+        $output = fopen('php://output', 'w');
+        fputcsv($output, ['Product ID', 'Product Name', 'Description', 'Price', 'Quantity', 'Image Path']);
+        fputcsv($output, ['3647', 'Chicken Manchow Soup', 'Updated description', '400.00', '200', '']);
+        fputcsv($output, ['3648', 'Veg Fried Rice', 'Updated description', '350.00', '150', '']);
+    } else {
+        header('Content-Disposition: attachment; filename="products_new_sample.csv"');
+        $output = fopen('php://output', 'w');
+        fputcsv($output, ['Product Name', 'Description', 'Price', 'Quantity', 'Image Path']);
+        fputcsv($output, ['New Product 1', 'Description for product 1', '200.00', '100', '']);
+        fputcsv($output, ['New Product 2', 'Description for product 2', '300.00', '50', '']);
+    }
     
     fclose($output);
     exit();
@@ -107,71 +271,88 @@ $conn->close();
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8" />
-    <title>Products Management</title>
+    <title>Bulk Products Import</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="assets/css/vendor.min.css" rel="stylesheet" type="text/css" />
-    <link href="assets/css/icons.min.css" rel="stylesheet" type="text/css" />
-    <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" />
-    <link href="assets/css/style.css" rel="stylesheet" type="text/css" />
+    <link href="assets/css/vendor.min.css" rel="stylesheet" />
+    <link href="assets/css/icons.min.css" rel="stylesheet" />
+    <link href="assets/css/app.min.css" rel="stylesheet" />
+    <link href="assets/css/style.css" rel="stylesheet" />
     <script src="assets/js/config.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.19.3/jquery.validate.min.js"></script>
 </head>
-
 <body>
 
-    <div class="wrapper">
-        <?php include 'toolbar.php'; ?>
-        <?php include 'menu.php'; ?>
+<div class="wrapper">
+    <?php 
+    // Verify includes exist before including
+    if (file_exists('toolbar.php')) {
+        include 'toolbar.php'; 
+    } else {
+        die("Toolbar file missing");
+    }
+    
+    if (file_exists('menu.php')) {
+        include 'menu.php';
+    } else {
+        die("Menu file missing");
+    }
+    ?>
 
-        <div class="page-content">
-            <div class="container">
-                <div class="row">
-                    <div class="col-xl-9">
-                        <div class="card">
-                            <div class="card-body">
-                                <h4 class="header-title mb-4">Import Products from CSV</h4>
+    <div class="page-content">
+        <div class="container">
+            <div class="row">
+                <div class="col-xl-9">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="header-title mb-4">Bulk Products Import/Update</h4>
+
+                            <?php if (!empty($success_message)): ?>
+                                <div class="alert alert-success"><?php echo $success_message; ?></div>
+                            <?php endif; ?>
+
+                            <?php if (!empty($error_message)): ?>
+                                <div class="alert alert-danger"><?php echo $error_message; ?></div>
+                            <?php endif; ?>
+
+                            <form action="" method="post" enctype="multipart/form-data">
+                                <div class="form-group mb-3">
+                                    <label for="csv_file">CSV File</label>
+                                    <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+                                    <small class="form-text text-muted">
+                                        For new products: Product Name, Description, Price, Quantity, Image Path<br>
+                                        For updates: Product ID, Product Name, Description, Price, Quantity, Image Path<br>
+                                        Note: Price can be in any format (₹200, $5.99, 150.00)
+                                    </small>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <button type="submit" name="import_csv" class="btn btn-primary">Import/Update Products</button>
+                                    <a href="?download_sample=1" class="btn btn-outline-secondary">Download New Products CSV</a>
+                                    <a href="?download_sample=1&type=update" class="btn btn-outline-secondary">Download Update CSV</a>
+                                </div>
+                            </form>
+
+                            <div class="mt-4">
+                                <h5>CSV File Formats:</h5>
                                 
-                                <?php if (!empty($success_message)): ?>
-                                    <div class="alert alert-success"><?php echo $success_message; ?></div>
-                                <?php endif; ?>
-                                
-                                <?php if (!empty($error_message)): ?>
-                                    <div class="alert alert-danger"><?php echo $error_message; ?></div>
-                                <?php endif; ?>
-                                
-                                <form action="" method="post" enctype="multipart/form-data">
-                                    <div class="form-group mb-3">
-                                        <label for="csv_file">CSV File</label>
-                                        <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
-                                        <small class="form-text text-muted">
-                                            CSV format: product_name, description, price, quantity
-                                        </small>
-                                    </div>
-                                    
-                                    <div class="d-flex gap-2">
-                                        <button type="submit" name="import_csv" class="btn btn-primary">Import Products</button>
-                                        <a href="?download_sample=1" class="btn btn-outline-secondary">Download Sample CSV</a>
-                                    </div>
-                                </form>
-                                
-                                <div class="mt-4">
-                                    <h5>CSV File Format:</h5>
-                                    <p>Your CSV file should have the following columns in order:</p>
-                                    <ol>
-                                        <li>Product Name (required)</li>
-                                        <li>Description</li>
-                                        <li>Price (numeric, required)</li>
-                                        <li>Quantity (integer, required)</li>
-                                    </ol>
-                                    <p>Example:</p>
+                                <div class="mb-4">
+                                    <h6>For New Products:</h6>
                                     <pre>
-Product Name,Description,Price,Quantity
-"Sample Product","This is a sample product",19.99,100
-"Another Product","Another description",29.50,50
+Product Name,Description,Price,Quantity,Image Path
+"Chicken Manchow Soup","Delicious soup with chicken",200.00,100,"images/soup.jpg"
+"Veg Fried Rice","Vegetable fried rice with spices",150.00,50,"images/rice.jpg"
+                                    </pre>
+                                </div>
+                                
+                                <div>
+                                    <h6>For Updating Existing Products:</h6>
+                                    <pre>
+Product ID,Product Name,Description,Price,Quantity,Image Path
+3647,"Chicken Manchow Soup","Updated description",400.00,200,"images/soup_new.jpg"
+3648,"Veg Fried Rice","Updated description",350.00,150,"images/rice_new.jpg"
                                     </pre>
                                 </div>
                             </div>
@@ -180,30 +361,36 @@ Product Name,Description,Price,Quantity
                 </div>
             </div>
 
-            <?php include 'footer.php'; ?>
+            <?php 
+            if (file_exists('footer.php')) {
+                include 'footer.php';
+            } else {
+                die("Footer file missing");
+            }
+            ?>
         </div>
     </div>
+</div>
 
-    <script src="assets/js/vendor.js"></script>
-    <script src="assets/js/app.js"></script>
-    
-    <script>
-        $(document).ready(function() {
-            $('form').validate({
-                rules: {
-                    csv_file: {
-                        required: true,
-                        extension: "csv"
-                    }
-                },
-                messages: {
-                    csv_file: {
-                        required: "Please select a CSV file",
-                        extension: "Please upload a valid CSV file"
-                    }
-                }
-            });
-        });
-    </script>
+<script src="assets/js/vendor.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+$(document).ready(function() {
+    $('form').validate({
+        rules: {
+            csv_file: {
+                required: true,
+                extension: "csv"
+            }
+        },
+        messages: {
+            csv_file: {
+                required: "Please select a CSV file",
+                extension: "Please upload a valid CSV file"
+            }
+        }
+    });
+});
+</script>
 </body>
 </html>

@@ -375,12 +375,12 @@
 
         <div class="row">
           <!-- Basic Package -->
-          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-duration="1500">
+          <!-- <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-duration="1500">
             <div class="pricing-card">
               <div class="pricing-header">
                 <h3>Basic Package</h3>
                 <div class="price">
-                  <span class="offer-price">999</span>
+                  <span class="offer-price">₹999</span>
                   <span>/ year</span><br>
                   <span class="original-price">₹1999</span>
                 </div>
@@ -415,15 +415,15 @@
                 <a href="register.php" class="btn puprple_btn">Register Now!</a>
               </div>
             </div>
-          </div>
+          </div> -->
 
           <!-- Regular Package -->
-          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="200">
+          <!-- <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="200">
             <div class="pricing-card">
               <div class="pricing-header">
                 <h3>Regular Package</h3>
                 <div class="price">
-                  <span class="offer-price">₹2,999</span>
+                  <span class="offer-price">₹4,999</span>
                   <span>/ year</span>
                   <span class="original-price">₹6,999</span>
                 </div>
@@ -457,15 +457,15 @@
                 <a href="register.php" class="btn puprple_btn">Register Now!</a>
               </div>
             </div>
-          </div>
+          </div> -->
 
           <!-- Premium Package -->
-          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="400">
+          <div class="col-lg-12 col-md-12" data-aos="fade-up" data-aos-duration="1500" data-aos-delay="400">
             <div class="pricing-card">
               <div class="pricing-header">
                 <h3>Premium Package</h3>
                 <div class="price">
-                  <span class="offer-price">₹3,999</span>
+                  <span class="offer-price">₹7,999</span>
                   <span>/ year</span>
                   <span class="original-price">₹9,999</span>
                 </div>
@@ -477,7 +477,7 @@
                 <ul class="features-list">
                   <li><i class="icofont-check"></i> Free 7 Days Trial</li>
                   <li><i class="icofont-check"></i> Add Unlimited Products</li>
-                  <li><i class="icofont-check"></i> Custom Domain/year (Additional Fee)</li>
+                  <li><i class="icofont-check"></i> Custom Domain/year</li>
                   <li><i class="icofont-check"></i> 1000 QR Printed Business Cards</li>
 
                   <li><i class="icofont-check"></i>Customise color as per your brand</li>

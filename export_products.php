@@ -14,10 +14,10 @@ header('Content-Disposition: attachment;filename=products.csv');
 
 $output = fopen('php://output', 'w');
 
-// Column headers
-fputcsv($output, ['Product Name', 'Description', 'Price', 'Quantity']);
+// Column headers - updated to include id, user_id, and image_path
+fputcsv($output, ['ID', 'User ID', 'Product Name', 'Description', 'Price', 'Quantity', 'Image Path']);
 
-$sql = "SELECT product_name, description, price, quantity FROM products WHERE user_id = ? ORDER BY product_name";
+$sql = "SELECT id, user_id, product_name, description, price, quantity, image_path FROM products WHERE user_id = ? ORDER BY product_name";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();

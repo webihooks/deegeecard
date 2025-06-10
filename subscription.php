@@ -206,30 +206,29 @@ if ($has_active_subscription || $is_active_trial) {
 
                                 <?php if ($current_subscription): ?>
                                     <div class="current-subscription mb-4">
-                                        <h5>Your Current Subscription</h5>
                                         <div class="card">
                                             <div class="card-header">
-                                                <h5><?php echo htmlspecialchars($current_subscription['package_name']); ?></h5>
+<h4>Your Current Subscription: <?php echo htmlspecialchars($current_subscription['package_name']); ?></h4>
                                             </div>
                                             <div class="card-body">
                                                 <p>
-                                                    <strong>Price:</strong> ₹<?php echo number_format($current_subscription['price']); ?><br>
+                                                    <!-- <strong>Price:</strong> ₹<?php //echo number_format($current_subscription['price']); ?><br> -->
                                                     <strong>Status:</strong> Active<br>
                                                     <strong>Start Date:</strong> <?php echo date('M d, Y', strtotime($current_subscription['start_date'])); ?><br>
                                                     <strong>Renewal Date:</strong> <?php echo date('M d, Y', strtotime($current_subscription['end_date'])); ?>
                                                 </p>
-                                                <form method="post">
+                                                <!-- <form method="post">
                                                     <button type="submit" name="cancel_subscription" class="btn btn-danger">Cancel Subscription</button>
-                                                </form>
+                                                </form> -->
 
-<div class="mt-3">
+<!-- <div class="mt-3">
 <strong class="red">Before you cancel your subscription, please note:</strong>
 <ul>
 <li>Immediate loss of access to all premium features and content.</li>
 <li>No refunds for unused portions of your billing cycle.</li>
 <li>Saved data or preferences may be permanently deleted.</li>
 </ul>
-</div>
+</div> -->
 
                                             </div>
                                         </div>

@@ -319,6 +319,7 @@ $conn->close();
                         <div class="card mt-4">
                             <div class="card-header">
                                 <h4 class="card-title">All Products</h4>
+                                <a href="download_products_csv.php" class="fr link-btn">Download All Products CSV</a>
                             </div>
                             <div class="card-body">
                                 <?php if (empty($products)): ?>
