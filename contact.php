@@ -88,6 +88,49 @@
                   </div>
 
                   <ul class="contact_info_list">
+                    
+
+
+                    <li>
+                      <div class="img">
+                        <img src="images/call_icon.webp" alt="image">
+                      </div>
+                      <div class="text">
+                        <span>Inayat Shaikh (CEO)</span>
+                        <a href="tel:919819411026"> +91 98194 11026 </a>
+                      </div>
+                    </li>
+
+                    <li>
+                      <div class="img">
+                        <img src="images/call_icon.webp" alt="image">
+                      </div>
+                      <div class="text">
+                        <span>Sagar Pawar (CTO)</span>
+                        <a href="tel:919373501199"> +91 93735 01199 </a>
+                      </div>
+                    </li>
+
+                    <li>
+                      <div class="img">
+                        <img src="images/call_icon.webp" alt="image">
+                      </div>
+                      <div class="text">
+                        <span>Zayn Shaikh (CBO)</span>
+                        <a href="tel:917738804051"> +91 77388 04051 </a>
+                      </div>
+                    </li>
+
+                    <li>
+                      <div class="img">
+                        <img src="images/call_icon.webp" alt="image">
+                      </div>
+                      <div class="text">
+                        <span>Sajeed Shaikh (BDM)</span>
+                        <a href="tel:918369105106"> +91 83691 05106 </a>
+                      </div>
+                    </li>
+
                     <li>
                       <div class="img">
                         <img src="images/mail_icon.webp" alt="image">
@@ -97,22 +140,28 @@
                         <a href="mailto:support@deegeecard.com">support@deegeecard.com</a>
                       </div>
                     </li>
-                    <li>
-                      <div class="img">
-                        <img src="images/call_icon.webp" alt="image">
-                      </div>
-                      <div class="text">
-                        <span>Call Us</span>
-                        <a href="tel:+1(888)553-46-11"> +91 93735 01199 </a>
-                      </div>
-                    </li>
+
+
                     <li>
                       <div class="img">
                         <img src="images/location_icon.webp" alt="image">
                       </div>
                       <div class="text">
                         <span>Visit Us</span>
-                        <p>1404, Vasudev Sky High, Mira Road East, Thane - 401105</p>
+                        <p><strong>DEEGEECARD LLP.</strong><br>
+
+                          <hr>
+
+                          Mira Road Branch <br>
+                        1404, Vasudev Sky High, Mira Road East, Thane - 401105 <br><br>
+
+                        <hr>
+
+                        Virar Branch <br>
+                        J4/103, Rustomjee Evershine Golbal City, Virar West, 401303
+
+
+                      </p>
                       </div>
                     </li>
                   </ul>
