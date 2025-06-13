@@ -465,12 +465,12 @@
               <div class="pricing-header">
                 <h3>Premium Package</h3>
                 <div class="price">
-                  <span class="offer-price">₹7,999</span>
+                  <span class="offer-price">₹9,999</span>
                   <span>/ year</span>
-                  <span class="original-price">₹9,999</span>
+                  <span class="original-price">₹11,999</span>
                 </div>
                 <div class="offer-badge">
-                  60% OFF
+                  17% OFF
                 </div>
               </div>
               <div class="pricing-body">
