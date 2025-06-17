@@ -25,12 +25,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['add_qr'])) {
         // Add new QR code
         $mobile_number = trim($_POST['mobile_number']);
+        $upi_id = trim($_POST['upi_id']);
         $payment_type = trim($_POST['payment_type']);
         $is_default = isset($_POST['is_default']) ? 1 : 0;
         
-        if (empty($mobile_number)) {
-            $error_message = "Mobile number is required";
-        } elseif (empty($payment_type)) {
+        if (empty($payment_type)) {
             $error_message = "Payment type is required";
         } else {
             // Handle file upload
@@ -59,10 +58,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     }
                     
                     // Insert new record
-                    $sql = "INSERT INTO qrcode_details (user_id, mobile_number, upload_qr_code, payment_type, is_default) 
-                            VALUES (?, ?, ?, ?, ?)";
+                    $sql = "INSERT INTO qrcode_details (user_id, mobile_number, upi_id, upload_qr_code, payment_type, is_default) 
+                            VALUES (?, ?, ?, ?, ?, ?)";
                     $stmt = $conn->prepare($sql);
-                    $stmt->bind_param("isssi", $user_id, $mobile_number, $file_name, $payment_type, $is_default);
+                    $stmt->bind_param("issssi", $user_id, $mobile_number, $upi_id, $file_name, $payment_type, $is_default);
                     
                     if ($stmt->execute()) {
                         $success_message = "QR Code added successfully!";
@@ -133,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 // Fetch all QR codes for this user
 $qr_codes = [];
-$stmt = $conn->prepare("SELECT id, mobile_number, upload_qr_code, payment_type, is_default FROM qrcode_details WHERE user_id = ? ORDER BY is_default DESC, created_at DESC");
+$stmt = $conn->prepare("SELECT id, mobile_number, upi_id, upload_qr_code, payment_type, is_default FROM qrcode_details WHERE user_id = ? ORDER BY is_default DESC, created_at DESC");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -186,8 +185,13 @@ $conn->close();
                                 <form id="qrCodeForm" method="post" enctype="multipart/form-data">
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
-                                            <label for="mobile_number" class="form-label">Mobile Number*</label>
-                                            <input type="text" class="form-control" id="mobile_number" name="mobile_number" required>
+                                            <label for="mobile_number" class="form-label">Mobile Number</label>
+                                            <input type="text" class="form-control" id="mobile_number" name="mobile_number">
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="upi_id" class="form-label">UPI ID</label>
+                                            <input type="text" class="form-control" id="upi_id" name="upi_id" placeholder="e.g., name@upi">
                                         </div>
                                         
                                         <div class="col-md-6 mb-3">
@@ -201,12 +205,12 @@ $conn->close();
                                                 <option value="Other">Other</option>
                                             </select>
                                         </div>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="qr_code" class="form-label">QR Code Image*</label>
-                                        <input type="file" class="form-control" id="qr_code" name="qr_code" accept="image/*" required>
-                                        <small class="text-muted">Upload a clear image (JPG, PNG, max 2MB)</small>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label for="qr_code" class="form-label">QR Code Image*</label>
+                                            <input type="file" class="form-control" id="qr_code" name="qr_code" accept="image/*" required>
+                                            <small class="text-muted">Upload a clear image (JPG, PNG, max 2MB)</small>
+                                        </div>
                                     </div>
                                     
                                     <div class="mb-3 form-check">
@@ -234,6 +238,7 @@ $conn->close();
                                                 <tr>
                                                     <th>QR Code</th>
                                                     <th>Mobile Number</th>
+                                                    <th>UPI ID</th>
                                                     <th>Payment Type</th>
                                                     <th>Default</th>
                                                     <th>Actions</th>
@@ -249,6 +254,7 @@ $conn->close();
                                                                  class="img-thumbnail">
                                                         </td>
                                                         <td><?php echo htmlspecialchars($qr['mobile_number']); ?></td>
+                                                        <td><?php echo htmlspecialchars($qr['upi_id']); ?></td>
                                                         <td><?php echo htmlspecialchars($qr['payment_type']); ?></td>
                                                         <td>
                                                             <?php if ($qr['is_default']): ?>
@@ -293,11 +299,6 @@ $conn->close();
         $(document).ready(function() {
             $("#qrCodeForm").validate({
                 rules: {
-                    mobile_number: {
-                        required: true,
-                        minlength: 10,
-                        maxlength: 15
-                    },
                     payment_type: {
                         required: true
                     },
@@ -306,11 +307,6 @@ $conn->close();
                     }
                 },
                 messages: {
-                    mobile_number: {
-                        required: "Please enter mobile number",
-                        minlength: "Mobile number must be at least 10 digits",
-                        maxlength: "Mobile number cannot exceed 15 digits"
-                    },
                     payment_type: {
                         required: "Please select payment type"
                     },

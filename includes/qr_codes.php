@@ -16,18 +16,23 @@
                         <div class="col-sm-12">
                             <h5><?= htmlspecialchars($qr['payment_type']) ?></h5>
                             <p class="mb-1">
+                                <i class="bi bi-upc-scan"></i> UPI ID: <?= htmlspecialchars($qr['upi_id']) ?>
+                            </p>
+                            <?php if (!empty($qr['mobile_number'])): ?>
+                            <p class="mb-1">
                                 <i class="bi bi-phone"></i> <?= htmlspecialchars($qr['mobile_number']) ?>
                             </p>
+                            <?php endif; ?>
                             <?php if ($qr['is_default']): ?>
                             <span class="badge bg-success">Default Payment Method</span>
                             <?php endif; ?>
                         </div>
                         <div class="col-sm-12 text-md-end mt-3 mt-md-0">
                             <button class="btn btn-outline-primary btn-sm" 
-                                onclick="showQrModal('<?= htmlspecialchars($qr['payment_type']) ?>', 'uploads/qrcodes/<?= htmlspecialchars($qr['upload_qr_code']) ?>')">
+                                onclick="showQrModal('<?= htmlspecialchars($qr['payment_type']) ?>', 'uploads/qrcodes/<?= htmlspecialchars($qr['upload_qr_code']) ?>', '<?= htmlspecialchars($qr['upi_id']) ?>')">
                                 <i class="bi bi-zoom-in"></i> Enlarge
                             </button>
-                            <a href="upi://pay?pa=<?= urlencode($qr['mobile_number']) ?>" 
+                            <a href="upi://pay?pa=<?= urlencode($qr['upi_id']) ?>" 
                                class="btn btn-primary btn-sm">
                                 <i class="bi bi-arrow-up-right-circle"></i> Pay Now
                             </a>
@@ -51,6 +56,7 @@
             <div class="modal-body text-center">
                 <img id="modalQrImage" src="" class="img-fluid" alt="QR Code">
                 <div class="mt-3">
+                    <p class="mb-2"><strong>UPI ID:</strong> <span id="modalUpiId"></span></p>
                     <a href="#" id="payNowLink" class="btn btn-primary">
                         <i class="bi bi-arrow-up-right-circle"></i> Pay Now
                     </a>
@@ -59,4 +65,15 @@
         </div>
     </div>
 </div>
+
+<script>
+function showQrModal(paymentType, qrImageSrc, upiId) {
+    document.getElementById('qrModalTitle').textContent = paymentType + ' QR Code';
+    document.getElementById('modalQrImage').src = qrImageSrc;
+    document.getElementById('modalUpiId').textContent = upiId;
+    document.getElementById('payNowLink').href = 'upi://pay?pa=' + encodeURIComponent(upiId);
+    var qrModal = new bootstrap.Modal(document.getElementById('qrModal'));
+    qrModal.show();
+}
+</script>
 <?php endif; ?>

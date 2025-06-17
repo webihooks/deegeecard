@@ -16,6 +16,28 @@
        <button class="btn-close" onclick="closeCart()"></button>
     </div>
     <div class="cart-items" id="cartItems"></div>
+
+
+
+    <div class="cart-total">
+          Total: ₹<span id="cartTotal">0.00</span>
+    </div>
+
+
+
+
+
+<!--     Add two buttons here
+
+    dinning 
+
+    delivery
+ -->
+
+
+
+
+
     <div class="customer-details">
        <h6>Customer Information</h6>
        <div class="mb-1 col-half">
@@ -35,14 +57,21 @@
           <textarea class="form-control" id="customerNotes" rows="2" placeholder="Any special instructions"></textarea>
        </div>
     </div>
+
+
+
+
     <div class="cart-footer">
-       <div class="cart-total">
-          Total: ₹<span id="cartTotal">0.00</span>
-       </div>
        <button class="btn btn-success w-100" onclick="placeOrderOnWhatsApp()">
        <i class="bi bi-whatsapp"></i> Place Order
        </button>
     </div>
+
+
+
+
+
+
  </div>
  <div class="row" id="productsContainer">
     <?php if (!empty($products)): ?>

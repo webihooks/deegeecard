@@ -60,7 +60,7 @@ function getBankDetails($conn, $user_id) {
 }
 
 function getQrCodes($conn, $user_id) {
-    $stmt = $conn->prepare("SELECT id, mobile_number, upload_qr_code, payment_type, is_default FROM qrcode_details WHERE user_id = ? ORDER BY is_default DESC, created_at DESC");
+    $stmt = $conn->prepare("SELECT id, mobile_number, upi_id, upload_qr_code, payment_type, is_default FROM qrcode_details WHERE user_id = ? ORDER BY is_default DESC, created_at DESC");
     $stmt->execute([$user_id]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
