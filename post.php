@@ -70,6 +70,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_rating'])) {
     }
 }
 
+// Fetch dining tables count
+$table_sql = "SELECT table_count FROM dining_tables WHERE user_id = ?";
+$table_stmt = $conn->prepare($table_sql);
+$table_stmt->execute([$user_id]);
+$table_data = $table_stmt->fetch(PDO::FETCH_ASSOC);
+$table_count = $table_data['table_count'] ?? 0; // Default to 0 if no record exists
+
+// Check dining and delivery status
+$dining_delivery_sql = "SELECT dining_active, delivery_active FROM dining_and_delivery WHERE user_id = ?";
+$dining_delivery_stmt = $conn->prepare($dining_delivery_sql);
+$dining_delivery_stmt->execute([$user_id]);
+$dining_delivery_data = $dining_delivery_stmt->fetch(PDO::FETCH_ASSOC);
+
+$dining_active = $dining_delivery_data['dining_active'] ?? 0;
+$delivery_active = $dining_delivery_data['delivery_active'] ?? 0;
+
 // Include HTML components
 require 'includes/header.php';
 require 'includes/navigation.php';
@@ -87,4 +103,3 @@ require 'includes/footer.php';
 // Close connection
 $conn = null;
 ?>
-

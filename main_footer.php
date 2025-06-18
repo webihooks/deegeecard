@@ -134,7 +134,7 @@
                   </div>
 
                   <div class="col-md-4">
-                      <p class="developer_text">Design & developed by <a href="https://webihooks.com" target="blank">Webihooks</a> & <a href="https://workethics.in" target="blank">WorkEthics</a></p>
+                      <p class="developer_text">Design & developed by DEEGEECARD</p>
                   </div>
               </div>
               <!-- row end -->

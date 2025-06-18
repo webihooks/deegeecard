@@ -49,6 +49,7 @@
                 </a>
             </li>
 
+
             <li class="nav-item">
                 <a class="nav-link" href="profile-cover-photo.php">
                     <span class="nav-icon">
@@ -64,6 +65,18 @@
                         <iconify-icon icon="solar:user-speak-rounded-bold-duotone"></iconify-icon>
                     </span>
                     <span class="nav-text">Social Sites</span>
+                </a>
+            </li>
+
+            <li class="menu-title">Services</li>
+
+
+            <li class="nav-item">
+                <a class="nav-link" href="dining_and_delivery.php">
+                    <span class="nav-icon">
+                        <iconify-icon icon="hugeicons:table-round"></iconify-icon>
+                    </span>
+                    <span class="nav-text">Dining & Delivery</span>
                 </a>
             </li>
 
@@ -86,6 +99,7 @@
                     <span class="nav-text">Bank Details</span>
                 </a>
             </li>
+
 
             <li class="nav-item">
                 <a class="nav-link" href="qr-code-details.php">
