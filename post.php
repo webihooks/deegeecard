@@ -49,6 +49,13 @@ $delivery_charges_stmt = $conn->prepare($delivery_charges_sql);
 $delivery_charges_stmt->execute([$user_id]);
 $delivery_charges = $delivery_charges_stmt->fetch(PDO::FETCH_ASSOC);
 
+// Get GST charge
+$gst_sql = "SELECT gst_percent FROM gst_charge WHERE user_id = ? ORDER BY created_at DESC LIMIT 1";
+$gst_stmt = $conn->prepare($gst_sql);
+$gst_stmt->execute([$user_id]);
+$gst_data = $gst_stmt->fetch(PDO::FETCH_ASSOC);
+$gst_percent = $gst_data['gst_percent'] ?? 0;
+
 // Get other profile data
 $business_info = getBusinessInfo($conn, $user_id);
 $photos = getProfilePhotos($conn, $user_id);

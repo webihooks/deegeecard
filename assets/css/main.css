@@ -638,7 +638,7 @@ h6 {
   overflow-y: auto;
 }
 
-.cart-delivery-charges, .cart-subtotal {
+.cart-delivery-charges, .cart-subtotal, .cart-gst-charges {
   text-align: right;
 }
 

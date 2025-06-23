@@ -34,10 +34,15 @@
     <div class="cart-items" id="cartItems"></div>
 
     <div class="cart-total-details">
-        <?php if ($delivery_active && isset($delivery_charges)): ?>
         <div class="cart-subtotal">
             Subtotal: ₹<span id="cartSubtotal">0.00</span>
         </div>
+        <?php if ($gst_percent > 0): ?>
+        <div class="cart-gst-charges">
+            GST (<?= $gst_percent ?>%): ₹<span id="gstCharges">0.00</span>
+        </div>
+        <?php endif; ?>
+        <?php if ($delivery_active && isset($delivery_charges)): ?>
         <div class="cart-delivery-charges <?= ($delivery_charges['delivery_charge'] == 0.00) ? 'free' : '' ?>">
             Delivery: <?= ($delivery_charges['delivery_charge'] == 0.00) ? 'FREE' : '₹<span id="deliveryCharges">'.number_format($delivery_charges['delivery_charge'], 2).'</span>' ?>
         </div>
@@ -57,7 +62,7 @@
         <?php endif; ?>
         <?php if ($dining_active): ?>
         <button class="btn btn-outline-primary w-50 <?= $delivery_active ? '' : 'active' ?>" id="dinningBtn">
-            <i class="bi bi-cup-hot"></i> Dinning
+            <i class="bi bi-cup-hot"></i> Dining
         </button>
         <?php endif; ?>
     </div>
@@ -173,7 +178,6 @@
  <?php endif; ?>
 </div>
 
-
 <script>
 // Detect store name from URL
 const storeName = window.location.pathname.split('/')[1] || 'default';
@@ -263,6 +267,7 @@ function updateCartUI() {
     let subtotal = 0;
     const isDelivery = <?= $delivery_active ? 'document.getElementById("deliveryBtn").classList.contains("active")' : 'false' ?>;
     const deliveryCharge = <?= isset($delivery_charges['delivery_charge']) ? $delivery_charges['delivery_charge'] : 0 ?>;
+    const gstPercent = <?= $gst_percent ?? 0 ?>;
 
     cart.forEach((item, index) => {
         subtotal += item.price * item.quantity;
@@ -298,7 +303,14 @@ function updateCartUI() {
     // Update subtotal and total
     document.getElementById('cartSubtotal').textContent = subtotal.toFixed(2);
     
+    // Calculate GST only if percentage is greater than 0
     let total = subtotal;
+    if (gstPercent > 0) {
+        const gstAmount = (subtotal * gstPercent) / 100;
+        document.getElementById('gstCharges').textContent = gstAmount.toFixed(2);
+        total += gstAmount;
+    }
+    
     if (isDelivery) {
         total += parseFloat(deliveryCharge);
         document.querySelector('.cart-delivery-charges').style.display = 'block';
@@ -407,6 +419,7 @@ function placeOrderOnWhatsApp() {
     <?php if ($delivery_active || $dining_active): ?>
     const isDelivery = <?= $delivery_active ? 'document.getElementById("deliveryBtn").classList.contains("active")' : 'false' ?>;
     const deliveryCharge = <?= isset($delivery_charges['delivery_charge']) ? $delivery_charges['delivery_charge'] : 0 ?>;
+    const gstPercent = <?= $gst_percent ?? 0 ?>;
     
     let customerName, customerPhone, orderDetails;
     
@@ -460,12 +473,17 @@ function placeOrderOnWhatsApp() {
 
     message += `--------------------------\n`;
     message += `*Subtotal: ₹${subtotal.toFixed(2)}*\n`;
-
+    if (gstPercent > 0) {
+        message += `*GST (${gstPercent}%): ₹${((subtotal * gstPercent) / 100).toFixed(2)}*\n`;
+    }
     if (isDelivery) {
         message += `*Delivery Charges: ${deliveryCharge == 0 ? 'FREE' : '₹' + deliveryCharge.toFixed(2)}*\n`;
     }
 
-    let total = isDelivery ? subtotal + parseFloat(deliveryCharge) : subtotal;
+    let total = subtotal + (gstPercent > 0 ? (subtotal * gstPercent / 100) : 0);
+    if (isDelivery) {
+        total += parseFloat(deliveryCharge);
+    }
     message += `*Total Amount: ₹${total.toFixed(2)}*\n--------------------------\n\n`;
     message += `*Customer Details:*\n${orderDetails}\n\n`;
     message += `*Please confirm this order.*`;
