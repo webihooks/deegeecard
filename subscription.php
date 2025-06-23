@@ -35,9 +35,9 @@ $subscription_stmt->store_result();
 $has_active_subscription = ($subscription_stmt->num_rows > 0);
 $subscription_stmt->close();
 
-// Fetch available packages including description and duration
+// Fetch available packages including description and duration WHERE status is active
 $packages = [];
-$sql_packages = "SELECT id, name, price, description, duration FROM packages";
+$sql_packages = "SELECT id, name, price, description, duration FROM packages WHERE status = 'active'";
 $result_packages = $conn->query($sql_packages);
 if ($result_packages) {
     while ($row = $result_packages->fetch_assoc()) {
@@ -171,22 +171,15 @@ $(document).ready(function() {
     <div class="wrapper">
         <?php include 'toolbar.php'; ?>
         
-
-
-
-<?php
-// Check subscription or active trial (not expired) status
-$is_active_trial = $is_trial && (strtotime($trial_end) > time());
-if ($has_active_subscription || $is_active_trial) {
-    include 'menu.php';
-} else {
-    include 'unsubscriber_menu.php';
-}
-?>
-
-
-
-
+        <?php
+        // Check subscription or active trial (not expired) status
+        $is_active_trial = $is_trial && (strtotime($trial_end) > time());
+        if ($has_active_subscription || $is_active_trial) {
+            include 'menu.php';
+        } else {
+            include 'unsubscriber_menu.php';
+        }
+        ?>
 
         <div class="page-content">
             <div class="container">
@@ -208,28 +201,14 @@ if ($has_active_subscription || $is_active_trial) {
                                     <div class="current-subscription mb-4">
                                         <div class="card">
                                             <div class="card-header">
-<h4>Your Current Subscription: <?php echo htmlspecialchars($current_subscription['package_name']); ?></h4>
+                                                <h4>Your Current Subscription: <?php echo htmlspecialchars($current_subscription['package_name']); ?></h4>
                                             </div>
                                             <div class="card-body">
                                                 <p>
-                                                    <!-- <strong>Price:</strong> ₹<?php //echo number_format($current_subscription['price']); ?><br> -->
                                                     <strong>Status:</strong> Active<br>
                                                     <strong>Start Date:</strong> <?php echo date('M d, Y', strtotime($current_subscription['start_date'])); ?><br>
                                                     <strong>Renewal Date:</strong> <?php echo date('M d, Y', strtotime($current_subscription['end_date'])); ?>
                                                 </p>
-                                                <!-- <form method="post">
-                                                    <button type="submit" name="cancel_subscription" class="btn btn-danger">Cancel Subscription</button>
-                                                </form> -->
-
-<!-- <div class="mt-3">
-<strong class="red">Before you cancel your subscription, please note:</strong>
-<ul>
-<li>Immediate loss of access to all premium features and content.</li>
-<li>No refunds for unused portions of your billing cycle.</li>
-<li>Saved data or preferences may be permanently deleted.</li>
-</ul>
-</div> -->
-
                                             </div>
                                         </div>
                                     </div>
@@ -238,7 +217,6 @@ if ($has_active_subscription || $is_active_trial) {
                                         You don't have an active subscription.
                                     </div>
                                 <?php endif; ?>
-
 
                                 <div class="available-packages">
                                     <h5>Available Subscription Plans</h5>
@@ -264,8 +242,6 @@ if ($has_active_subscription || $is_active_trial) {
                                         <?php endforeach; ?>
                                     </div>
                                 </div>
-
-
                             </div>
                         </div>
                     </div>
