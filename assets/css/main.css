@@ -638,6 +638,15 @@ h6 {
   overflow-y: auto;
 }
 
+.cart-delivery-charges, .cart-subtotal {
+  text-align: right;
+}
+
+.cart-delivery-charges.free {
+    color: green;
+    font-weight: bold;
+}
+
 .cart-sidebar.open {
   right: 0;
 }

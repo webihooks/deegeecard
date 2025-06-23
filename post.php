@@ -43,6 +43,12 @@ $theme_data = $theme_stmt->fetch(PDO::FETCH_ASSOC);
 $primary_color = $theme_data['primary_color'] ?? '#4e73df';
 $secondary_color = $theme_data['secondary_color'] ?? '#858796';
 
+// Get delivery charges
+$delivery_charges_sql = "SELECT * FROM delivery_charges WHERE user_id = ?";
+$delivery_charges_stmt = $conn->prepare($delivery_charges_sql);
+$delivery_charges_stmt->execute([$user_id]);
+$delivery_charges = $delivery_charges_stmt->fetch(PDO::FETCH_ASSOC);
+
 // Get other profile data
 $business_info = getBusinessInfo($conn, $user_id);
 $photos = getProfilePhotos($conn, $user_id);
@@ -75,7 +81,7 @@ $table_sql = "SELECT table_count FROM dining_tables WHERE user_id = ?";
 $table_stmt = $conn->prepare($table_sql);
 $table_stmt->execute([$user_id]);
 $table_data = $table_stmt->fetch(PDO::FETCH_ASSOC);
-$table_count = $table_data['table_count'] ?? 0; // Default to 0 if no record exists
+$table_count = $table_data['table_count'] ?? 0;
 
 // Check dining and delivery status
 $dining_delivery_sql = "SELECT dining_active, delivery_active FROM dining_and_delivery WHERE user_id = ?";

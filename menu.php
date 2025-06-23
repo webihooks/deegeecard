@@ -80,6 +80,15 @@
                 </a>
             </li>
 
+            <li class="nav-item">
+                <a class="nav-link" href="delivery_charges.php">
+                    <span class="nav-icon">
+                        <iconify-icon icon="ic:baseline-delivery-dining"></iconify-icon>
+                    </span>
+                    <span class="nav-text">Delivery Charges</span>
+                </a>
+            </li>
+
             <li class="menu-title">Business Info</li>
 
             <li class="nav-item">

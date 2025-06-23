@@ -1,6 +1,7 @@
 {
     "require": {
         "razorpay/razorpay": "^2.9",
-        "endroid/qr-code": "^6.0"
+        "endroid/qr-code": "^6.0",
+        "thiagoalessio/tesseract_ocr": "^2.13"
     }
 }

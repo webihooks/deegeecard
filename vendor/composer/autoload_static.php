@@ -12,6 +12,10 @@ class ComposerStaticInit19dce85914a0d40ff610e42a7553729f
     );
 
     public static $prefixLengthsPsr4 = array (
+        't' => 
+        array (
+            'thiagoalessio\\TesseractOCR\\' => 27,
+        ),
         'W' => 
         array (
             'WpOrg\\Requests\\' => 15,
@@ -36,6 +40,10 @@ class ComposerStaticInit19dce85914a0d40ff610e42a7553729f
     );
 
     public static $prefixDirsPsr4 = array (
+        'thiagoalessio\\TesseractOCR\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/thiagoalessio/tesseract_ocr/src',
+        ),
         'WpOrg\\Requests\\' => 
         array (
             0 => __DIR__ . '/..' . '/rmccue/requests/src',

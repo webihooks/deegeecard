@@ -33,8 +33,18 @@
     </div>
     <div class="cart-items" id="cartItems"></div>
 
-    <div class="cart-total">
-          Total: ₹<span id="cartTotal">0.00</span>
+    <div class="cart-total-details">
+        <?php if ($delivery_active && isset($delivery_charges)): ?>
+        <div class="cart-subtotal">
+            Subtotal: ₹<span id="cartSubtotal">0.00</span>
+        </div>
+        <div class="cart-delivery-charges <?= ($delivery_charges['delivery_charge'] == 0.00) ? 'free' : '' ?>">
+            Delivery: <?= ($delivery_charges['delivery_charge'] == 0.00) ? 'FREE' : '₹<span id="deliveryCharges">'.number_format($delivery_charges['delivery_charge'], 2).'</span>' ?>
+        </div>
+        <?php endif; ?>
+        <div class="cart-total">
+            Total: ₹<span id="cartTotal">0.00</span>
+        </div>
     </div>
 
     <!-- Order Type Buttons -->
@@ -53,7 +63,7 @@
     </div>
     <?php endif; ?>
 
-    <!-- Dinning Details (hidden by default) -->
+    <!-- Dinning Details -->
     <?php if ($dining_active): ?>
     <div class="customer-details dinning-details" style="display: <?= $delivery_active ? 'none' : 'block' ?>;">
        <h6>Dinning Information</h6>
@@ -77,7 +87,7 @@
     </div>
     <?php endif; ?>
 
-    <!-- Delivery Details (shown by default if delivery is active) -->
+    <!-- Delivery Details -->
     <?php if ($delivery_active): ?>
     <div class="customer-details delivery-details" style="display:<?= $delivery_active ? 'block' : 'none' ?>;">
        <h6>Delivery Information</h6>
@@ -163,21 +173,22 @@
  <?php endif; ?>
 </div>
 
+
 <script>
- // Detect store name from URL
- const storeName = window.location.pathname.split('/')[1] || 'default';
- const cartKey = `cart_${storeName}`;
+// Detect store name from URL
+const storeName = window.location.pathname.split('/')[1] || 'default';
+const cartKey = `cart_${storeName}`;
 
- let cart = [];
+let cart = [];
 
- // Initialize cart from localStorage
- if (localStorage.getItem(cartKey)) {
-     cart = JSON.parse(localStorage.getItem(cartKey));
-     updateCartUI();
- }
+// Initialize cart from localStorage
+if (localStorage.getItem(cartKey)) {
+    cart = JSON.parse(localStorage.getItem(cartKey));
+    updateCartUI();
+}
 
- // Add to cart button click handler
- document.querySelectorAll('.add-to-cart').forEach(button => {
+// Add to cart button click handler
+document.querySelectorAll('.add-to-cart').forEach(button => {
     button.addEventListener('click', function() {
         const product = {
             id: this.dataset.id,
@@ -239,200 +250,232 @@ function showToast(message, isError = false) {
     }, 2000);
 }
 
- // Save cart to localStorage
- function saveCart() {
-     localStorage.setItem(cartKey, JSON.stringify(cart));
- }
+// Save cart to localStorage
+function saveCart() {
+    localStorage.setItem(cartKey, JSON.stringify(cart));
+}
 
- // Update cart UI
- function updateCartUI() {
-     const cartItemsContainer = document.getElementById('cartItems');
-     cartItemsContainer.innerHTML = '';
+// Update cart UI
+function updateCartUI() {
+    const cartItemsContainer = document.getElementById('cartItems');
+    cartItemsContainer.innerHTML = '';
 
-     let total = 0;
+    let subtotal = 0;
+    const isDelivery = <?= $delivery_active ? 'document.getElementById("deliveryBtn").classList.contains("active")' : 'false' ?>;
+    const deliveryCharge = <?= isset($delivery_charges['delivery_charge']) ? $delivery_charges['delivery_charge'] : 0 ?>;
 
-     cart.forEach((item, index) => {
-         total += item.price * item.quantity;
-         const productImage = item.image_path ? item.image_path : 'images/no-image.jpg';
+    cart.forEach((item, index) => {
+        subtotal += item.price * item.quantity;
+        const productImage = item.image_path ? item.image_path : 'images/no-image.jpg';
 
-         const itemElement = document.createElement('div');
-         itemElement.className = 'cart-item';
-         itemElement.innerHTML = `
-             <div class="cart-item-info d-flex">
-                 <img src="${productImage}" alt="${item.name}" class="cart-item-img" />
-                 <div class="ms-1">
-                     <h6>${item.name}</h6>
-                     <div>₹${item.price.toFixed(2)} x ${item.quantity}</div>
-                 </div>
-             </div>
-             <div class="cart-item-controls">
-                 <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${index}, -1)">
-                     <i class="bi bi-dash"></i>
-                 </button>
-                 <input type="number" value="${item.quantity}" min="1" max="${item.max}" 
-                        onchange="updateQuantityInput(${index}, this.value)">
-                 <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${index}, 1)">
-                     <i class="bi bi-plus"></i>
-                 </button>
-                 <button class="btn btn-sm btn-outline-danger ms-2" onclick="removeFromCart(${index})">
-                     <i class="bi bi-trash"></i>
-                 </button>
-             </div>
-         `;
-         cartItemsContainer.appendChild(itemElement);
-     });
+        const itemElement = document.createElement('div');
+        itemElement.className = 'cart-item';
+        itemElement.innerHTML = `
+            <div class="cart-item-info d-flex">
+                <img src="${productImage}" alt="${item.name}" class="cart-item-img" />
+                <div class="ms-1">
+                    <h6>${item.name}</h6>
+                    <div>₹${item.price.toFixed(2)} x ${item.quantity}</div>
+                </div>
+            </div>
+            <div class="cart-item-controls">
+                <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${index}, -1)">
+                    <i class="bi bi-dash"></i>
+                </button>
+                <input type="number" value="${item.quantity}" min="1" max="${item.max}" 
+                       onchange="updateQuantityInput(${index}, this.value)">
+                <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${index}, 1)">
+                    <i class="bi bi-plus"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger ms-2" onclick="removeFromCart(${index})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        `;
+        cartItemsContainer.appendChild(itemElement);
+    });
 
-     document.getElementById('cartTotal').textContent = total.toFixed(2);
-     const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-     document.querySelector('.cart-count').textContent = itemCount;
- }
+    // Update subtotal and total
+    document.getElementById('cartSubtotal').textContent = subtotal.toFixed(2);
+    
+    let total = subtotal;
+    if (isDelivery) {
+        total += parseFloat(deliveryCharge);
+        document.querySelector('.cart-delivery-charges').style.display = 'block';
+        
+        // Update delivery charges display
+        if (deliveryCharge == 0) {
+            document.querySelector('.cart-delivery-charges').innerHTML = 'Delivery: FREE';
+            document.querySelector('.cart-delivery-charges').classList.add('free');
+        } else {
+            document.querySelector('.cart-delivery-charges').innerHTML = `Delivery: ₹${deliveryCharge.toFixed(2)}`;
+            document.querySelector('.cart-delivery-charges').classList.remove('free');
+        }
+    } else {
+        document.querySelector('.cart-delivery-charges').style.display = 'none';
+    }
+    
+    document.getElementById('cartTotal').textContent = total.toFixed(2);
+    const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+    document.querySelector('.cart-count').textContent = itemCount;
+}
 
- // Update quantity with buttons
- function updateQuantity(index, change) {
-     const item = cart[index];
-     const newQuantity = item.quantity + change;
+// Update quantity with buttons
+function updateQuantity(index, change) {
+    const item = cart[index];
+    const newQuantity = item.quantity + change;
 
-     if (newQuantity < 1) {
-         removeFromCart(index);
-         return;
-     }
+    if (newQuantity < 1) {
+        removeFromCart(index);
+        return;
+    }
 
-     if (newQuantity > item.max) {
-         alert('Maximum quantity reached for this product');
-         return;
-     }
+    if (newQuantity > item.max) {
+        alert('Maximum quantity reached for this product');
+        return;
+    }
 
-     item.quantity = newQuantity;
-     saveCart();
-     updateCartUI();
- }
+    item.quantity = newQuantity;
+    saveCart();
+    updateCartUI();
+}
 
- // Update quantity via input field
- function updateQuantityInput(index, value) {
-     const item = cart[index];
-     const newQuantity = parseInt(value);
+// Update quantity via input field
+function updateQuantityInput(index, value) {
+    const item = cart[index];
+    const newQuantity = parseInt(value);
 
-     if (isNaN(newQuantity) || newQuantity < 1) {
-         item.quantity = 1;
-     } else if (newQuantity > item.max) {
-         alert('Maximum quantity reached for this product');
-         item.quantity = item.max;
-     } else {
-         item.quantity = newQuantity;
-     }
+    if (isNaN(newQuantity) || newQuantity < 1) {
+        item.quantity = 1;
+    } else if (newQuantity > item.max) {
+        alert('Maximum quantity reached for this product');
+        item.quantity = item.max;
+    } else {
+        item.quantity = newQuantity;
+    }
 
-     saveCart();
-     updateCartUI();
- }
+    saveCart();
+    updateCartUI();
+}
 
- // Remove item from cart
- function removeFromCart(index) {
-     cart.splice(index, 1);
-     saveCart();
-     updateCartUI();
- }
+// Remove item from cart
+function removeFromCart(index) {
+    cart.splice(index, 1);
+    saveCart();
+    updateCartUI();
+}
 
- // Cart toggle controls
- function toggleCart() {
-     document.querySelector('.cart-sidebar').classList.toggle('open');
- }
+// Cart toggle controls
+function toggleCart() {
+    document.querySelector('.cart-sidebar').classList.toggle('open');
+}
 
- function showCart() {
-     document.querySelector('.cart-sidebar').classList.add('open');
- }
+function showCart() {
+    document.querySelector('.cart-sidebar').classList.add('open');
+}
 
- function closeCart() {
-     document.querySelector('.cart-sidebar').classList.remove('open');
- }
+function closeCart() {
+    document.querySelector('.cart-sidebar').classList.remove('open');
+}
 
- // Order type toggle functionality
- <?php if ($delivery_active && $dining_active): ?>
- document.getElementById('deliveryBtn').addEventListener('click', function() {
-     this.classList.add('active');
-     document.getElementById('dinningBtn').classList.remove('active');
-     document.querySelector('.delivery-details').style.display = 'block';
-     document.querySelector('.dinning-details').style.display = 'none';
- });
+// Order type toggle functionality
+<?php if ($delivery_active && $dining_active): ?>
+document.getElementById('deliveryBtn').addEventListener('click', function() {
+    this.classList.add('active');
+    document.getElementById('dinningBtn').classList.remove('active');
+    document.querySelector('.delivery-details').style.display = 'block';
+    document.querySelector('.dinning-details').style.display = 'none';
+    updateCartUI();
+});
 
- document.getElementById('dinningBtn').addEventListener('click', function() {
-     this.classList.add('active');
-     document.getElementById('deliveryBtn').classList.remove('active');
-     document.querySelector('.dinning-details').style.display = 'block';
-     document.querySelector('.delivery-details').style.display = 'none';
- });
- <?php endif; ?>
+document.getElementById('dinningBtn').addEventListener('click', function() {
+    this.classList.add('active');
+    document.getElementById('deliveryBtn').classList.remove('active');
+    document.querySelector('.dinning-details').style.display = 'block';
+    document.querySelector('.delivery-details').style.display = 'none';
+    updateCartUI();
+});
+<?php endif; ?>
 
- // Place order on WhatsApp
- function placeOrderOnWhatsApp() {
-     if (cart.length === 0) {
-         alert('Your cart is empty');
-         return;
-     }
+// Place order on WhatsApp
+function placeOrderOnWhatsApp() {
+    if (cart.length === 0) {
+        alert('Your cart is empty');
+        return;
+    }
 
-     <?php if ($delivery_active || $dining_active): ?>
-     const isDelivery = <?= $delivery_active ? 'document.getElementById("deliveryBtn").classList.contains("active")' : 'false' ?>;
-     
-     let customerName, customerPhone, orderDetails;
-     
-     if (isDelivery) {
-         customerName = document.getElementById('customerName').value;
-         customerPhone = document.getElementById('customerPhone').value;
-         const customerAddress = document.getElementById('customerAddress').value;
-         const customerNotes = document.getElementById('customerNotes').value;
-         
-         if (!customerName || !customerPhone || !customerAddress) {
-             alert('Please provide your name, phone number and address');
-             return;
-         }
-         
-         orderDetails = `*Delivery Order*\nName: ${customerName}\nPhone: ${customerPhone}\nAddress: ${customerAddress}`;
-         if (customerNotes) orderDetails += `\nNotes: ${customerNotes}`;
-     } else {
-         customerName = document.getElementById('dinningName').value;
-         customerPhone = document.getElementById('dinningPhone').value;
-         const tableNumber = document.getElementById('tableNumber').value;
-         
-         if (!customerName || !customerPhone || !tableNumber) {
-             alert('Please provide your name, phone number and table number');
-             return;
-         }
-         
-         orderDetails = `*Dinning Order*\nName: ${customerName}\nPhone: ${customerPhone}\nTable No.: ${tableNumber}`;
-     }
-     <?php else: ?>
-     let customerName = 'Guest';
-     let customerPhone = '';
-     let orderDetails = `*Quick Order*`;
-     <?php endif; ?>
+    <?php if ($delivery_active || $dining_active): ?>
+    const isDelivery = <?= $delivery_active ? 'document.getElementById("deliveryBtn").classList.contains("active")' : 'false' ?>;
+    const deliveryCharge = <?= isset($delivery_charges['delivery_charge']) ? $delivery_charges['delivery_charge'] : 0 ?>;
+    
+    let customerName, customerPhone, orderDetails;
+    
+    if (isDelivery) {
+        customerName = document.getElementById('customerName').value;
+        customerPhone = document.getElementById('customerPhone').value;
+        const customerAddress = document.getElementById('customerAddress').value;
+        const customerNotes = document.getElementById('customerNotes').value;
+        
+        if (!customerName || !customerPhone || !customerAddress) {
+            alert('Please provide your name, phone number and address');
+            return;
+        }
+        
+        orderDetails = `*Delivery Order*\nName: ${customerName}\nPhone: ${customerPhone}\nAddress: ${customerAddress}`;
+        if (customerNotes) orderDetails += `\nNotes: ${customerNotes}`;
+    } else {
+        customerName = document.getElementById('dinningName').value;
+        customerPhone = document.getElementById('dinningPhone').value;
+        const tableNumber = document.getElementById('tableNumber').value;
+        
+        if (!customerName || !customerPhone || !tableNumber) {
+            alert('Please provide your name, phone number and table number');
+            return;
+        }
+        
+        orderDetails = `*Dinning Order*\nName: ${customerName}\nPhone: ${customerPhone}\nTable No.: ${tableNumber}`;
+    }
+    <?php else: ?>
+    let customerName = 'Guest';
+    let customerPhone = '';
+    let orderDetails = `*Quick Order*`;
+    <?php endif; ?>
 
-     const whatsappLink = "<?= $social_link['whatsapp'] ?? '' ?>";
-     let phoneNumber = whatsappLink.match(/wa\.me\/(\d+)/)?.[1] || "<?= $user['phone'] ?? '' ?>";
+    const whatsappLink = "<?= $social_link['whatsapp'] ?? '' ?>";
+    let phoneNumber = whatsappLink.match(/wa\.me\/(\d+)/)?.[1] || "<?= $user['phone'] ?? '' ?>";
 
-     if (!phoneNumber) {
-         alert('WhatsApp number not available');
-         return;
-     }
+    if (!phoneNumber) {
+        alert('WhatsApp number not available');
+        return;
+    }
 
-     let message = `*##### NEW ORDER #####*\n\n`;
-     message += `--------------------------\n*Order Details:*\n--------------------------\n`;
+    let message = `*##### NEW ORDER #####*\n\n`;
+    message += `--------------------------\n*Order Details:*\n--------------------------\n`;
 
-     let total = 0;
-     cart.forEach(item => {
-         message += `*${item.name}*\nPrice: ₹${item.price.toFixed(2)}\nQuantity: ${item.quantity}\nSubtotal: ₹${(item.price * item.quantity).toFixed(2)}\n\n`;
-         total += item.price * item.quantity;
-     });
+    let subtotal = 0;
+    cart.forEach(item => {
+        message += `*${item.name}*\nPrice: ₹${item.price.toFixed(2)}\nQuantity: ${item.quantity}\nSubtotal: ₹${(item.price * item.quantity).toFixed(2)}\n\n`;
+        subtotal += item.price * item.quantity;
+    });
 
-     message += `--------------------------\n`;
-     message += `*Total Amount: ₹${total.toFixed(2)}*\n--------------------------\n\n`;
-     message += `*Customer Details:*\n${orderDetails}\n\n`;
-     message += `*Please confirm this order.*`;
+    message += `--------------------------\n`;
+    message += `*Subtotal: ₹${subtotal.toFixed(2)}*\n`;
 
-     window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+    if (isDelivery) {
+        message += `*Delivery Charges: ${deliveryCharge == 0 ? 'FREE' : '₹' + deliveryCharge.toFixed(2)}*\n`;
+    }
 
-     // Optional: Clear cart after order
-     cart = [];
-     saveCart();
-     updateCartUI();
-     closeCart();
- }
+    let total = isDelivery ? subtotal + parseFloat(deliveryCharge) : subtotal;
+    message += `*Total Amount: ₹${total.toFixed(2)}*\n--------------------------\n\n`;
+    message += `*Customer Details:*\n${orderDetails}\n\n`;
+    message += `*Please confirm this order.*`;
+
+    window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+
+    // Optional: Clear cart after order
+    cart = [];
+    saveCart();
+    updateCartUI();
+    closeCart();
+}
 </script>
