@@ -18,8 +18,8 @@
     <meta name="twitter:description" content="<?= htmlspecialchars($business_info['business_description']) ?>">
     <meta name="twitter:image" content="uploads/profile/<?= htmlspecialchars($photos['profile_photo']) ?>">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css?<?php echo time(); ?>" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css?<?php echo time(); ?>">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Google tag (gtag.js) -->
@@ -33,7 +33,7 @@
     </script>
 
 
-    <link href="assets/css/main.css" rel="stylesheet">
+    <link href="assets/css/main.css?<?php echo time(); ?>" rel="stylesheet">
     <script>
         window.addEventListener('scroll', function() {
             const coverPhoto = document.querySelector('.cover_photo');
@@ -47,7 +47,7 @@
             } else {
                 coverPhoto?.classList.remove('small');
                 profilePhoto?.classList.remove('small', 'with-burger');
-                burgerMenu?.classList.remove('show');
+                // burgerMenu?.classList.remove('show');
             }
         });
         
@@ -161,6 +161,9 @@
         }
         body {
             background-color: var(--secondary-color);
+        }
+        .burger-menu {
+            background: var(--secondary-color);
         }
     </style>
 </head>

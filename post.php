@@ -40,8 +40,8 @@ $theme_stmt->execute([$user_id]);
 $theme_data = $theme_stmt->fetch(PDO::FETCH_ASSOC);
 
 // Set default colors if no theme exists
-$primary_color = $theme_data['primary_color'] ?? '#4e73df';
-$secondary_color = $theme_data['secondary_color'] ?? '#858796';
+$primary_color = $theme_data['primary_color'] ?? '#000000';
+$secondary_color = $theme_data['secondary_color'] ?? '#ffffff';
 
 // Get delivery charges
 $delivery_charges_sql = "SELECT * FROM delivery_charges WHERE user_id = ?";
