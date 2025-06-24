@@ -628,6 +628,10 @@ h6 {
   padding: 20px;
 }
 
+.free-delivery-text {
+  color: red;
+}
+
 .cart-sidebar {
   position: fixed;
   top: 0;

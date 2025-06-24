@@ -1,4 +1,6 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 require 'config/db_connection.php';
 require 'functions/profile_functions.php';
 
@@ -43,8 +45,8 @@ $theme_data = $theme_stmt->fetch(PDO::FETCH_ASSOC);
 $primary_color = $theme_data['primary_color'] ?? '#000000';
 $secondary_color = $theme_data['secondary_color'] ?? '#ffffff';
 
-// Get delivery charges
-$delivery_charges_sql = "SELECT * FROM delivery_charges WHERE user_id = ?";
+// Get delivery charges including free delivery minimum
+$delivery_charges_sql = "SELECT delivery_charge, free_delivery_minimum FROM delivery_charges WHERE user_id = ?";
 $delivery_charges_stmt = $conn->prepare($delivery_charges_sql);
 $delivery_charges_stmt->execute([$user_id]);
 $delivery_charges = $delivery_charges_stmt->fetch(PDO::FETCH_ASSOC);

@@ -26,21 +26,26 @@ $stmt->close();
 
 // Fetch existing delivery charge if it exists
 $current_charge = 0;
-$sql = "SELECT delivery_charge FROM delivery_charges WHERE user_id = ?";
+$current_free_delivery_min = 0;
+$sql = "SELECT delivery_charge, free_delivery_minimum FROM delivery_charges WHERE user_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
-$stmt->bind_result($current_charge);
+$stmt->bind_result($current_charge, $current_free_delivery_min);
 $stmt->fetch();
 $stmt->close();
 
 // Process form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_delivery_charge'])) {
     $delivery_charge = (float)$_POST['delivery_charge'];
+    $free_delivery_min = (float)$_POST['free_delivery_min'];
     
-    // Validate input
+    // Validate inputs
     if ($delivery_charge < 0) {
         $message = "Delivery charge cannot be negative.";
+        $message_type = "danger";
+    } elseif ($free_delivery_min < 0) {
+        $message = "Free delivery minimum cannot be negative.";
         $message_type = "danger";
     } else {
         // First check if record exists for this user
@@ -55,21 +60,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_delivery_charge'
         
         if ($record_exists) {
             // Update existing record
-            $sql = "UPDATE delivery_charges SET delivery_charge = ?, updated_at = NOW() WHERE user_id = ?";
+            $sql = "UPDATE delivery_charges SET delivery_charge = ?, free_delivery_minimum = ?, updated_at = NOW() WHERE user_id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("di", $delivery_charge, $user_id);
+            $stmt->bind_param("ddi", $delivery_charge, $free_delivery_min, $user_id);
         } else {
             // Insert new record
-            $sql = "INSERT INTO delivery_charges (user_id, delivery_charge, created_at, updated_at) VALUES (?, ?, NOW(), NOW())";
+            $sql = "INSERT INTO delivery_charges (user_id, delivery_charge, free_delivery_minimum, created_at, updated_at) 
+                    VALUES (?, ?, ?, NOW(), NOW())";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("id", $user_id, $delivery_charge);
+            $stmt->bind_param("idd", $user_id, $delivery_charge, $free_delivery_min);
         }
         
         if ($stmt->execute()) {
-            $message = "Delivery charge saved successfully!";
+            $message = "Delivery settings saved successfully!";
             $current_charge = $delivery_charge;
+            $current_free_delivery_min = $free_delivery_min;
         } else {
-            $message = "Error saving delivery charge: " . $conn->error;
+            $message = "Error saving delivery settings: " . $conn->error;
             $message_type = "danger";
         }
         $stmt->close();
@@ -105,7 +112,7 @@ $conn->close();
                     <div class="col-xl-9">
                         <div class="card">
                             <div class="card-header">
-                                <h4 class="card-title">Delivery Charges</h4>
+                                <h4 class="card-title">Delivery Settings</h4>
                             </div>
                             <div class="card-body">
                                 <?php if (!empty($message)): ?>
@@ -115,14 +122,27 @@ $conn->close();
                                 <?php endif; ?>
 
                                 <form method="POST" action="delivery_charges.php">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="delivery_charge" class="form-label">Delivery Charge (₹)</label>
-                                        <input type="number" class="form-control" id="delivery_charge" 
-                                               name="delivery_charge" step="0.01" min="0" 
-                                               value="<?php echo htmlspecialchars($current_charge); ?>" required>
-                                        <div class="form-text">Enter the delivery charge amount in rupees.</div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="delivery_charge" class="form-label">Delivery Charge (₹)</label>
+                                            <input type="number" class="form-control" id="delivery_charge" 
+                                                   name="delivery_charge" step="0.01" min="0" 
+                                                   value="<?php echo htmlspecialchars($current_charge); ?>" required>
+                                            <div class="form-text">Standard delivery charge amount.</div>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="free_delivery_min" class="form-label">Free Delivery Minimum (₹)</label>
+                                            <input type="number" class="form-control" id="free_delivery_min" 
+                                                   name="free_delivery_min" step="0.01" min="0" 
+                                                   value="<?php echo htmlspecialchars($current_free_delivery_min); ?>" required>
+                                            <div class="form-text">Order amount needed for free delivery.</div>
+                                        </div>
                                     </div>
-                                    <button type="submit" name="save_delivery_charge" class="btn btn-primary">Save Delivery Charge</button>
+                                    
+                                    <button type="submit" name="save_delivery_charge" class="btn btn-primary">
+                                        Save Delivery Settings
+                                    </button>
                                 </form>
                             </div>
                         </div>
@@ -142,12 +162,20 @@ $conn->close();
                     delivery_charge: {
                         required: true,
                         min: 0
+                    },
+                    free_delivery_min: {
+                        required: true,
+                        min: 0
                     }
                 },
                 messages: {
                     delivery_charge: {
                         required: "Please enter a delivery charge",
                         min: "Delivery charge cannot be negative"
+                    },
+                    free_delivery_min: {
+                        required: "Please enter free delivery minimum",
+                        min: "Free delivery minimum cannot be negative"
                     }
                 },
                 errorElement: 'div',

@@ -51,8 +51,8 @@
         <?php endif; ?>
         
         <?php if ($delivery_active && isset($delivery_charges)): ?>
-        <div class="cart-delivery-charges <?= ($delivery_charges['delivery_charge'] == 0.00) ? 'free' : '' ?>">
-            Delivery: <?= ($delivery_charges['delivery_charge'] == 0.00) ? 'FREE' : '₹<span id="deliveryCharges">'.number_format($delivery_charges['delivery_charge'], 2).'</span>' ?>
+        <div class="cart-delivery-charges">
+            Delivery: <span id="deliveryChargeText">₹0.00</span>
         </div>
         <?php endif; ?>
         
@@ -187,8 +187,6 @@
  <?php endif; ?>
 </div>
 
-
-
 <script>
 // Detect store name from URL
 const storeName = window.location.pathname.split('/')[1] || 'default';
@@ -261,7 +259,7 @@ function showToast(message, isError = false) {
     const toast = new bootstrap.Toast(toastElement);
     toast.show();
     
-    // Auto-hide after 3 seconds
+    // Auto-hide after 2 seconds
     setTimeout(() => {
         toast.hide();
     }, 2000);
@@ -273,7 +271,6 @@ function saveCart() {
 }
 
 // Update cart UI
-// Update cart UI
 function updateCartUI() {
     const cartItemsContainer = document.getElementById('cartItems');
     cartItemsContainer.innerHTML = '';
@@ -281,9 +278,17 @@ function updateCartUI() {
     let subtotal = 0;
     const isDelivery = <?= $delivery_active ? 'document.getElementById("deliveryBtn").classList.contains("active")' : 'false' ?>;
     const deliveryCharge = <?= isset($delivery_charges['delivery_charge']) ? $delivery_charges['delivery_charge'] : 0 ?>;
+    const freeDeliveryMin = <?= isset($delivery_charges['free_delivery_minimum']) ? $delivery_charges['free_delivery_minimum'] : 0 ?>;
     const gstPercent = <?= $gst_percent ?? 0 ?>;
 
-    // Calculate subtotal
+    // Get references to delivery and dining buttons/sections
+    const deliveryBtn = document.getElementById('deliveryBtn');
+    const dinningBtn = document.getElementById('dinningBtn');
+    const deliveryDetails = document.querySelector('.delivery-details');
+    const dinningDetails = document.querySelector('.dinning-details');
+    const cartDeliveryChargesRow = document.querySelector('.cart-delivery-charges');
+
+    // Calculate subtotal and populate cart items
     cart.forEach((item, index) => {
         subtotal += item.price * item.quantity;
         const productImage = item.image_path ? item.image_path : 'images/no-image.jpg';
@@ -315,6 +320,46 @@ function updateCartUI() {
         cartItemsContainer.appendChild(itemElement);
     });
 
+    // Handle visibility of Delivery/Dining options based on cart contents
+    if (cart.length === 0) {
+        // If cart is empty, hide delivery details and potentially the delivery button
+        if (deliveryDetails) deliveryDetails.style.display = 'none';
+        if (cartDeliveryChargesRow) cartDeliveryChargesRow.style.display = 'none';
+
+        // If both options exist and cart is empty, default to Dining if active
+        // Or if only delivery is active, hide the entire order type buttons if cart is empty.
+        <?php if ($delivery_active && $dining_active): ?>
+            if (deliveryBtn) deliveryBtn.style.display = 'none';
+            if (dinningBtn) dinningBtn.classList.add('active'); // Force Dining active
+            if (dinningDetails) dinningDetails.style.display = 'block'; // Show Dining details
+        <?php elseif ($delivery_active): ?>
+            // If only delivery is active, hide the delivery section when cart is empty
+            if (document.querySelector('.order-type-buttons')) {
+                document.querySelector('.order-type-buttons').style.display = 'none';
+            }
+            if (deliveryDetails) deliveryDetails.style.display = 'none';
+        <?php endif; ?>
+    } else {
+        // If cart has items, manage button and section visibility as usual
+        <?php if ($delivery_active && $dining_active): ?>
+            if (deliveryBtn) deliveryBtn.style.display = 'inline-block'; // Show delivery button
+            // Re-apply original logic for active button display
+            if (deliveryBtn && deliveryBtn.classList.contains('active')) {
+                if (deliveryDetails) deliveryDetails.style.display = 'block';
+                if (dinningDetails) dinningDetails.style.display = 'none';
+            } else if (dinningBtn && dinningBtn.classList.contains('active')) {
+                if (deliveryDetails) deliveryDetails.style.display = 'none';
+                if (dinningDetails) dinningDetails.style.display = 'block';
+            }
+        <?php elseif ($delivery_active): ?>
+            // If only delivery is active, ensure the order type buttons are visible
+            if (document.querySelector('.order-type-buttons')) {
+                document.querySelector('.order-type-buttons').style.display = 'block';
+            }
+            if (deliveryDetails) deliveryDetails.style.display = 'block';
+        <?php endif; ?>
+    }
+
     // Calculate discount
     discountAmount = 0;
     discountType = '';
@@ -326,7 +371,6 @@ function updateCartUI() {
         let applicableDiscount = null;
 
         // Iterate through discounts to find the highest applicable one
-        // Assuming discounts are ordered by min_cart_value ASC from PHP
         for (const discount of discounts) {
             if (subtotal >= discount.min_cart_value) {
                 applicableDiscount = discount;
@@ -338,9 +382,8 @@ function updateCartUI() {
                 discountAmount = (subtotal * applicableDiscount.discount_in_percent) / 100;
                 discountType = applicableDiscount.discount_in_percent + '% discount';
             } else if (applicableDiscount.discount_in_flat !== null && applicableDiscount.discount_in_flat > 0) {
-                // This is the main change: If discount_in_flat is mentioned, use it directly
                 discountAmount = parseFloat(applicableDiscount.discount_in_flat);
-                discountType = 'Flat OFF ₹' + discountAmount.toFixed(2) ; // Changed for clarity
+                discountType = 'Flat OFF ₹' + discountAmount.toFixed(2);
             }
 
             // Ensure discountAmount doesn't exceed subtotal
@@ -356,7 +399,6 @@ function updateCartUI() {
             } else {
                 discountSection.style.display = 'none';
             }
-
         } else {
             // Hide discount section if no applicable discount
             discountSection.style.display = 'none';
@@ -371,7 +413,7 @@ function updateCartUI() {
 
     // Calculate GST on amount after discount
     let amountAfterDiscount = subtotal - discountAmount;
-    if (amountAfterDiscount < 0) { // Ensure amount after discount doesn't go negative
+    if (amountAfterDiscount < 0) {
         amountAfterDiscount = 0;
     }
 
@@ -382,20 +424,32 @@ function updateCartUI() {
         total += gstAmount;
     }
 
-    if (isDelivery) {
-        total += parseFloat(deliveryCharge);
-        document.querySelector('.cart-delivery-charges').style.display = 'block';
-
-        // Update delivery charges display
-        if (deliveryCharge == 0) {
-            document.querySelector('.cart-delivery-charges').innerHTML = 'Delivery: FREE';
-            document.querySelector('.cart-delivery-charges').classList.add('free');
+    // Calculate delivery charges ONLY if cart is NOT empty and delivery is active AND selected
+    let actualDeliveryCharge = 0;
+    if (cart.length > 0 && isDelivery && deliveryCharge !== undefined) {
+        if (freeDeliveryMin > 0 && amountAfterDiscount >= freeDeliveryMin) {
+            // Free delivery because subtotal meets minimum
+            actualDeliveryCharge = 0;
+            document.getElementById('deliveryChargeText').textContent = 'FREE (Order above ₹' + freeDeliveryMin + ')';
+            if (cartDeliveryChargesRow) cartDeliveryChargesRow.classList.add('free');
         } else {
-            document.querySelector('.cart-delivery-charges').innerHTML = `Delivery: ₹${deliveryCharge.toFixed(2)}`;
-            document.querySelector('.cart-delivery-charges').classList.remove('free');
+            // Apply normal delivery charge
+            actualDeliveryCharge = parseFloat(deliveryCharge);
+            if (freeDeliveryMin > 0) {
+                // Show message about how much more to spend for free delivery
+                const neededForFree = freeDeliveryMin - amountAfterDiscount;
+                document.getElementById('deliveryChargeText').innerHTML =
+                    `₹${deliveryCharge.toFixed(2)} <span class="free-delivery-text"> (Add ₹${neededForFree.toFixed(2)} more for FREE delivery)</span>`;
+            } else {
+                document.getElementById('deliveryChargeText').textContent = `₹${deliveryCharge.toFixed(2)}`;
+            }
+            if (cartDeliveryChargesRow) cartDeliveryChargesRow.classList.remove('free');
         }
+        
+        if (cartDeliveryChargesRow) cartDeliveryChargesRow.style.display = 'block';
+        total += actualDeliveryCharge;
     } else {
-        document.querySelector('.cart-delivery-charges').style.display = 'none';
+        if (cartDeliveryChargesRow) cartDeliveryChargesRow.style.display = 'none';
     }
 
     document.getElementById('cartTotal').textContent = total.toFixed(2);
@@ -490,11 +544,13 @@ function placeOrderOnWhatsApp() {
     <?php if ($delivery_active || $dining_active): ?>
     const isDelivery = <?= $delivery_active ? 'document.getElementById("deliveryBtn").classList.contains("active")' : 'false' ?>;
     const deliveryCharge = <?= isset($delivery_charges['delivery_charge']) ? $delivery_charges['delivery_charge'] : 0 ?>;
+    const freeDeliveryMin = <?= isset($delivery_charges['free_delivery_minimum']) ? $delivery_charges['free_delivery_minimum'] : 0 ?>;
     const gstPercent = <?= $gst_percent ?? 0 ?>;
     
     let customerName, customerPhone, orderDetails;
     
-    if (isDelivery) {
+    // Determine which details to capture based on active order type (Delivery or Dining)
+    if (isDelivery && cart.length > 0) { // Only check delivery if items in cart
         customerName = document.getElementById('customerName').value;
         customerPhone = document.getElementById('customerPhone').value;
         const customerAddress = document.getElementById('customerAddress').value;
@@ -507,7 +563,7 @@ function placeOrderOnWhatsApp() {
         
         orderDetails = `*Delivery Order*\nName: ${customerName}\nPhone: ${customerPhone}\nAddress: ${customerAddress}`;
         if (customerNotes) orderDetails += `\nNotes: ${customerNotes}`;
-    } else {
+    } else { // Default to Dining if not Delivery, or if Delivery is chosen but cart is empty
         customerName = document.getElementById('dinningName').value;
         customerPhone = document.getElementById('dinningPhone').value;
         const tableNumber = document.getElementById('tableNumber').value;
@@ -558,12 +614,20 @@ function placeOrderOnWhatsApp() {
         message += `*GST (${gstPercent}%): ₹${((subtotal - discountAmount) * gstPercent / 100).toFixed(2)}*\n`;
     }
     
-    if (isDelivery) {
-        message += `*Delivery Charges: ${deliveryCharge == 0 ? 'FREE' : '₹' + deliveryCharge.toFixed(2)}*\n`;
+    if (isDelivery && cart.length > 0) { // Only show delivery charge in message if delivery is active and cart has items
+        if (freeDeliveryMin > 0 && (subtotal - discountAmount) >= freeDeliveryMin) {
+            message += `*Delivery Charges: FREE (Order above ₹${freeDeliveryMin})*\n`;
+        } else {
+            message += `*Delivery Charges: ${deliveryCharge == 0 ? 'FREE' : '₹' + deliveryCharge.toFixed(2)}*\n`;
+            if (freeDeliveryMin > 0) {
+                const neededForFree = freeDeliveryMin - (subtotal - discountAmount);
+                message += `(Add ₹${neededForFree.toFixed(2)} more for FREE delivery)\n`;
+            }
+        }
     }
 
     let total = (subtotal - discountAmount) + (gstPercent > 0 ? ((subtotal - discountAmount) * gstPercent / 100) : 0);
-    if (isDelivery) {
+    if (isDelivery && cart.length > 0) { // Only add delivery charge to total if delivery is active and cart has items
         total += parseFloat(deliveryCharge);
     }
     
