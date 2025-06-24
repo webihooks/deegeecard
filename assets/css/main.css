@@ -67,6 +67,57 @@ h6 {
   transition: all 0.3s ease;
 }
 
+
+.offer_popup {
+  top: 15%;
+  position: relative;
+  padding: 0 20px;
+  margin: 0;
+
+}
+.offer_popup .btn-close-black {
+  position: fixed;
+  margin-top: 5px !important;
+  right: 25px;
+  margin: 0;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  background: #000;
+  opacity: 1;
+  z-index: 999;
+}
+.offer_popup .modal-content {
+  border: 0;
+}
+.offer_popup .modal-body {
+  padding: 0;
+  border: 0;
+}
+.offer_popup .rounded {
+  border-radius: 0 !important;
+}
+.offer_popup .msg {
+  text-align: center;
+  font-size: 18px;
+  font-style: italic;
+  font-weight: bold;
+  padding: 5px 0 10px 0;
+  text-shadow: 1px 1px 1px #fff;
+}
+.offer_popup .msg span {
+  font-style: normal;
+}
+.discount-card {
+  border-radius: 0 0 10px 10px !important;
+  overflow: hidden;
+}
+
+
+
+
+
+
 /* Profile Photo */
 .profile_photo {
   width: 140px;
@@ -465,8 +516,26 @@ h6 {
     padding: 20px;
     position: relative;
   }
+  
 
 
+}
+
+@media screen and (min-width: 768px) {
+  .offer_popup {
+    top: 15%;
+    position: relative;
+    padding: 0 20px;
+    margin: 0;
+      margin-left: 0px;
+    width: 500px;
+    left: 50%;
+    margin-left: -250px;
+  }
+  .offer_popup .btn-close-black {
+    right: 50%;
+    margin-right: -218px;
+  }
 }
 
 .hide {

@@ -165,6 +165,12 @@
         .burger-menu {
             background: var(--secondary-color);
         }
+        .discount-card {
+          background: var(--secondary-color);
+        }
+        .offer_popup .btn-close-black {
+            background: var(--secondary-color);
+        }
     </style>
 </head>
 <body class="restaurant">

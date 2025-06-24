@@ -15,6 +15,12 @@ $user_id = $_SESSION['user_id'];
 $message = '';
 $message_type = 'success';
 
+// Define the upload directory
+$upload_dir = 'uploads/banners/';
+if (!is_dir($upload_dir)) {
+    mkdir($upload_dir, 0777, true);
+}
+
 // Fetch user details
 $sql = "SELECT name, email, phone, address, role FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
@@ -26,9 +32,9 @@ $stmt->close();
 
 // Fetch existing discount for this user (only one allowed)
 $discount = null;
-$sql = "SELECT id, min_cart_value, discount_in_percent, discount_in_flat, image_path 
-        FROM discount 
-        WHERE user_id = ? 
+$sql = "SELECT id, min_cart_value, discount_in_percent, discount_in_flat, image_path
+        FROM discount
+        WHERE user_id = ?
         LIMIT 1";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
@@ -39,6 +45,15 @@ if ($result->num_rows > 0) {
 }
 $stmt->close();
 
+// Function to delete an image file
+function deleteImage($imagePath) {
+    if ($imagePath && file_exists($imagePath)) {
+        unlink($imagePath);
+        return true;
+    }
+    return false;
+}
+
 // Process form submission for adding/editing discount
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['save_discount'])) {
@@ -46,7 +61,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $min_cart_value = (float)$_POST['min_cart_value'];
         $discount_in_percent = !empty($_POST['discount_in_percent']) ? (float)$_POST['discount_in_percent'] : NULL;
         $discount_in_flat = !empty($_POST['discount_in_flat']) ? (float)$_POST['discount_in_flat'] : NULL;
-        
+        $current_image_path = $discount ? $discount['image_path'] : NULL; // Get current image path from DB
+
+        // Handle image upload
+        $image_path = $current_image_path; // Default to current image path
+        if (isset($_FILES['offer_banner']) && $_FILES['offer_banner']['error'] === UPLOAD_ERR_OK) {
+            $file_name = $_FILES['offer_banner']['name'];
+            $file_tmp = $_FILES['offer_banner']['tmp_name'];
+            $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+            $new_file_name = uniqid('banner_', true) . '.' . $file_ext;
+            $destination = $upload_dir . $new_file_name;
+
+            // Validate file type
+            $allowed_ext = ['jpg', 'jpeg', 'png', 'gif'];
+            if (!in_array($file_ext, $allowed_ext)) {
+                $errors[] = "Invalid image file type. Only JPG, JPEG, PNG, and GIF are allowed.";
+            }
+
+            // Validate file size (e.g., max 5MB)
+            if ($_FILES['offer_banner']['size'] > 5 * 1024 * 1024) {
+                $errors[] = "Image file size must not exceed 5MB.";
+            }
+
+            if (empty($errors)) {
+                if (move_uploaded_file($file_tmp, $destination)) {
+                    // Delete old image if a new one is uploaded
+                    if ($current_image_path && file_exists($current_image_path)) {
+                        deleteImage($current_image_path);
+                    }
+                    $image_path = $destination;
+                } else {
+                    $errors[] = "Failed to upload image.";
+                }
+            }
+        } elseif (isset($_POST['delete_current_banner']) && $_POST['delete_current_banner'] === 'yes') {
+            // User explicitly requested to delete the current banner
+            if ($current_image_path && file_exists($current_image_path)) {
+                deleteImage($current_image_path);
+            }
+            $image_path = NULL; // Set image_path to NULL in DB
+        }
+
         // Validate input
         $errors = [];
         if ($min_cart_value <= 0) {
@@ -70,14 +125,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($errors)) {
             if ($id > 0) {
                 // Update existing discount
-                $sql = "UPDATE discount SET 
-                        min_cart_value = ?, 
-                        discount_in_percent = ?, 
-                        discount_in_flat = ?, 
-                        updated_at = NOW() 
+                $sql = "UPDATE discount SET
+                        min_cart_value = ?,
+                        discount_in_percent = ?,
+                        discount_in_flat = ?,
+                        image_path = ?,
+                        updated_at = NOW()
                         WHERE id = ? AND user_id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("dddii", $min_cart_value, $discount_in_percent, $discount_in_flat, $id, $user_id);
+                $stmt->bind_param("dddsii", $min_cart_value, $discount_in_percent, $discount_in_flat, $image_path, $id, $user_id);
             } else {
                 // Check if discount already exists
                 if ($discount !== null) {
@@ -85,11 +141,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $message_type = "danger";
                 } else {
                     // Insert new discount
-                    $sql = "INSERT INTO discount 
-                            (user_id, min_cart_value, discount_in_percent, discount_in_flat, created_at, updated_at) 
-                            VALUES (?, ?, ?, ?, NOW(), NOW())";
+                    $sql = "INSERT INTO discount
+                            (user_id, min_cart_value, discount_in_percent, discount_in_flat, image_path, created_at, updated_at)
+                            VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
                     $stmt = $conn->prepare($sql);
-                    $stmt->bind_param("iddd", $user_id, $min_cart_value, $discount_in_percent, $discount_in_flat);
+                    $stmt->bind_param("iddds", $user_id, $min_cart_value, $discount_in_percent, $discount_in_flat, $image_path);
                 }
             }
             
@@ -114,11 +170,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif (isset($_POST['delete_discount'])) {
         $id = (int)$_POST['id'];
+        // Fetch image path before deleting the discount record
+        $sql = "SELECT image_path FROM discount WHERE id = ? AND user_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ii", $id, $user_id);
+        $stmt->execute();
+        $stmt->bind_result($image_to_delete);
+        $stmt->fetch();
+        $stmt->close();
+
         $sql = "DELETE FROM discount WHERE id = ? AND user_id = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("ii", $id, $user_id);
         
         if ($stmt->execute()) {
+            // Delete the associated image file
+            deleteImage($image_to_delete);
             $message = "Discount deleted successfully!";
             // Refresh the page
             header("Location: discount.php");
@@ -183,6 +250,7 @@ $conn->close();
                                                 <tr>
                                                     <th>Min Cart Value</th>
                                                     <th>Discount</th>
+                                                    <th>Offer Banner</th>
                                                     <th>Actions</th>
                                                 </tr>
                                             </thead>
@@ -190,7 +258,7 @@ $conn->close();
                                                 <tr>
                                                     <td>₹<?php echo number_format($discount['min_cart_value'], 2); ?></td>
                                                     <td>
-                                                        <?php 
+                                                        <?php
                                                         if ($discount['discount_in_percent'] !== NULL) {
                                                             echo number_format($discount['discount_in_percent'], 2) . '%';
                                                         } else {
@@ -199,16 +267,24 @@ $conn->close();
                                                         ?>
                                                     </td>
                                                     <td>
-                                                        <button class="btn btn-sm btn-warning edit-discount" 
+                                                        <?php if ($discount['image_path']): ?>
+                                                            <img src="<?php echo htmlspecialchars($discount['image_path']); ?>" alt="Offer Banner" style="max-width: 100px; max-height: 100px;">
+                                                        <?php else: ?>
+                                                            No Banner
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-warning edit-discount"
                                                                 data-id="<?php echo $discount['id']; ?>"
                                                                 data-min-cart="<?php echo $discount['min_cart_value']; ?>"
                                                                 data-percent="<?php echo $discount['discount_in_percent']; ?>"
-                                                                data-flat="<?php echo $discount['discount_in_flat']; ?>">
-                                                            Edit
+                                                                data-flat="<?php echo $discount['discount_in_flat']; ?>"
+                                                                data-image-path="<?php echo htmlspecialchars($discount['image_path']); ?>">
+                                                                Edit
                                                         </button>
                                                         <form method="POST" style="display:inline;">
                                                             <input type="hidden" name="id" value="<?php echo $discount['id']; ?>">
-                                                            <button type="submit" name="delete_discount" class="btn btn-sm btn-danger" 
+                                                            <button type="submit" name="delete_discount" class="btn btn-sm btn-danger"
                                                                     onclick="return confirm('Are you sure you want to delete this discount?');">
                                                                 Delete
                                                             </button>
@@ -228,7 +304,6 @@ $conn->close();
         </div>
     </div>
 
-    <!-- Add/Edit Discount Modal -->
     <div class="modal fade" id="addDiscountModal" tabindex="-1" aria-labelledby="addDiscountModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -236,28 +311,44 @@ $conn->close();
                     <h5 class="modal-title" id="addDiscountModalLabel"><?php echo $discount ? 'Edit Discount' : 'Add Discount'; ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form method="POST" action="discount.php" id="discountForm">
+                <form method="POST" action="discount.php" id="discountForm" enctype="multipart/form-data">
                     <input type="hidden" name="id" id="discountId" value="<?php echo $discount ? $discount['id'] : 0; ?>">
                     <div class="modal-body">
                         <div class="mb-3">
+                            <label for="offer_banner" class="form-label">Offer Banner</label>
+                            <input type="file" class="form-control" id="offer_banner" name="offer_banner" accept="image/*">
+                            <small class="form-text text-muted">Upload an image for your offer banner (JPG, JPEG, PNG, GIF, Max 5MB).</small>
+                            <div id="currentBannerDisplay" class="mt-2">
+                                <?php if ($discount && $discount['image_path']): ?>
+                                    <p>Current Banner:</p>
+                                    <img src="<?php echo htmlspecialchars($discount['image_path']); ?>" alt="Current Offer Banner" style="max-width: 150px; max-height: 150px;">
+                                    <div class="form-check mt-1">
+                                        <input class="form-check-input" type="checkbox" id="deleteCurrentBanner" name="delete_current_banner" value="yes">
+                                        <label class="form-check-label" for="deleteCurrentBanner">Delete current banner</label>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
                             <label for="min_cart_value" class="form-label">Minimum Cart Value (₹)</label>
-                            <input type="number" class="form-control" id="min_cart_value" 
-                                   name="min_cart_value" step="0.01" min="0.01" 
+                            <input type="number" class="form-control" id="min_cart_value"
+                                   name="min_cart_value" step="0.01" min="0.01"
                                    value="<?php echo $discount ? $discount['min_cart_value'] : ''; ?>" required>
                         </div>
                         
                         <div class="mb-3">
                             <label class="form-label">Discount Type</label>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="discount_type" 
-                                       id="percentDiscount" value="percent" 
+                                <input class="form-check-input" type="radio" name="discount_type"
+                                       id="percentDiscount" value="percent"
                                        <?php echo ($discount && $discount['discount_in_percent'] !== NULL) ? 'checked' : 'checked'; ?>>
                                 <label class="form-check-label" for="percentDiscount">
                                     Percentage Discount
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="discount_type" 
+                                <input class="form-check-input" type="radio" name="discount_type"
                                        id="flatDiscount" value="flat"
                                        <?php echo ($discount && $discount['discount_in_flat'] !== NULL) ? 'checked' : ''; ?>>
                                 <label class="form-check-label" for="flatDiscount">
@@ -268,14 +359,14 @@ $conn->close();
                         
                         <div class="mb-3" id="percentDiscountGroup" style="<?php echo ($discount && $discount['discount_in_flat'] !== NULL) ? 'display:none;' : ''; ?>">
                             <label for="discount_in_percent" class="form-label">Discount Percentage (%)</label>
-                            <input type="number" class="form-control" id="discount_in_percent" 
+                            <input type="number" class="form-control" id="discount_in_percent"
                                    name="discount_in_percent" step="0.01" min="0" max="100"
                                    value="<?php echo $discount ? $discount['discount_in_percent'] : ''; ?>">
                         </div>
                         
                         <div class="mb-3" id="flatDiscountGroup" style="<?php echo ($discount && $discount['discount_in_flat'] !== NULL) ? '' : 'display:none;'; ?>">
                             <label for="discount_in_flat" class="form-label">Flat Discount Amount (₹)</label>
-                            <input type="number" class="form-control" id="discount_in_flat" 
+                            <input type="number" class="form-control" id="discount_in_flat"
                                    name="discount_in_flat" step="0.01" min="0.01"
                                    value="<?php echo $discount ? $discount['discount_in_flat'] : ''; ?>">
                         </div>
@@ -293,9 +384,9 @@ $conn->close();
     <script src="assets/js/app.js"></script>
     <script>
         $(document).ready(function() {
-            // Toggle between percentage and flat discount fields
-            $('input[name="discount_type"]').change(function() {
-                if ($(this).val() === 'percent') {
+            // Function to toggle discount type fields
+            function toggleDiscountFields() {
+                if ($('input[name="discount_type"]:checked').val() === 'percent') {
                     $('#percentDiscountGroup').show();
                     $('#flatDiscountGroup').hide();
                     $('#discount_in_percent').attr('required', 'required');
@@ -306,6 +397,14 @@ $conn->close();
                     $('#discount_in_percent').removeAttr('required');
                     $('#discount_in_flat').attr('required', 'required');
                 }
+            }
+
+            // Initial call to set correct fields on page load/modal open
+            toggleDiscountFields();
+
+            // Toggle between percentage and flat discount fields
+            $('input[name="discount_type"]').change(function() {
+                toggleDiscountFields();
             });
             
             // Edit discount button handler
@@ -314,24 +413,45 @@ $conn->close();
                 var minCart = $(this).data('min-cart');
                 var percent = $(this).data('percent');
                 var flat = $(this).data('flat');
-                
+                var imagePath = $(this).data('image-path'); // Get image path
+
                 $('#discountId').val(id);
                 $('#min_cart_value').val(minCart);
                 
-                if (percent !== null) {
+                if (percent !== null && percent !== '') {
                     $('input[name="discount_type"][value="percent"]').prop('checked', true);
                     $('#discount_in_percent').val(percent);
-                    $('#percentDiscountGroup').show();
-                    $('#flatDiscountGroup').hide();
                 } else {
                     $('input[name="discount_type"][value="flat"]').prop('checked', true);
                     $('#discount_in_flat').val(flat);
-                    $('#percentDiscountGroup').hide();
-                    $('#flatDiscountGroup').show();
                 }
-                
+                toggleDiscountFields(); // Call to adjust visibility based on loaded data
+
+                // Display current banner and delete option in modal
+                $('#currentBannerDisplay').empty(); // Clear previous display
+                if (imagePath) {
+                    $('#currentBannerDisplay').html(
+                        '<p>Current Banner:</p>' +
+                        '<img src="' + imagePath + '" alt="Current Offer Banner" style="max-width: 150px; max-height: 150px;">' +
+                        '<div class="form-check mt-1">' +
+                        '<input class="form-check-input" type="checkbox" id="deleteCurrentBanner" name="delete_current_banner" value="yes">' +
+                        '<label class="form-check-label" for="deleteCurrentBanner">Delete current banner</label>' +
+                        '</div>'
+                    );
+                }
+
                 $('#addDiscountModalLabel').text('Edit Discount');
                 $('#addDiscountModal').modal('show');
+            });
+
+            // When "Add Discount" button is clicked, clear the form and reset modal title
+            $('[data-bs-target="#addDiscountModal"]').click(function() {
+                $('#discountForm')[0].reset(); // Reset form fields
+                $('#discountId').val(0); // Set ID to 0 for new discount
+                $('input[name="discount_type"][value="percent"]').prop('checked', true); // Default to percent
+                toggleDiscountFields(); // Adjust fields for new entry
+                $('#currentBannerDisplay').empty(); // Clear banner display for new entry
+                $('#addDiscountModalLabel').text('Add Discount');
             });
             
             // Form validation
@@ -353,6 +473,9 @@ $conn->close();
                             return $('input[name="discount_type"]:checked').val() === 'flat';
                         },
                         min: 0.01
+                    },
+                    offer_banner: {
+                        extension: "jpg|jpeg|png|gif" // Client-side validation for file type
                     }
                 },
                 messages: {
@@ -368,12 +491,19 @@ $conn->close();
                     discount_in_flat: {
                         required: "Please enter flat discount amount",
                         min: "Flat discount must be greater than 0"
+                    },
+                    offer_banner: {
+                        extension: "Only JPG, JPEG, PNG, GIF files are allowed."
                     }
                 },
                 errorElement: 'div',
                 errorPlacement: function(error, element) {
                     error.addClass('invalid-feedback');
-                    element.closest('.mb-3').append(error);
+                    if (element.attr("name") == "offer_banner") {
+                        error.insertAfter(element);
+                    } else {
+                        element.closest('.mb-3').append(error);
+                    }
                 },
                 highlight: function(element, errorClass, validClass) {
                     $(element).addClass('is-invalid').removeClass('is-valid');
