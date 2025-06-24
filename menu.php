@@ -98,6 +98,15 @@
                 </a>
             </li>
 
+            <li class="nav-item">
+                <a class="nav-link" href="discount.php">
+                    <span class="nav-icon">
+                        <iconify-icon icon="fluent-mdl2:coupon"></iconify-icon>
+                    </span>
+                    <span class="nav-text">Discount</span>
+                </a>
+            </li>
+
             <li class="menu-title">Business Info</li>
 
             <li class="nav-item">

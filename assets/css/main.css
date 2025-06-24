@@ -641,7 +641,7 @@ h6 {
   overflow-y: auto;
 }
 
-.cart-delivery-charges, .cart-subtotal, .cart-gst-charges {
+.cart-delivery-charges, .cart-subtotal, .cart-gst-charges, .cart-discount {
   text-align: right;
 }
 
@@ -652,6 +652,22 @@ h6 {
 
 .cart-sidebar.open {
   right: 0;
+}
+
+.cart-discount {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.cart-total-details div {
+    padding: 3px 0;
+}
+
+.cart-total-details div:last-child {
+    border-bottom: none;
+    font-weight: bold;
+    font-size: 1.1em;
+    padding-top: 5px;
 }
 
 .cart-header {
@@ -680,6 +696,10 @@ h6 {
   align-items: center;
   padding: 10px 0;
   border-bottom: 1px solid #eee;
+}
+
+.cart-item h6 {
+  text-transform: capitalize;
 }
 
 .cart-item-info {

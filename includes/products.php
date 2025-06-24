@@ -37,16 +37,25 @@
         <div class="cart-subtotal">
             Subtotal: ₹<span id="cartSubtotal">0.00</span>
         </div>
+        
+        <!-- Discount Section -->
+        <div class="cart-discount" id="discountSection" style="display: none;">
+            Discount: -₹<span id="discountAmount">0.00</span>
+            (<span id="discountType"></span>)
+        </div>
+        
         <?php if ($gst_percent > 0): ?>
         <div class="cart-gst-charges">
             GST (<?= $gst_percent ?>%): ₹<span id="gstCharges">0.00</span>
         </div>
         <?php endif; ?>
+        
         <?php if ($delivery_active && isset($delivery_charges)): ?>
         <div class="cart-delivery-charges <?= ($delivery_charges['delivery_charge'] == 0.00) ? 'free' : '' ?>">
             Delivery: <?= ($delivery_charges['delivery_charge'] == 0.00) ? 'FREE' : '₹<span id="deliveryCharges">'.number_format($delivery_charges['delivery_charge'], 2).'</span>' ?>
         </div>
         <?php endif; ?>
+        
         <div class="cart-total">
             Total: ₹<span id="cartTotal">0.00</span>
         </div>
@@ -178,12 +187,16 @@
  <?php endif; ?>
 </div>
 
+
+
 <script>
 // Detect store name from URL
 const storeName = window.location.pathname.split('/')[1] || 'default';
 const cartKey = `cart_${storeName}`;
 
 let cart = [];
+let discountAmount = 0;
+let discountType = '';
 
 // Initialize cart from localStorage
 if (localStorage.getItem(cartKey)) {
@@ -260,6 +273,7 @@ function saveCart() {
 }
 
 // Update cart UI
+// Update cart UI
 function updateCartUI() {
     const cartItemsContainer = document.getElementById('cartItems');
     cartItemsContainer.innerHTML = '';
@@ -269,6 +283,7 @@ function updateCartUI() {
     const deliveryCharge = <?= isset($delivery_charges['delivery_charge']) ? $delivery_charges['delivery_charge'] : 0 ?>;
     const gstPercent = <?= $gst_percent ?? 0 ?>;
 
+    // Calculate subtotal
     cart.forEach((item, index) => {
         subtotal += item.price * item.quantity;
         const productImage = item.image_path ? item.image_path : 'images/no-image.jpg';
@@ -287,8 +302,8 @@ function updateCartUI() {
                 <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${index}, -1)">
                     <i class="bi bi-dash"></i>
                 </button>
-                <input type="number" value="${item.quantity}" min="1" max="${item.max}" 
-                       onchange="updateQuantityInput(${index}, this.value)">
+                <input type="number" value="${item.quantity}" min="1" max="${item.max}"
+                        onchange="updateQuantityInput(${index}, this.value)">
                 <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${index}, 1)">
                     <i class="bi bi-plus"></i>
                 </button>
@@ -300,21 +315,77 @@ function updateCartUI() {
         cartItemsContainer.appendChild(itemElement);
     });
 
+    // Calculate discount
+    discountAmount = 0;
+    discountType = '';
+    const discountSection = document.getElementById('discountSection');
+
+    <?php if (!empty($discounts)): ?>
+        // Check each discount condition in order
+        const discounts = <?= json_encode($discounts) ?>;
+        let applicableDiscount = null;
+
+        // Iterate through discounts to find the highest applicable one
+        // Assuming discounts are ordered by min_cart_value ASC from PHP
+        for (const discount of discounts) {
+            if (subtotal >= discount.min_cart_value) {
+                applicableDiscount = discount;
+            }
+        }
+
+        if (applicableDiscount) {
+            if (applicableDiscount.discount_in_percent !== null && applicableDiscount.discount_in_percent > 0) {
+                discountAmount = (subtotal * applicableDiscount.discount_in_percent) / 100;
+                discountType = applicableDiscount.discount_in_percent + '% discount';
+            } else if (applicableDiscount.discount_in_flat !== null && applicableDiscount.discount_in_flat > 0) {
+                // This is the main change: If discount_in_flat is mentioned, use it directly
+                discountAmount = parseFloat(applicableDiscount.discount_in_flat);
+                discountType = 'Flat OFF ₹' + discountAmount.toFixed(2) ; // Changed for clarity
+            }
+
+            // Ensure discountAmount doesn't exceed subtotal
+            if (discountAmount > subtotal) {
+                discountAmount = subtotal;
+            }
+
+            // Show discount section only if a discount is actually applied
+            if (discountAmount > 0) {
+                discountSection.style.display = 'block';
+                document.getElementById('discountAmount').textContent = discountAmount.toFixed(2);
+                document.getElementById('discountType').textContent = discountType;
+            } else {
+                discountSection.style.display = 'none';
+            }
+
+        } else {
+            // Hide discount section if no applicable discount
+            discountSection.style.display = 'none';
+        }
+    <?php else: ?>
+        // Hide discount section if no discounts exist at all
+        discountSection.style.display = 'none';
+    <?php endif; ?>
+
     // Update subtotal and total
     document.getElementById('cartSubtotal').textContent = subtotal.toFixed(2);
-    
-    // Calculate GST only if percentage is greater than 0
-    let total = subtotal;
+
+    // Calculate GST on amount after discount
+    let amountAfterDiscount = subtotal - discountAmount;
+    if (amountAfterDiscount < 0) { // Ensure amount after discount doesn't go negative
+        amountAfterDiscount = 0;
+    }
+
+    let total = amountAfterDiscount;
     if (gstPercent > 0) {
-        const gstAmount = (subtotal * gstPercent) / 100;
+        const gstAmount = (amountAfterDiscount * gstPercent) / 100;
         document.getElementById('gstCharges').textContent = gstAmount.toFixed(2);
         total += gstAmount;
     }
-    
+
     if (isDelivery) {
         total += parseFloat(deliveryCharge);
         document.querySelector('.cart-delivery-charges').style.display = 'block';
-        
+
         // Update delivery charges display
         if (deliveryCharge == 0) {
             document.querySelector('.cart-delivery-charges').innerHTML = 'Delivery: FREE';
@@ -326,7 +397,7 @@ function updateCartUI() {
     } else {
         document.querySelector('.cart-delivery-charges').style.display = 'none';
     }
-    
+
     document.getElementById('cartTotal').textContent = total.toFixed(2);
     const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
     document.querySelector('.cart-count').textContent = itemCount;
@@ -462,28 +533,40 @@ function placeOrderOnWhatsApp() {
         return;
     }
 
+    // Calculate subtotal
+    let subtotal = 0;
+    cart.forEach(item => {
+        subtotal += item.price * item.quantity;
+    });
+
     let message = `*##### NEW ORDER #####*\n\n`;
     message += `--------------------------\n*Order Details:*\n--------------------------\n`;
 
-    let subtotal = 0;
     cart.forEach(item => {
         message += `*${item.name}*\nPrice: ₹${item.price.toFixed(2)}\nQuantity: ${item.quantity}\nSubtotal: ₹${(item.price * item.quantity).toFixed(2)}\n\n`;
-        subtotal += item.price * item.quantity;
     });
 
     message += `--------------------------\n`;
     message += `*Subtotal: ₹${subtotal.toFixed(2)}*\n`;
-    if (gstPercent > 0) {
-        message += `*GST (${gstPercent}%): ₹${((subtotal * gstPercent) / 100).toFixed(2)}*\n`;
+    
+    // Add discount line if applicable
+    if (discountAmount > 0) {
+        message += `*Discount (${discountType}): -₹${discountAmount.toFixed(2)}*\n`;
     }
+    
+    if (gstPercent > 0) {
+        message += `*GST (${gstPercent}%): ₹${((subtotal - discountAmount) * gstPercent / 100).toFixed(2)}*\n`;
+    }
+    
     if (isDelivery) {
         message += `*Delivery Charges: ${deliveryCharge == 0 ? 'FREE' : '₹' + deliveryCharge.toFixed(2)}*\n`;
     }
 
-    let total = subtotal + (gstPercent > 0 ? (subtotal * gstPercent / 100) : 0);
+    let total = (subtotal - discountAmount) + (gstPercent > 0 ? ((subtotal - discountAmount) * gstPercent / 100) : 0);
     if (isDelivery) {
         total += parseFloat(deliveryCharge);
     }
+    
     message += `*Total Amount: ₹${total.toFixed(2)}*\n--------------------------\n\n`;
     message += `*Customer Details:*\n${orderDetails}\n\n`;
     message += `*Please confirm this order.*`;

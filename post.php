@@ -56,6 +56,12 @@ $gst_stmt->execute([$user_id]);
 $gst_data = $gst_stmt->fetch(PDO::FETCH_ASSOC);
 $gst_percent = $gst_data['gst_percent'] ?? 0;
 
+// Get discounts for this user
+$discounts_sql = "SELECT * FROM discount WHERE user_id = ? ORDER BY min_cart_value ASC";
+$discounts_stmt = $conn->prepare($discounts_sql);
+$discounts_stmt->execute([$user_id]);
+$discounts = $discounts_stmt->fetchAll(PDO::FETCH_ASSOC);
+
 // Get other profile data
 $business_info = getBusinessInfo($conn, $user_id);
 $photos = getProfilePhotos($conn, $user_id);
