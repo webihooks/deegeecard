@@ -98,6 +98,26 @@
                     </a>
                </li>
 
+               <li class="menu-title">Accounts</li>
+
+               <li class="nav-item">
+                    <a class="nav-link" href="ac_category.php">
+                         <span class="nav-icon">
+                              <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
+                         </span>
+                         <span class="nav-text"> Category </span>
+                    </a>
+               </li>
+
+               <li class="nav-item">
+                    <a class="nav-link" href="finance-management.php">
+                         <span class="nav-icon">
+                              <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
+                         </span>
+                         <span class="nav-text"> Finance Management </span>
+                    </a>
+               </li>
+
               
               
 
