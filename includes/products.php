@@ -174,10 +174,25 @@
                 <img src="<?= htmlspecialchars($product['image_path']) ?>" 
                 class="card-img-top product-img" 
                 alt="<?= htmlspecialchars($product['product_name']) ?>"
-                onerror="this.style.display='none'; document.querySelector('.cart_btn_group').classList.add('top-0')">
+                onerror="this.style.display='none'">
             </div>
             <?php endif; ?>
 
+
+            <script>
+                document.querySelectorAll('.product-img').forEach(img => {
+                  img.addEventListener('error', function() {
+                    // Find the closest parent `.product-card`, then navigate to `.card-body .cart_btn_group`
+                    const productCard = this.closest('.product-card');
+                    if (productCard) {
+                      const cartBtnGroup = productCard.querySelector('.card-body .cart_btn_group');
+                      if (cartBtnGroup) {
+                        cartBtnGroup.classList.add('top'); // Add the "top" class
+                      }
+                    }
+                  });
+                });
+            </script>
 
 
 
