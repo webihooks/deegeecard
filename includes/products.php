@@ -139,34 +139,48 @@
        data-name="<?= htmlspecialchars(strtolower($product['product_name'])) ?>"
        data-desc="<?= htmlspecialchars(strtolower($product['description'])) ?>">
        <div class="card product-card">
-          <img src="<?= !empty($product['image_path']) ? htmlspecialchars($product['image_path']) : 'images/no-image.jpg' ?>" 
-             class="card-img-top product-img" 
-             alt="<?= htmlspecialchars($product['product_name']) ?>">
-          <div class="card-body">
-             <h5 class="card-title"><?= htmlspecialchars($product['product_name']) ?></h5>
-             <p class="card-text"><?= htmlspecialchars($product['description']) ?></p>
-             <div class="d-flex justify-content-between align-items-center">
-                <span class="text-primary fw-bold">₹<?= number_format($product['price']) ?></span>
-                <span class="badge bg-<?= ($product['quantity'] > 0) ? 'success' : 'danger' ?>">
-                <?= ($product['quantity'] > 0) ? 'In Stock' : 'Out of Stock' ?>
-                </span>
-             </div>
-             <?php if ($product['quantity'] > 0): ?>
-             <small class="text-muted">Quantity: <?= $product['quantity'] ?></small>
-             <?php endif; ?>
-             <?php if ($product['quantity'] > 0 && ($delivery_active || $dining_active)): ?>
-             <div class="mt-3">
-                <button class="btn btn-primary w-100 add-to-cart" 
-                   data-id="<?= htmlspecialchars($product['product_name']) ?>"
-                   data-name="<?= htmlspecialchars($product['product_name']) ?>"
-                   data-price="<?= $product['price'] ?>"
-                   data-max="<?= $product['quantity'] ?>"
-                   data-image="<?= htmlspecialchars($product['image_path']) ?>"> 
-                <i class="bi bi-cart-plus"></i> Add to Cart
-                </button>
-             </div>
-             <?php endif; ?>
-          </div>
+          
+
+
+
+            <div class="card-body">
+                <h5 class="card-title"><?= htmlspecialchars($product['product_name']) ?></h5>
+                <p class="card-text"><?= htmlspecialchars($product['description']) ?></p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-primary fw-bold">₹<?= number_format($product['price']) ?></span>
+                    <span class="badge bg-<?= ($product['quantity'] > 0) ? 'success' : 'danger' ?>" style="display: none;">
+                        <?= ($product['quantity'] > 0) ? 'In Stock' : 'Out of Stock' ?>
+                    </span>
+                </div>
+                <?php if ($product['quantity'] > 0): ?>
+                <small class="text-muted">Quantity: <?= $product['quantity'] ?></small>
+                <?php endif; ?>
+                <?php if ($product['quantity'] > 0 && ($delivery_active || $dining_active)): ?>
+                <div class="mt-3 cart_btn_group <?= empty($product['image_path']) ? 'top' : '' ?>">
+                    <button class="btn btn-primary w-100 add-to-cart" 
+                       data-id="<?= htmlspecialchars($product['product_name']) ?>"
+                       data-name="<?= htmlspecialchars($product['product_name']) ?>"
+                       data-price="<?= $product['price'] ?>"
+                       data-max="<?= $product['quantity'] ?>"
+                       data-image="<?= htmlspecialchars($product['image_path']) ?>"> 
+                    <i class="bi bi-cart-plus"></i> Add to Cart
+                    </button>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <?php if (!empty($product['image_path'])): ?>
+            <div class="img-group">
+                <img src="<?= htmlspecialchars($product['image_path']) ?>" 
+                class="card-img-top product-img" 
+                alt="<?= htmlspecialchars($product['product_name']) ?>"
+                onerror="this.style.display='none'; document.querySelector('.cart_btn_group').classList.add('top-0')">
+            </div>
+            <?php endif; ?>
+
+
+
+
        </div>
     </div>
     <?php endforeach; ?>
@@ -297,7 +311,6 @@ function updateCartUI() {
         itemElement.className = 'cart-item';
         itemElement.innerHTML = `
             <div class="cart-item-info d-flex">
-                <img src="${productImage}" alt="${item.name}" class="cart-item-img" />
                 <div class="ms-1">
                     <h6>${item.name}</h6>
                     <div>₹${item.price.toFixed(2)} x ${item.quantity}</div>

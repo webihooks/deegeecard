@@ -282,7 +282,7 @@ h6 {
   padding: 10px;
 }
 
-.product-img,
+.img-group,
 .service-img {
   height: 200px;
   object-fit: cover;
@@ -635,25 +635,42 @@ h6 {
 
 .restaurant .product-card {
   width: 100%;
-  display: block;
-  overflow: hidden;
+  display: inline-block;
   padding: 0;
   border: 0;
+  position: relative;
+  border-radius: 0;
 }
 
-.restaurant .product-img {
+.restaurant .img-group {
   width: 40%;
-  float: left;
+  float: right;
   display: block;
   height: auto;
+}
+
+.restaurant .img-group .product-img {
+  width: 140px;
+  height: 140px;
+  float: right;
   border-radius: 5px;
 }
 
 .restaurant .product-card .card-body {
   width: 60%;
-  float: right;
+  float: left;
   display: block;
-  padding: 0 0 0 15px;
+  padding: 0 15px 0 0;
+}
+
+.restaurant .product-card .card-body .cart_btn_group {
+  position: absolute;
+  right: 15px;
+  bottom: 15px;
+}
+
+.restaurant .product-card .card-body .cart_btn_group.top {
+  top: 50px;
 }
 
 .restaurant .product-card .card-body .card-title {
@@ -678,7 +695,9 @@ h6 {
 }
 
 .restaurant .product-card {
-  margin-bottom: 10px;
+  padding: 30px 0;
+  border-bottom: 1px dashed #909090;
+  margin-bottom: 0;
 }
 
 .restaurant .product-card .card-body .mt-3 {
