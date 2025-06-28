@@ -31,7 +31,7 @@ if ($role_stmt) {
     $role = ''; // Default or handle error
 }
 
-// Fetch categories for dropdown
+// Fetch categories for dropdown (for both add transaction and filter)
 $categories = [];
 $category_sql = "SELECT id, name FROM dg_categories ORDER BY name";
 $category_result = $conn->query($category_sql);
@@ -43,64 +43,109 @@ if ($category_result) {
     $error_message = "Error fetching categories: " . $conn->error;
 }
 
-// Handle finance form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['add_transaction'])) {
-        $amount = floatval($_POST['amount']);
-        $category_id = intval($_POST['category_id']);
-        $description = trim($_POST['description']);
-        $type = $_POST['transaction_type'];
-        $date = $_POST['date'];
+// Handle finance form submission for adding transactions
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_transaction'])) {
+    $amount = floatval($_POST['amount']);
+    $category_id = intval($_POST['category_id']);
+    $description = trim($_POST['description']);
+    $type = $_POST['transaction_type'];
+    $date = $_POST['date'];
 
-        // Basic validation
-        if ($amount <= 0) {
-            $error_message = "Amount must be greater than zero";
-        } elseif (!array_key_exists($category_id, $categories)) {
-            $error_message = "Invalid category selected";
-        } else {
-            // Insert transaction
-            $insert_sql = "INSERT INTO dg_transactions
-                            (user_id, amount, category_id, description, type, date, created_at)
-                            VALUES (?, ?, ?, ?, ?, ?, NOW())";
-            $stmt = $conn->prepare($insert_sql);
+    // Basic validation
+    if ($amount <= 0) {
+        $error_message = "Amount must be greater than zero";
+    } elseif (!array_key_exists($category_id, $categories)) {
+        $error_message = "Invalid category selected";
+    } else {
+        // Insert transaction
+        $insert_sql = "INSERT INTO dg_transactions
+                        (user_id, amount, category_id, description, type, date, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, NOW())";
+        $stmt = $conn->prepare($insert_sql);
 
-            if ($stmt) {
-                $stmt->bind_param("idssss", $user_id, $amount, $category_id, $description, $type, $date);
+        if ($stmt) {
+            $stmt->bind_param("idssss", $user_id, $amount, $category_id, $description, $type, $date);
 
-                if ($stmt->execute()) {
-                    $success_message = "Transaction added successfully!";
-                    // Clear form values
-                    $_POST = array();
-                } else {
-                    $error_message = "Error adding transaction: " . $stmt->error;
-                }
-                $stmt->close();
+            if ($stmt->execute()) {
+                $success_message = "Transaction added successfully!";
+                // Clear form values
+                $_POST = array();
             } else {
-                $error_message = "Error preparing insert query: " . $conn->error;
+                $error_message = "Error adding transaction: " . $stmt->error;
             }
+            $stmt->close();
+        } else {
+            $error_message = "Error preparing insert query: " . $conn->error;
         }
     }
 }
 
-// Fetch transactions with category names and user info
+// Initialize filter variables from GET request
+$filter_from_date = $_GET['from_date'] ?? '';
+$filter_end_date = $_GET['end_date'] ?? '';
+$filter_transaction_type = $_GET['filter_type'] ?? 'both'; // Default to 'both'
+$filter_category_id = $_GET['filter_category'] ?? ''; // New: Initialize category filter
+
+// Fetch transactions with category names and user info based on filters
 $transactions = [];
 $transaction_sql = "SELECT t.id, t.amount, c.name AS category,
-                   t.description, t.type, t.date, t.user_id, u.name AS user_name
-                   FROM dg_transactions t
-                   LEFT JOIN dg_categories c ON t.category_id = c.id
-                   LEFT JOIN users u ON t.user_id = u.id";
+                    t.description, t.type, t.date, t.user_id, u.name AS user_name
+                    FROM dg_transactions t
+                    LEFT JOIN dg_categories c ON t.category_id = c.id
+                    LEFT JOIN users u ON t.user_id = u.id";
 
-// Add WHERE clause only for non-admin users
+$conditions = [];
+$params = [];
+$param_types = '';
+
+// Condition for user role (always apply for non-admin)
 if ($role !== 'admin') {
-    $transaction_sql .= " WHERE t.user_id = ?";
+    $conditions[] = "t.user_id = ?";
+    $params[] = $user_id;
+    $param_types .= "i";
 }
 
+// Add date range conditions
+if (!empty($filter_from_date)) {
+    $conditions[] = "t.date >= ?";
+    $params[] = $filter_from_date;
+    $param_types .= "s";
+}
+
+if (!empty($filter_end_date)) {
+    $conditions[] = "t.date <= ?";
+    $params[] = $filter_end_date;
+    $param_types .= "s";
+}
+
+// Add transaction type condition
+if ($filter_transaction_type !== 'both') {
+    $conditions[] = "t.type = ?";
+    $params[] = $filter_transaction_type;
+    $param_types .= "s";
+}
+
+// New: Add category filter condition
+if (!empty($filter_category_id)) {
+    $conditions[] = "t.category_id = ?";
+    $params[] = $filter_category_id;
+    $param_types .= "i"; // 'i' for integer as category_id is likely an INT
+}
+
+// Append WHERE clause if conditions exist
+if (!empty($conditions)) {
+    $transaction_sql .= " WHERE " . implode(" AND ", $conditions);
+}
+
+// Add ordering
 $transaction_sql .= " ORDER BY t.date DESC, t.created_at DESC";
 
+// Prepare and execute the statement for fetching transactions
 $transaction_stmt = $conn->prepare($transaction_sql);
 if ($transaction_stmt) {
-    if ($role !== 'admin') {
-        $transaction_stmt->bind_param("i", $user_id);
+    if (!empty($params)) {
+        // Use call_user_func_array to bind parameters dynamically
+        $transaction_stmt->bind_param($param_types, ...$params);
     }
     $transaction_stmt->execute();
     $result = $transaction_stmt->get_result();
@@ -112,35 +157,20 @@ if ($transaction_stmt) {
     $error_message = "Error preparing transaction history query: " . $conn->error;
 }
 
-// Calculate totals
+// Calculate totals based on the FILTERED transactions
 $income_total = 0;
 $expense_total = 0;
 
-if ($role === 'admin') {
-    // For admin, calculate totals for all transactions
-    $totals_sql = "SELECT 
-                  SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as income,
-                  SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as expense
-                  FROM dg_transactions";
-    $totals_result = $conn->query($totals_sql);
-    if ($totals_row = $totals_result->fetch_assoc()) {
-        $income_total = $totals_row['income'] ?? 0;
-        $expense_total = $totals_row['expense'] ?? 0;
-    }
-} else {
-    // For regular users, calculate only their transactions
-    foreach ($transactions as $transaction) {
-        if ($transaction['type'] === 'income') {
-            $income_total += $transaction['amount'];
-        } else {
-            $expense_total += $transaction['amount'];
-        }
+foreach ($transactions as $transaction) {
+    if ($transaction['type'] === 'income') {
+        $income_total += $transaction['amount'];
+    } else {
+        $expense_total += $transaction['amount'];
     }
 }
-
 $balance = $income_total - $expense_total;
 
-// Fetch user name
+// Fetch user name for display
 $sql = "SELECT name FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
 if ($stmt) {
@@ -173,15 +203,15 @@ $conn->close();
    </head>
    <body>
       <div class="wrapper">
-         <?php include 'toolbar.php'; ?>
-         <?php
+          <?php include 'toolbar.php'; ?>
+          <?php
             if ($role === 'admin') {
                 include 'admin_menu.php';
             } else {
                 include 'menu.php';
             }
             ?>
-         <div class="page-content">
+          <div class="page-content">
             <div class="container">
                <div class="row">
                   <div class="col-xl-12">
@@ -234,8 +264,8 @@ $conn->close();
                                              <div class="col-md-3 mb-3">
                                                 <label for="transaction_type" class="form-label">Type</label>
                                                 <select class="form-select" id="transaction_type" name="transaction_type" required>
-                                                   <option value="income">Income</option>
-                                                   <option value="expense">Expense</option>
+                                                   <option value="income" <?php echo (isset($_POST['transaction_type']) && $_POST['transaction_type'] == 'income') ? 'selected' : ''; ?>>Income</option>
+                                                   <option value="expense" <?php echo (isset($_POST['transaction_type']) && $_POST['transaction_type'] == 'expense') ? 'selected' : ''; ?>>Expense</option>
                                                 </select>
                                              </div>
                                              <div class="col-md-3 mb-3">
@@ -275,6 +305,41 @@ $conn->close();
                                        <h5 class="card-title">Transaction History</h5>
                                     </div>
                                     <div class="card-body">
+                                       <form method="GET" action="finance-management.php" class="mb-4">
+                                          <div class="row g-2">
+                                             <div class="col-md-3">
+                                                <label for="from_date" class="form-label">From Date</label>
+                                                <input type="date" class="form-control" id="from_date" name="from_date" value="<?php echo htmlspecialchars($filter_from_date); ?>">
+                                             </div>
+                                             <div class="col-md-3">
+                                                <label for="end_date" class="form-label">End Date</label>
+                                                <input type="date" class="form-control" id="end_date" name="end_date" value="<?php echo htmlspecialchars($filter_end_date); ?>">
+                                             </div>
+                                             <div class="col-md-2">
+                                                <label for="filter_type" class="form-label">Type</label>
+                                                <select class="form-select" id="filter_type" name="filter_type">
+                                                   <option value="both" <?php echo ($filter_transaction_type === 'both') ? 'selected' : ''; ?>>Both</option>
+                                                   <option value="income" <?php echo ($filter_transaction_type === 'income') ? 'selected' : ''; ?>>Income</option>
+                                                   <option value="expense" <?php echo ($filter_transaction_type === 'expense') ? 'selected' : ''; ?>>Expense</option>
+                                                </select>
+                                             </div>
+                                             <div class="col-md-2">
+                                                <label for="filter_category" class="form-label">Category</label>
+                                                <select class="form-select" id="filter_category" name="filter_category">
+                                                   <option value="">All Categories</option>
+                                                   <?php foreach ($categories as $id => $name): ?>
+                                                   <option value="<?php echo $id; ?>" <?php echo (string)$filter_category_id === (string)$id ? 'selected' : ''; ?>>
+                                                      <?php echo htmlspecialchars($name); ?>
+                                                   </option>
+                                                   <?php endforeach; ?>
+                                                </select>
+                                             </div>
+                                             <div class="col-md-2 d-flex align-items-end">
+                                                <button type="submit" class="btn btn-info w-100">Apply Filter</button>
+                                             </div>
+                                          </div>
+                                       </form>
+
                                        <div class="table-responsive">
                                           <table class="table table-striped">
                                              <thead>
@@ -326,44 +391,47 @@ $conn->close();
                </div>
             </div>
             <?php include 'footer.php'; ?>
-         </div>
+          </div>
       </div>
       <script src="assets/js/vendor.js"></script>
       <script src="assets/js/app.js"></script>
       <script>
-         // Initialize form validation
-         $(document).ready(function() {
-             $("form").validate({
-                 rules: {
-                     amount: {
-                         required: true,
-                         number: true,
-                         min: 0.01
-                     },
-                     category_id: {
-                         required: true
-                     },
-                     date: {
-                         required: true,
-                         date: true
-                     }
-                 },
-                 messages: {
-                     amount: {
-                         required: "Please enter an amount",
-                         number: "Please enter a valid number",
-                         min: "Amount must be greater than zero"
-                     },
-                     category_id: {
-                         required: "Please select a category"
-                     },
-                     date: {
-                         required: "Please select a date",
-                         date: "Please enter a valid date"
-                     }
-                 }
-             });
-         });
+          // Initialize form validation
+          $(document).ready(function() {
+              // Validation for Add Transaction form
+              $("form[name='add_transaction_form']").validate({ // Added a name to the add transaction form
+                  rules: {
+                      amount: {
+                          required: true,
+                          number: true,
+                          min: 0.01
+                      },
+                      category_id: {
+                          required: true
+                      },
+                      date: {
+                          required: true,
+                          date: true
+                      }
+                  },
+                  messages: {
+                      amount: {
+                          required: "Please enter an amount",
+                          number: "Please enter a valid number",
+                          min: "Amount must be greater than zero"
+                      },
+                      category_id: {
+                          required: "Please select a category"
+                      },
+                      date: {
+                          required: "Please select a date",
+                          date: "Please enter a valid date"
+                      }
+                  }
+              });
+
+              // No validation for filter form (GET requests) as it's optional filtering
+          });
       </script>
    </body>
 </html>
