@@ -41,9 +41,4 @@
             <a href="javascript:void(0)" onclick="scrollToSection('qr_code_details')">Pay with QR</a>
     <?php endif; ?>
 
-    
-      
-
-
-
 </div>

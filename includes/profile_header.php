@@ -22,7 +22,7 @@
     <?php endif; ?>
     
     <ul class="social_networks">
-        <?php foreach (['facebook', 'instagram', 'whatsapp', 'linkedin', 'youtube', 'telegram'] as $social): ?>
+        <?php foreach (['facebook', 'instagram', 'linkedin', 'youtube', 'telegram'] as $social): ?>
             <?php if (!empty($social_link[$social])): ?>
             <li>
                 <a href="<?= htmlspecialchars($social_link[$social]) ?>" target="_blank">
@@ -31,37 +31,39 @@
             </li>
             <?php endif; ?>
         <?php endforeach; ?>
-    </ul>
-    
-    <ul class="personal_contact mt-4">
+        
+        <!-- Phone -->
         <?php if (!empty($user['phone'])): ?>
         <li>
             <a href="tel:<?= htmlspecialchars($user['phone']) ?>">
-                <i class="bi bi-telephone"></i> <?= htmlspecialchars($user['phone']) ?>
+                <i class="bi bi-telephone"></i>
             </a>
         </li>
         <?php endif; ?>
         
+        <!-- WhatsApp -->
         <?php if (!empty($social_link['whatsapp'])): ?>
         <li>
-            <a href="<?= htmlspecialchars($social_link['whatsapp']) ?>">
-                <i class="bi bi-whatsapp"></i> <?= htmlspecialchars($social_link['whatsapp']) ?>
+            <a target="_blank" href="<?= htmlspecialchars($social_link['whatsapp']) ?>">
+                <i class="bi bi-whatsapp"></i>
             </a>
         </li>
         <?php endif; ?>
         
+        <!-- Email -->
         <?php if (!empty($user['email'])): ?>
         <li>
             <a href="mailto:<?= htmlspecialchars($user['email']) ?>">
-                <i class="bi bi-envelope"></i> <?= htmlspecialchars($user['email']) ?>
+                <i class="bi bi-envelope"></i>
             </a>
         </li>
         <?php endif; ?>
         
+        <!-- Google Direction -->
         <?php if (!empty($business_info['google_direction'])): ?>
         <li>
             <a href="<?= htmlspecialchars($business_info['google_direction']) ?>" target="_blank">
-                <i class="bi bi-geo-alt"></i> <?= htmlspecialchars($business_info['google_direction']) ?>
+                <i class="bi bi-geo-alt"></i>
             </a>
         </li>
         <?php endif; ?>

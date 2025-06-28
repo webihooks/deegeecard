@@ -520,10 +520,14 @@ h6 {
     padding: 20px;
     position: relative;
   }
-  
-
-
 }
+
+
+
+
+
+
+
 
 @media screen and (min-width: 768px) {
   .offer_popup {
@@ -993,3 +997,25 @@ h6 {
     width: 100%;
   }
 }
+
+
+@media only screen and (max-width: 400px) {
+  .restaurant .img-group .product-img {
+    width: 100%;
+  }
+  .restaurant .product-card .card-body .cart_btn_group {
+    right: 3px;
+  }
+  .restaurant .product-card .card-body .btn.add-to-cart {
+    font-size: 11px;
+    width: 100px !important;
+    height: auto !important;
+    padding: 3px;
+  }
+}
+
+
+
+
+
+

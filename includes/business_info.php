@@ -1,5 +1,5 @@
 <?php if ($business_info): ?>
-<div class="business_details">
+<div class="business_details mt-4">
     <h6>Business</h6>
     <h2><?= htmlspecialchars($business_info['business_name']) ?></h2>
     <p><?= htmlspecialchars($business_info['business_description']) ?></p>
