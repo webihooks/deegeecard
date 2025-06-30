@@ -97,7 +97,13 @@ $conn->close();
 <body>
     <div class="wrapper">
         <?php include 'toolbar.php'; ?>
-        <?php echo ($role === 'admin') ? include 'admin_menu.php' : include 'menu.php'; ?>
+        <?php
+        if ($role === 'admin') {
+            include 'admin_menu.php';
+        } else {
+            include 'menu.php'; // default menu for other roles
+        }
+        ?>
 
         <div class="page-content">
             <div class="container">

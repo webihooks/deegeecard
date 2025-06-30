@@ -152,35 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_remark'])) {
     }
 }
 
-// Pagination setup
-$records_per_page = 50;
-$current_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-if ($current_page < 1) {
-    $current_page = 1;
-}
-$offset = ($current_page - 1) * $records_per_page;
-
-// Fetch total number of records for pagination
-if ($role === 'admin') {
-    $count_sql = "SELECT COUNT(*) FROM sales_track";
-    $count_stmt = $conn->prepare($count_sql);
-} else {
-    $count_sql = "SELECT COUNT(*) FROM sales_track WHERE user_id = ?";
-    $count_stmt = $conn->prepare($count_sql);
-    $count_stmt->bind_param("i", $user_id);
-}
-
-$total_records = 0;
-if ($count_stmt) {
-    $count_stmt->execute();
-    $count_stmt->bind_result($total_records);
-    $count_stmt->fetch();
-    $count_stmt->close();
-}
-
-$total_pages = ceil($total_records / $records_per_page);
-
-// Fetch paginated entries based on user role
+// Fetch existing entries based on user role
 $sales_track_list = [];
 if ($role === 'admin') {
     // Admin can see all records
@@ -192,10 +164,8 @@ if ($role === 'admin') {
         postal_code, country, follow_up_date, 
         package_price, remark, owner_available 
         FROM sales_track 
-        ORDER BY current_date DESC, time_stamp DESC
-        LIMIT ?, ?";
+        ORDER BY current_date DESC, time_stamp DESC";
     $fetch_sales_stmt = $conn->prepare($fetch_sales_sql);
-    $fetch_sales_stmt->bind_param("ii", $offset, $records_per_page);
 } else {
     // Sales person can only see their own records
     $fetch_sales_sql = "SELECT 
@@ -207,10 +177,9 @@ if ($role === 'admin') {
         package_price, remark, owner_available 
         FROM sales_track 
         WHERE user_id = ?
-        ORDER BY current_date DESC, time_stamp DESC
-        LIMIT ?, ?";
+        ORDER BY current_date DESC, time_stamp DESC";
     $fetch_sales_stmt = $conn->prepare($fetch_sales_sql);
-    $fetch_sales_stmt->bind_param("iii", $user_id, $offset, $records_per_page);
+    $fetch_sales_stmt->bind_param("i", $user_id);
 }
 
 if ($fetch_sales_stmt) {
@@ -257,7 +226,7 @@ $conn->close();
         ?>
         
         <div class="page-content">
-            <div class="container">
+            <div class="container-fluid">
                 <div class="row">
                     <div class="col-xl-12">
                         <div class="card">
@@ -392,9 +361,6 @@ $conn->close();
     <div class="card">
         <div class="card-header">
             <h5 class="card-title">Existing Records</h5>
-            <div class="float-right">
-                <span class="badge badge-info">Total Records: <?= $total_records ?></span>
-            </div>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -425,7 +391,7 @@ $conn->close();
                         <?php if (!empty($sales_track_list)): ?>
                             <?php foreach ($sales_track_list as $index => $entry): ?>
                                 <tr>
-                                    <td><?= $index + 1 + $offset ?></td>
+                                    <td><?= $index + 1 ?></td>
                                     <td style="display:none;"><?= htmlspecialchars($entry['id']) ?></td>
                                     <?php if ($role === 'admin'): ?>
                                         <td><?= htmlspecialchars($entry['user_name']) ?></td>
@@ -501,55 +467,6 @@ $conn->close();
                         <?php endif; ?>
                     </tbody>
                 </table>
-                
-                <!-- Pagination -->
-                <?php if ($total_pages > 1): ?>
-                <nav aria-label="Page navigation">
-                    <ul class="pagination justify-content-center">
-                        <?php if ($current_page > 1): ?>
-                            <li class="page-item">
-                                <a class="page-link" href="?page=1" aria-label="First">
-                                    <span aria-hidden="true">&laquo;&laquo;</span>
-                                </a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="?page=<?= $current_page - 1 ?>" aria-label="Previous">
-                                    <span aria-hidden="true">&laquo;</span>
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                        
-                        <?php 
-                        // Show page numbers
-                        $start_page = max(1, $current_page - 2);
-                        $end_page = min($total_pages, $start_page + 4);
-                        
-                        // Adjust if we're at the end
-                        if ($end_page - $start_page < 4 && $start_page > 1) {
-                            $start_page = max(1, $end_page - 4);
-                        }
-                        
-                        for ($i = $start_page; $i <= $end_page; $i++): ?>
-                            <li class="page-item <?= ($i == $current_page) ? 'active' : '' ?>">
-                                <a class="page-link" href="?page=<?= $i ?>"><?= $i ?></a>
-                            </li>
-                        <?php endfor; ?>
-                        
-                        <?php if ($current_page < $total_pages): ?>
-                            <li class="page-item">
-                                <a class="page-link" href="?page=<?= $current_page + 1 ?>" aria-label="Next">
-                                    <span aria-hidden="true">&raquo;</span>
-                                </a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="?page=<?= $total_pages ?>" aria-label="Last">
-                                    <span aria-hidden="true">&raquo;&raquo;</span>
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                    </ul>
-                </nav>
-                <?php endif; ?>
             </div>
         </div>
     </div>
