@@ -97,7 +97,42 @@ background-color: #5a6268;
 }
 
 
-
+.remark-textarea {
+    width: 100%;
+    min-height: 80px;
+    margin-bottom: 10px;
+}
+.remark-container {
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 8px;
+    background-color: #fbe4c4;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    width: 300px;
+}
+.remark-entry {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #c2c2c2;
+}
+.remark-entry:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+.remark-date {
+    font-weight: bold;
+    color: #555;
+    font-size: 0.9em;
+}
+.remark-content {
+    margin-top: 4px;
+}
+.short-address, .full-address {
+    white-space: pre-line;
+}
 
 
 

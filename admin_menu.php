@@ -1,12 +1,12 @@
 <div class="main-nav">
      <!-- Sidebar Logo -->
      <div class="logo-box">
-          <a href="dashboard.php" class="logo-dark">
+          <a href="admin-dashboard.php" class="logo-dark">
                <img src="assets/images/logo-sm.png" class="logo-sm" alt="logo sm">
                <img src="assets/images/logo-dark.png" class="logo-lg" alt="logo dark">
           </a>
 
-          <a href="dashboard.php" class="logo-light">
+          <a href="admin-dashboard.php" class="logo-light">
                <img src="assets/images/logo-sm.png" class="logo-sm" alt="logo sm">
                <img src="assets/images/logo-light.png" class="logo-lg" alt="logo light">
           </a>
@@ -118,9 +118,17 @@
                     </a>
                </li>
 
-              
-              
+               
+               <li class="menu-title">Sales Records</li>
 
+               <li class="nav-item">
+                    <a class="nav-link" href="sales_track.php">
+                         <span class="nav-icon">
+                              <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
+                         </span>
+                         <span class="nav-text"> Sales Track </span>
+                    </a>
+               </li>
 
 
           </ul>
