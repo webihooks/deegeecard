@@ -133,8 +133,73 @@ background-color: #5a6268;
 .short-address, .full-address {
     white-space: pre-line;
 }
-
-
+.badge-info {
+    background: #333;
+}
+.badge-danger {
+    color: red;
+}
+.filter-section {
+    background-color: #f8f9fa;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+.filter-row {
+    margin-bottom: 10px;
+}
+.search-box {
+    position: relative;
+}
+.search-box .clear-search {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    cursor: pointer;
+    color: #999;
+}
+.search-box .clear-search:hover {
+    color: #333;
+}
+.remark-container {
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 5px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+}
+.remark-entry {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #ddd;
+}
+.remark-entry:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+.remark-date {
+    font-weight: bold;
+    color: #666;
+    font-size: 0.8em;
+}
+.remark-content {
+    white-space: pre-wrap;
+    font-size: 0.9em;
+}
+.address {
+    font-size: 0.9em;
+    line-height: 1.3;
+}
+.table th {
+    white-space: nowrap;
+}
+.team-member-filter {
+    min-width: 200px;
+}
+.badge-team-member {
+    background-color: #6c757d;
+}
 
 
 

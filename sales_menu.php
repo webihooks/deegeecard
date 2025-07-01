@@ -31,14 +31,23 @@
                     </a>
                </li>
               
-               <li class="menu-title">Sales Records</li>
+               <li class="menu-title">Sales Track Records</li>
 
                <li class="nav-item">
-                    <a class="nav-link" href="sales_track.php">
+                    <a class="nav-link" href="add_sales_record.php">
                          <span class="nav-icon">
-                              <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
+                              <iconify-icon icon="carbon:sales-ops"></iconify-icon>
                          </span>
-                         <span class="nav-text"> Sales Track </span>
+                         <span class="nav-text"> Add Sales Record </span>
+                    </a>
+               </li>
+
+               <li class="nav-item">
+                    <a class="nav-link" href="view_sales_records.php">
+                         <span class="nav-icon">
+                              <iconify-icon icon="lsicon:sales-return-outline"></iconify-icon>
+                         </span>
+                         <span class="nav-text"> All Sales Records </span>
                     </a>
                </li>
 

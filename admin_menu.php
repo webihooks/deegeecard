@@ -34,7 +34,7 @@
                <li class="nav-item">
                     <a class="nav-link" href="packages.php">
                          <span class="nav-icon">
-                              <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
+                              <iconify-icon icon="tabler:packages"></iconify-icon>
                          </span>
                          <span class="nav-text"> Packages </span>
                     </a>
@@ -45,7 +45,7 @@
                <li class="nav-item">
                     <a class="nav-link" href="master_products.php">
                          <span class="nav-icon">
-                              <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
+                              <iconify-icon icon="fluent-mdl2:product-list"></iconify-icon>
                          </span>
                          <span class="nav-text"> Master Products </span>
                     </a>
@@ -54,7 +54,7 @@
                <li class="nav-item">
                     <a class="nav-link" href="bulk_master_products.php">
                          <span class="nav-icon">
-                              <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
+                              <iconify-icon icon="fluent-mdl2:bulk-upload"></iconify-icon>
                          </span>
                          <span class="nav-text"> Bulk Master Products </span>
                     </a>
@@ -65,7 +65,7 @@
                <li class="nav-item">
                     <a class="nav-link" href="list-of-users.php">
                          <span class="nav-icon">
-                              <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
+                              <iconify-icon icon="mdi:users"></iconify-icon>
                          </span>
                          <span class="nav-text"> Users </span>
                     </a>
@@ -74,7 +74,7 @@
                <li class="nav-item">
                     <a class="nav-link" href="list-of-trial-users.php">
                          <span class="nav-icon">
-                              <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
+                              <iconify-icon icon="carbon:global-loan-and-trial"></iconify-icon>
                          </span>
                          <span class="nav-text"> Trial Users </span>
                     </a>
@@ -83,7 +83,7 @@
                <li class="nav-item">
                     <a class="nav-link" href="list-of-subscribers.php">
                          <span class="nav-icon">
-                              <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
+                              <iconify-icon icon="mdi:subscriber-identification-module-outline"></iconify-icon>
                          </span>
                          <span class="nav-text"> Subscribers </span>
                     </a>
@@ -92,7 +92,7 @@
                <li class="nav-item">
                     <a class="nav-link" href="qr.php">
                          <span class="nav-icon">
-                              <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
+                              <iconify-icon icon="ic:baseline-qrcode"></iconify-icon>
                          </span>
                          <span class="nav-text"> QR Code </span>
                     </a>
@@ -103,7 +103,7 @@
                <li class="nav-item">
                     <a class="nav-link" href="ac_category.php">
                          <span class="nav-icon">
-                              <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
+                              <iconify-icon icon="carbon:category"></iconify-icon>
                          </span>
                          <span class="nav-text"> Category </span>
                     </a>
@@ -112,21 +112,30 @@
                <li class="nav-item">
                     <a class="nav-link" href="finance-management.php">
                          <span class="nav-icon">
-                              <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
+                              <iconify-icon icon="material-symbols:finance-sharp"></iconify-icon>
                          </span>
                          <span class="nav-text"> Finance Management </span>
                     </a>
                </li>
 
                
-               <li class="menu-title">Sales Records</li>
+               <li class="menu-title">Sales Track Records</li>
 
                <li class="nav-item">
-                    <a class="nav-link" href="sales_track.php">
+                    <a class="nav-link" href="add_sales_record.php">
                          <span class="nav-icon">
-                              <iconify-icon icon="solar:widget-5-bold-duotone"></iconify-icon>
+                              <iconify-icon icon="carbon:sales-ops"></iconify-icon>
                          </span>
-                         <span class="nav-text"> Sales Track </span>
+                         <span class="nav-text"> Add Sales Record </span>
+                    </a>
+               </li>
+
+               <li class="nav-item">
+                    <a class="nav-link" href="view_sales_records.php">
+                         <span class="nav-icon">
+                              <iconify-icon icon="lsicon:sales-return-outline"></iconify-icon>
+                         </span>
+                         <span class="nav-text"> All Sales Records </span>
                     </a>
                </li>
 
