@@ -3,7 +3,7 @@
     <div class="share-buttons">
         <?php 
         $current_url = "https://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-        $share_text = "Check out " . htmlspecialchars($user['name']) . "'s profile";
+        $share_text = "📱 No waiting, no calling – Just tap & taste! Order online from";
         if ($business_info && !empty($business_info['business_name'])) {
             $share_text .= " - " . htmlspecialchars($business_info['business_name']);
         }
