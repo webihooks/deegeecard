@@ -200,6 +200,9 @@ background-color: #5a6268;
 .badge-team-member {
     background-color: #6c757d;
 }
+#followUpDatePicker .input-group-text {
+    padding: 0.7rem 1rem;
+}
 
 
 

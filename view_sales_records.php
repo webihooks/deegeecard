@@ -252,10 +252,47 @@ $conn->close();
     <link href="assets/css/app.min.css" rel="stylesheet">
     <link href="assets/css/style.css?<?php echo time(); ?>" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
     <script src="assets/js/config.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.19.3/jquery.validate.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+    <style>
+        /* Datepicker styles */
+        .datepicker {
+            z-index: 1151 !important; /* Make sure it appears above modals */
+        }
+        .input-group-append {
+            cursor: pointer;
+        }
+        .clear-search, .clear-follow-up {
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .remark-container {
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+        .remark-entry {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .remark-date {
+            font-weight: bold;
+            color: #666;
+            font-size: 0.8em;
+        }
+        .remark-content {
+            font-size: 0.9em;
+        }
+        .address {
+            max-width: 200px;
+            word-wrap: break-word;
+        }
+    </style>
 </head>
 <body>
     <div class="wrapper">
@@ -295,8 +332,13 @@ $conn->close();
                                                        value="<?= htmlspecialchars($date_filter) ?>">
                                             </div>
                                             <div class="col-md-2">
-                                                <input type="date" class="form-control" name="follow_up_filter" 
-                                                       value="<?= htmlspecialchars($follow_up_filter) ?>">
+                                                <div class="input-group date" id="followUpDatePicker">
+                                                    <input type="text" class="form-control" name="follow_up_filter" 
+                                                           value="<?= htmlspecialchars($follow_up_filter) ?>" placeholder="Follow Up Date">
+                                                    <div class="input-group-append">
+                                                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                                    </div>
+                                                </div>
                                             </div>
                                             <?php if ($role === 'admin'): ?>
                                             <div class="col-md-3">
@@ -336,7 +378,9 @@ $conn->close();
                                                             <span class="badge badge-info">Date: <?= htmlspecialchars($date_filter) ?></span>
                                                         <?php endif; ?>
                                                         <?php if (!empty($follow_up_filter)): ?>
-                                                            <span class="badge badge-info">Follow-up: <?= htmlspecialchars($follow_up_filter) ?></span>
+                                                            <span class="badge badge-info">Follow-up: <?= htmlspecialchars($follow_up_filter) ?>
+                                                                <a href="#" class="clear-follow-up" style="color: white; margin-left: 5px;">&times;</a>
+                                                            </span>
                                                         <?php endif; ?>
                                                         <?php if ($role === 'admin' && $sales_person_filter > 0): ?>
                                                             <?php 
@@ -378,30 +422,50 @@ $conn->close();
                                                     <table class="table table-striped">
                                                         <thead>
                                                             <tr>
-                                                                <th>Sr.No.</th>
+                                                                <th>Actions</th>
+                                                                <th>Sr.<br>
+                                                                No.</th>
                                                                 <th style="display:none;">ID</th>
                                                                 <?php if ($role === 'admin'): ?>
-                                                                    <th>Team Member</th>
+                                                                    <th>Team</th>
                                                                 <?php endif; ?>
                                                                 <th>Date</th>
                                                                 <th>Time</th>
                                                                 <th>Restaurant</th>
-                                                                <th>Contact</th>
-                                                                <th>Phone</th>
+                                                                
                                                                 <th>Owner</th>
-                                                                <th>D.M.</th>
-                                                                <th>D.M. Phone</th>
-                                                                <th>Location Details</th>
+                                                                
                                                                 <th>Follow Up</th>
                                                                 <th>Price</th>
                                                                 <th>Remark</th>
-                                                                <th>Actions</th>
+                                                                <th>Contact</th>
+                                                                <th>Phone</th>
+                                                                <th>D.M.</th>
+                                                                <th>D.M. Phone</th>
+                                                                <th>Location Details</th>
+                                                                
                                                             </tr>
                                                         </thead>
                                                         <tbody>
                                                             <?php if (!empty($sales_track_list)): ?>
                                                                 <?php foreach ($sales_track_list as $index => $entry): ?>
                                                                     <tr>
+                                                                        <td>
+                                                                            <?php if ($role === 'admin' || $entry['user_id'] == $user_id): ?>
+                                                                            <button class="btn btn-sm btn-outline-primary update-record-btn" 
+                                                                                    data-record-id="<?= $entry['id'] ?>"
+                                                                                    data-restaurant-name="<?= htmlspecialchars($entry['restaurant_name']) ?>"
+                                                                                    data-contacted-person="<?= htmlspecialchars($entry['contacted_person']) ?>"
+                                                                                    data-phone="<?= htmlspecialchars($entry['phone']) ?>"
+                                                                                    data-owner-available="<?= $entry['owner_available'] ? '1' : '0' ?>"
+                                                                                    data-decision-maker-name="<?= htmlspecialchars($entry['decision_maker_name']) ?>"
+                                                                                    data-decision-maker-phone="<?= htmlspecialchars($entry['decision_maker_phone']) ?>"
+                                                                                    data-follow-up-date="<?= htmlspecialchars($entry['follow_up_date']) ?>"
+                                                                                    data-package-price="<?= htmlspecialchars($entry['package_price']) ?>">
+                                                                                <i class="fas fa-edit"></i> Update
+                                                                            </button>
+                                                                            <?php endif; ?>
+                                                                        </td>
                                                                         <td><?= $index + 1 + $offset ?></td>
                                                                         <td style="display:none;"><?= htmlspecialchars($entry['id']) ?></td>
                                                                         <?php if ($role === 'admin'): ?>
@@ -410,29 +474,9 @@ $conn->close();
                                                                         <td><?= htmlspecialchars($entry['current_date']) ?></td>
                                                                         <td><?= date('h:i A', strtotime($entry['time_stamp'])) ?></td>
                                                                         <td><?= htmlspecialchars($entry['restaurant_name']) ?></td>
-                                                                        <td><?= htmlspecialchars($entry['contacted_person']) ?></td>
-                                                                        <td><?= htmlspecialchars($entry['phone']) ?></td>
-                                                                        <td><?= $entry['owner_available'] ? 'Yes' : 'No' ?></td>
-                                                                        <td><?= htmlspecialchars($entry['decision_maker_name']) ?></td>
-                                                                        <td><?= htmlspecialchars($entry['decision_maker_phone']) ?></td>
                                                                         
-                                                                        <td>
-                                                                            <?php
-                                                                                $fullAddress = '';
-                                                                                if (!empty($entry['street'])) {
-                                                                                    $fullAddress .= htmlspecialchars($entry['street']) . '<br>';
-                                                                                }
-                                                                                if (!empty($entry['city'])) {
-                                                                                    $fullAddress .= htmlspecialchars($entry['city']);
-                                                                                }
-                                                                                if (!empty($entry['state'])) {
-                                                                                    $fullAddress .= ', ' . htmlspecialchars($entry['state']);
-                                                                                }
-                                                                            ?>
-                                                                            <div class="address">
-                                                                                <?= $fullAddress ?>
-                                                                            </div>
-                                                                        </td>
+                                                                        <td><?= $entry['owner_available'] ? 'Yes' : 'No' ?></td>
+                                                                        
 
                                                                         <td><?= htmlspecialchars($entry['follow_up_date']) ?></td>
                                                                         <td><?= number_format($entry['package_price']) ?></td>
@@ -461,23 +505,32 @@ $conn->close();
                                                                                 </div>
                                                                             <?php endif; ?>
                                                                         </td>
+
+                                                                        <td><?= htmlspecialchars($entry['contacted_person']) ?></td>
+                                                                        <td><?= htmlspecialchars($entry['phone']) ?></td>
+
+                                                                        <td><?= htmlspecialchars($entry['decision_maker_name']) ?></td>
+                                                                        <td><?= htmlspecialchars($entry['decision_maker_phone']) ?></td>
                                                                         
                                                                         <td>
-                                                                            <?php if ($role === 'admin' || $entry['user_id'] == $user_id): ?>
-                                                                            <button class="btn btn-sm btn-outline-primary update-record-btn" 
-                                                                                    data-record-id="<?= $entry['id'] ?>"
-                                                                                    data-restaurant-name="<?= htmlspecialchars($entry['restaurant_name']) ?>"
-                                                                                    data-contacted-person="<?= htmlspecialchars($entry['contacted_person']) ?>"
-                                                                                    data-phone="<?= htmlspecialchars($entry['phone']) ?>"
-                                                                                    data-owner-available="<?= $entry['owner_available'] ? '1' : '0' ?>"
-                                                                                    data-decision-maker-name="<?= htmlspecialchars($entry['decision_maker_name']) ?>"
-                                                                                    data-decision-maker-phone="<?= htmlspecialchars($entry['decision_maker_phone']) ?>"
-                                                                                    data-follow-up-date="<?= htmlspecialchars($entry['follow_up_date']) ?>"
-                                                                                    data-package-price="<?= htmlspecialchars($entry['package_price']) ?>">
-                                                                                <i class="fas fa-edit"></i> Update
-                                                                            </button>
-                                                                            <?php endif; ?>
+                                                                            <?php
+                                                                                $fullAddress = '';
+                                                                                if (!empty($entry['street'])) {
+                                                                                    $fullAddress .= htmlspecialchars($entry['street']) . '<br>';
+                                                                                }
+                                                                                if (!empty($entry['city'])) {
+                                                                                    $fullAddress .= htmlspecialchars($entry['city']);
+                                                                                }
+                                                                                if (!empty($entry['state'])) {
+                                                                                    $fullAddress .= ', ' . htmlspecialchars($entry['state']);
+                                                                                }
+                                                                            ?>
+                                                                            <div class="address">
+                                                                                <?= $fullAddress ?>
+                                                                            </div>
                                                                         </td>
+                                                                        
+                                                                        
                                                                     </tr>
                                                                 <?php endforeach; ?>
                                                             <?php else: ?>
@@ -638,6 +691,21 @@ $conn->close();
 
     <script>
         $(document).ready(function() {
+            // Initialize date picker for follow up filter
+            $('#followUpDatePicker').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true,
+                todayHighlight: true,
+                clearBtn: true
+            });
+
+            // Clear follow up date filter
+            $(document).on('click', '.clear-follow-up', function(e) {
+                e.preventDefault();
+                $('#followUpDatePicker').datepicker('clearDates');
+                $('#filterForm').submit();
+            });
+
             // Update record button click handler
             $(document).on('click', '.update-record-btn', function(e) {
                 e.preventDefault();
@@ -754,27 +822,11 @@ $conn->close();
             $('select[name="owner_filter"], select[name="sales_person_filter"]').change(function() {
                 $('#filterForm').submit();
             });
-        });
 
-        $(document).ready(function() {
             // Handle modal close functionality
             $(document).on('click', '#updateRecordModal .btn-secondary', function(e) {
                 e.preventDefault();
-                // Corrected: We should target the modal, not the form
                 $('#updateRecordModal').modal('hide');
-            });
-
-            // Also handle when clicking outside modal or pressing ESC
-            $('#updateRecordModal').on('hidden.bs.modal', function() {
-                // Cleanup when modal is fully hidden
-                $(this).find('form')[0].reset();
-                $(this).find('.is-invalid').removeClass('is-invalid');
-                $(this).find('.invalid-feedback').remove();
-                
-                // If you're using jQuery validation, reset the form validation
-                if ($('#updateRecordForm').data('validator')) {
-                    $('#updateRecordForm').validate().resetForm();
-                }
             });
         });
     </script>
