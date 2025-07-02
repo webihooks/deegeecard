@@ -161,10 +161,15 @@ elseif ($sales_person_filter > 0) {
 
 // Add other filters
 if (!empty($search_query)) {
-    $where_clauses[] = "(restaurant_name LIKE ? OR contacted_person LIKE ? OR phone LIKE ? OR decision_maker_name LIKE ? OR decision_maker_phone LIKE ?)";
+    $where_clauses[] = "(restaurant_name LIKE ? OR 
+                        contacted_person LIKE ? OR 
+                        phone LIKE ? OR 
+                        decision_maker_name LIKE ? OR 
+                        decision_maker_phone LIKE ? OR 
+                        CONCAT(street, ' ', city, ' ', state, ' ', location) LIKE ?)";
     $search_param = "%$search_query%";
-    $params = array_merge($params, array_fill(0, 5, $search_param));
-    $param_types .= str_repeat('s', 5);
+    $params = array_merge($params, array_fill(0, 6, $search_param));
+    $param_types .= str_repeat('s', 6);
 }
 
 if (!empty($date_filter)) {
@@ -211,7 +216,8 @@ $fetch_sales_sql = "SELECT
     decision_maker_name, decision_maker_phone, 
     location, street, city, state, 
     postal_code, country, follow_up_date, 
-    package_price, remark, owner_available 
+    package_price, remark, owner_available,
+    CONCAT(street, ' ', city, ' ', state, ' ', location) AS full_address
     FROM sales_track 
     $where_sql
     ORDER BY current_date DESC, time_stamp DESC
@@ -258,41 +264,6 @@ $conn->close();
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.19.3/jquery.validate.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
-    <style>
-        /* Datepicker styles */
-        .datepicker {
-            z-index: 1151 !important; /* Make sure it appears above modals */
-        }
-        .input-group-append {
-            cursor: pointer;
-        }
-        .clear-search, .clear-follow-up {
-            cursor: pointer;
-            margin-left: 5px;
-        }
-        .remark-container {
-            max-height: 150px;
-            overflow-y: auto;
-            padding: 5px;
-        }
-        .remark-entry {
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        .remark-date {
-            font-weight: bold;
-            color: #666;
-            font-size: 0.8em;
-        }
-        .remark-content {
-            font-size: 0.9em;
-        }
-        .address {
-            max-width: 200px;
-            word-wrap: break-word;
-        }
-    </style>
 </head>
 <body>
     <div class="wrapper">
@@ -308,12 +279,15 @@ $conn->close();
         ?>
         
         <div class="page-content">
-            <div class="container">
+            <div class="container-fluid">
                 <div class="row">
                     <div class="col-xl-12">
                         <div class="card">
                             <div class="card-header">
-                                <h4 class="card-title">View Sales Records</h4>
+                                <h4 class="card-title">
+                                    View Sales Records
+                                    <button id="fullscreenToggle" class="btn btn-primary btn-block fr">Enter Fullscreen</button>
+                                </h4>
                             </div>
 
                             <div class="card-body">
@@ -321,17 +295,20 @@ $conn->close();
                                     <form id="filterForm" method="GET" action="">
                                         <div class="row filter-row">
                                             <div class="col-md-2 search-box">
+                                                <label class="form-label">Search</label>
                                                 <input type="text" class="form-control" name="search" placeholder="Search..." 
                                                        value="<?= htmlspecialchars($search_query) ?>">
                                                 <?php if (!empty($search_query)): ?>
-                                                    <span class="clear-search" onclick="clearSearch()">&times;</span>
+                                                    <span class="clear-search" style="display:none;" onclick="clearSearch()">&times;</span>
                                                 <?php endif; ?>
                                             </div>
                                             <div class="col-md-2">
+                                                <label class="form-label">Date</label>
                                                 <input type="date" class="form-control" name="date_filter" 
                                                        value="<?= htmlspecialchars($date_filter) ?>">
                                             </div>
                                             <div class="col-md-2">
+                                                <label class="form-label">Follow up Date</label>
                                                 <div class="input-group date" id="followUpDatePicker">
                                                     <input type="text" class="form-control" name="follow_up_filter" 
                                                            value="<?= htmlspecialchars($follow_up_filter) ?>" placeholder="Follow Up Date">
@@ -342,6 +319,7 @@ $conn->close();
                                             </div>
                                             <?php if ($role === 'admin'): ?>
                                             <div class="col-md-3">
+                                                <label class="form-label">Team member</label>
                                                 <select class="form-control team-member-filter" name="sales_person_filter">
                                                     <option value="0">All Team Members</option>
                                                     <?php foreach ($team_members as $member): ?>
@@ -353,13 +331,14 @@ $conn->close();
                                             </div>
                                             <?php endif; ?>
                                             <div class="col-md-2">
+                                                <label class="form-label">Owner Status</label>
                                                 <select class="form-control" name="owner_filter">
                                                     <option value="-1" <?= $owner_filter == -1 ? 'selected' : '' ?>>Owner: All</option>
                                                     <option value="1" <?= $owner_filter == 1 ? 'selected' : '' ?>>Owner: Available</option>
                                                     <option value="0" <?= $owner_filter == 0 ? 'selected' : '' ?>>Owner: Not Available</option>
                                                 </select>
                                             </div>
-                                            <div class="col-md-1">
+                                            <div class="col-md-1 mt-3">
                                                 <button type="submit" class="btn btn-primary btn-block">Apply</button>
                                             </div>
                                         </div>
@@ -514,20 +493,21 @@ $conn->close();
                                                                         
                                                                         <td>
                                                                             <?php
-                                                                                $fullAddress = '';
+                                                                                $fullAddress = [];
+                                                                                if (!empty($entry['location'])) {
+                                                                                    $fullAddress[] = htmlspecialchars($entry['location']);
+                                                                                }
                                                                                 if (!empty($entry['street'])) {
-                                                                                    $fullAddress .= htmlspecialchars($entry['street']) . '<br>';
+                                                                                    $fullAddress[] = htmlspecialchars($entry['street']);
                                                                                 }
                                                                                 if (!empty($entry['city'])) {
-                                                                                    $fullAddress .= htmlspecialchars($entry['city']);
+                                                                                    $fullAddress[] = htmlspecialchars($entry['city']);
                                                                                 }
                                                                                 if (!empty($entry['state'])) {
-                                                                                    $fullAddress .= ', ' . htmlspecialchars($entry['state']);
+                                                                                    $fullAddress[] = htmlspecialchars($entry['state']);
                                                                                 }
+                                                                                echo implode('<br>', $fullAddress);
                                                                             ?>
-                                                                            <div class="address">
-                                                                                <?= $fullAddress ?>
-                                                                            </div>
                                                                         </td>
                                                                         
                                                                         
@@ -690,6 +670,17 @@ $conn->close();
     </div>
 
     <script>
+
+        //dont remove this query start
+        $(document).ready(function() {
+        // Handle modal close functionality
+            $(document).on('click', '#updateRecordModal .btn-secondary', function(e) {
+                e.preventDefault();
+                $('#updateRecordModal').modal('hide');
+            });
+        });
+        //dont remove this query end
+
         $(document).ready(function() {
             // Initialize date picker for follow up filter
             $('#followUpDatePicker').datepicker({
@@ -823,12 +814,53 @@ $conn->close();
                 $('#filterForm').submit();
             });
 
-            // Handle modal close functionality
-            $(document).on('click', '#updateRecordModal .btn-secondary', function(e) {
-                e.preventDefault();
-                $('#updateRecordModal').modal('hide');
-            });
+            
         });
+
+
+        const toggleBtn = document.getElementById('fullscreenToggle');
+
+        function isFullscreen() {
+          return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+        }
+
+        function enterFullscreen() {
+          const elem = document.documentElement;
+          if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+          } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+          } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+          }
+        }
+
+        function exitFullscreen() {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
+        }
+
+        toggleBtn.addEventListener('click', () => {
+          if (isFullscreen()) {
+            exitFullscreen();
+          } else {
+            enterFullscreen();
+          }
+        });
+
+        // Update button label based on fullscreen change
+        document.addEventListener('fullscreenchange', updateButtonLabel);
+        document.addEventListener('webkitfullscreenchange', updateButtonLabel);
+        document.addEventListener('msfullscreenchange', updateButtonLabel);
+
+        function updateButtonLabel() {
+          toggleBtn.textContent = isFullscreen() ? 'Exit Fullscreen' : 'Enter Fullscreen';
+        }
     </script>
     <!-- Then your other scripts -->
     <script src="assets/js/vendor.js"></script>
