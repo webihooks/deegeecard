@@ -31,82 +31,127 @@ if ($user_info_stmt) {
 
 // Handle form submission for new sales track
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_sales_track'])) {
-    $restaurant_name       = trim($_POST['restaurant_name']);
+    $restaurant_name        = trim($_POST['restaurant_name']);
     $contacted_person      = trim($_POST['contacted_person']);
-    $phone                 = trim($_POST['phone']);
+    $phone                  = trim($_POST['phone']);
     $decision_maker_name   = trim($_POST['decision_maker_name'] ?? '');
     $decision_maker_phone  = trim($_POST['decision_maker_phone'] ?? '');
     $location              = trim($_POST['location']);
-    $street                = trim($_POST['street'] ?? '');
-    $city                  = trim($_POST['city'] ?? '');
-    $state                 = trim($_POST['state'] ?? '');
-    $postal_code           = trim($_POST['postal_code'] ?? '');
-    $country               = trim($_POST['country'] ?? '');
+    $street                 = trim($_POST['street'] ?? '');
+    $city                   = trim($_POST['city'] ?? '');
+    $state                  = trim($_POST['state'] ?? '');
+    $postal_code            = trim($_POST['postal_code'] ?? '');
+    $country                = trim($_POST['country'] ?? '');
     $follow_up_date        = !empty($_POST['follow_up_date']) ? trim($_POST['follow_up_date']) : null;
-    $package_price         = isset($_POST['package_price']) && is_numeric($_POST['package_price']) 
-                           ? floatval($_POST['package_price']) 
-                           : 0.00;
-    date_default_timezone_set('Asia/Kolkata'); // Ensures correct local time
+    
+    // Package price validation with limits
+    $package_price = isset($_POST['package_price']) && is_numeric($_POST['package_price']) 
+                    ? floatval($_POST['package_price']) 
+                    : 0.00;
+    $max_package_price = 999999.99; // Matches DECIMAL(10,2) in database
+    
+    date_default_timezone_set('Asia/Kolkata');
     $raw_remark = trim($_POST['remark']);
     $timestamp = date('Y-m-d h:i A');
     $remark = "$timestamp - $user_name: $raw_remark";
 
-    $owner_available       = isset($_POST['owner_available']) ? 1 : 0;
-    $current_date          = date('Y-m-d');
+    $owner_available        = isset($_POST['owner_available']) ? 1 : 0;
+    $record_date            = date('Y-m-d');
 
-    if (empty($restaurant_name) || empty($contacted_person) || empty($phone) || empty($location) || empty($remark)) {
+    // Validate required fields
+    if (empty($restaurant_name) || empty($contacted_person) || empty($phone) || empty($location) || empty($raw_remark)) {
         $error_message = "Restaurant Name, Contacted Person, Phone, Location, and Remark are required fields.";
+    } 
+    // Validate package price range
+    elseif ($package_price > $max_package_price) {
+        $error_message = "Package price cannot exceed " . number_format($max_package_price, 2);
+    }
+    elseif ($package_price < 0) {
+        $error_message = "Package price cannot be negative";
+    }
+    else {
+        // In your form handling section:
+
+$insert_sql = "INSERT INTO sales_track (
+    user_id, user_name, record_date,
+    restaurant_name, contacted_person, phone,
+    decision_maker_name, decision_maker_phone,
+    location, street, city, state,
+    postal_code, country, follow_up_date,
+    package_price, remark, owner_available
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+$stmt = $conn->prepare($insert_sql);
+
+if ($stmt) {
+    $params = [
+        $user_id,             // i (integer)
+        $user_name,           // s (string)
+        $record_date,         // s (string)
+        $restaurant_name,     // s (string)
+        $contacted_person,    // s (string)
+        $phone,               // s (string)
+        $decision_maker_name, // s (string)
+        $decision_maker_phone,// s (string)
+        $location,            // s (string)
+        $street,              // s (string)
+        $city,                // s (string)
+        $state,               // s (string)
+        $postal_code,         // s (string)
+        $country,             // s (string)
+        $follow_up_date,      // s (string)
+        $package_price,       // d (double/float)
+        $remark,              // s (string)
+        $owner_available      // i (integer)
+    ];
+
+    // Corrected type definition string (18 characters)
+    $types = 'issssssssssssssdsi';
+    /* Breakdown:
+        i - user_id (integer)
+        s - user_name (string)
+        s - record_date (string)
+        s - restaurant_name (string)
+        s - contacted_person (string)
+        s - phone (string)
+        s - decision_maker_name (string)
+        s - decision_maker_phone (string)
+        s - location (string)
+        s - street (string)
+        s - city (string)
+        s - state (string)
+        s - postal_code (string)
+        s - country (string)
+        s - follow_up_date (string)
+        d - package_price (double)
+        s - remark (string)
+        i - owner_available (integer)
+    */
+
+    // Debug output to verify counts
+    echo "<script>console.log('Type length: " . strlen($types) . "')</script>";
+    echo "<script>console.log('Params count: " . count($params) . "')</script>";
+
+    if (strlen($types) !== count($params)) {
+        die("Mismatch detected: Types length (" . strlen($types) . ") 
+            doesn't match params count (" . count($params) . ")");
+    }
+
+    $bound = $stmt->bind_param($types, ...$params);
+
+    if (!$bound) {
+        $error_message = "Parameter binding failed: " . $stmt->error;
+    } elseif ($stmt->execute()) {
+        $success_message = "Record added successfully!";
+        $_POST = array(); // Clear form
     } else {
-        $insert_sql = "INSERT INTO sales_track (
-            user_id, user_name, `current_date`,
-            restaurant_name, contacted_person, phone,
-            decision_maker_name, decision_maker_phone,
-            location, street, city, state,
-            postal_code, country, follow_up_date,
-            package_price, remark, owner_available
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $error_message = "Error: " . $stmt->error;
+    }
 
-        $stmt = $conn->prepare($insert_sql);
-
-        if ($stmt) {
-            $params = [
-                $user_id,
-                $user_name,
-                $current_date,
-                $restaurant_name,
-                $contacted_person,
-                $phone,
-                $decision_maker_name,
-                $decision_maker_phone,
-                $location,
-                $street,
-                $city,
-                $state,
-                $postal_code,
-                $country,
-                $follow_up_date,
-                $package_price,
-                $remark,
-                $owner_available
-            ];
-
-            $types = 'issssssssssssssdsi';
-
-            $bound = $stmt->bind_param($types, ...$params);
-
-            if (!$bound) {
-                $error_message = "Parameter binding failed: " . $stmt->error;
-            } elseif ($stmt->execute()) {
-                $success_message = "Sales track entry for '{$restaurant_name}' added successfully!";
-                $_POST = array();
-            } else {
-                $error_message = "Error adding sales track entry: " . $stmt->error;
-            }
-
-            $stmt->close();
-        } else {
-            $error_message = "Error preparing insert query: " . $conn->error;
-        }
+    $stmt->close();
+} else {
+    $error_message = "Prepare failed: " . $conn->error;
+}
     }
 }
 
@@ -127,7 +172,7 @@ $conn->close();
     <script src="assets/js/config.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.19.3/jquery.validate.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>    
 </head>
 <body>
     <div class="wrapper">
@@ -138,7 +183,7 @@ $conn->close();
         } elseif ($role === 'sales_person') {
             include 'sales_menu.php';
         } else {
-            include 'menu.php'; // default menu for other roles
+            include 'menu.php';
         }
         ?>
         
@@ -171,12 +216,6 @@ $conn->close();
                                                     <input type="text" class="form-control" value="<?= htmlspecialchars($user_name) ?>" readonly>
                                                 </div>
                                             </div>
-                                            <div class="row" style="display:none;">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label">Date</label>
-                                                    <input type="date" class="form-control" value="<?= date('Y-m-d') ?>" readonly>
-                                                </div>
-                                            </div>
 
                                             <div class="row">
                                                 <div class="col-md-6 mb-3">
@@ -185,7 +224,10 @@ $conn->close();
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label">Package Price<span class="text-danger">*</span></label>
-                                                    <input type="number" step="0.01" class="form-control" name="package_price" value="<?= htmlspecialchars($_POST['package_price'] ?? '') ?>" required>
+                                                    <input type="number" step="0.01" class="form-control" name="package_price" 
+                                                            value="<?= htmlspecialchars($_POST['package_price'] ?? '') ?>" 
+                                                            min="0" max="999999" required>
+                                                    <small class="text-muted">Maximum value: 999,999.99</small>
                                                 </div>
                                             </div>
 
@@ -199,6 +241,7 @@ $conn->close();
                                                     <input type="text" class="form-control" name="phone" value="<?= htmlspecialchars($_POST['phone'] ?? '') ?>" required>
                                                 </div>
                                             </div>
+
                                             <div class="row">
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label">Decision Maker's Name</label>
@@ -209,6 +252,7 @@ $conn->close();
                                                     <input type="text" class="form-control" name="decision_maker_phone" value="<?= htmlspecialchars($_POST['decision_maker_phone'] ?? '') ?>">
                                                 </div>
                                             </div>
+
                                             <div class="row">
                                                 <div class="col-md-12 mb-3">
                                                     <label class="form-label">Location <span class="text-danger">*</span></label>
@@ -218,7 +262,7 @@ $conn->close();
                                                             <i class="fas fa-location-arrow"></i> Detect
                                                         </button>
                                                     </div>
-                                                    <small class="text-muted">Click "Detect" to auto-fill your current location with street details</small>
+                                                    <small class="text-muted">Click "Detect" to auto-fill your current location</small>
                                                     <div id="locationStatus" class="mt-2"></div>
                                                     
                                                     <div class="row mt-3">
@@ -252,13 +296,14 @@ $conn->close();
                                             
                                             <div class="mb-3">
                                                 <label class="form-label">Remark <span class="text-danger">*</span></label>
-                                                <textarea class="form-control" name="remark" id="remark" rows="3" required minlength="5"></textarea>
-                                                <div class="invalid-feedback">Please enter a remark (at least 5 characters).</div>
+                                                <textarea class="form-control" name="remark" id="remark" rows="3" required minlength="5"><?= htmlspecialchars($_POST['remark'] ?? '') ?></textarea>
                                             </div>
+
                                             <div class="mb-3 form-check">
                                                 <label class="form-check-label">
-                                                <input type="checkbox" class="form-check-input" name="owner_available" value="1" <?= isset($_POST['owner_available']) ? 'checked' : '' ?>>
-                                                Decision Maker Available</label>
+                                                    <input type="checkbox" class="form-check-input" name="owner_available" value="1" <?= isset($_POST['owner_available']) ? 'checked' : '' ?>>
+                                                    Decision Maker Available
+                                                </label>
                                             </div>
 
                                             <button type="submit" name="add_sales_track" class="btn btn-primary">Add Record</button>
@@ -283,25 +328,18 @@ $conn->close();
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
                         function(position) {
-                            // Success callback
                             const latitude = position.coords.latitude;
                             const longitude = position.coords.longitude;
                             
-                            // Use a geocoding service to get address details
                             $.get(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`, 
                                 function(data) {
-                                    // Parse the response and fill the form fields
                                     const address = data.address || {};
-                                    
-                                    // Set the main location field
                                     let locationText = '';
                                     if (address.road) locationText += address.road;
                                     if (address.road && address.city) locationText += ', ';
                                     if (address.city) locationText += address.city;
                                     
                                     $('#location').val(locationText || 'Current Location');
-                                    
-                                    // Set the detailed address fields
                                     $('#street').val(address.road || '');
                                     $('#city').val(address.city || address.town || address.village || '');
                                     $('#state').val(address.state || '');
@@ -316,7 +354,6 @@ $conn->close();
                             });
                         },
                         function(error) {
-                            // Error callback
                             let errorMessage = 'Error detecting location: ';
                             switch(error.code) {
                                 case error.PERMISSION_DENIED:
@@ -345,7 +382,7 @@ $conn->close();
                 }
             });
 
-            // Form validation for main form
+            // Form validation
             $("#salesTrackForm").validate({
                 rules: {
                     restaurant_name: {
@@ -367,6 +404,12 @@ $conn->close();
                     remark: {
                         required: true,
                         minlength: 5
+                    },
+                    package_price: {
+                        required: true,
+                        number: true,
+                        min: 0,
+                        max: 999999
                     }
                 },
                 messages: {
@@ -389,6 +432,12 @@ $conn->close();
                     remark: {
                         required: "Please enter a remark",
                         minlength: "Remark should be at least 5 characters long"
+                    },
+                    package_price: {
+                        required: "Please enter package price",
+                        number: "Please enter a valid number",
+                        min: "Price cannot be negative",
+                        max: "Price cannot exceed 999,999"
                     }
                 },
                 errorElement: 'div',
@@ -405,8 +454,7 @@ $conn->close();
             });
         });
     </script>
-<!-- Then your other scripts -->
-<script src="assets/js/vendor.js"></script>
-<script src="assets/js/app.js"></script>   
+    <script src="assets/js/vendor.js"></script>
+    <script src="assets/js/app.js"></script>    
 </body>
 </html>

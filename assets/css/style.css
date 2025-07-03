@@ -140,7 +140,6 @@ background-color: #5a6268;
     color: red;
 }
 .filter-section {
-    background-color: #f8f9fa;
     padding: 15px;
     margin-bottom: 20px;
     border-radius: 5px;
@@ -236,4 +235,91 @@ background-color: #5a6268;
     max-width: 200px;
     word-wrap: break-word;
 }
+
+
+
+
+
+
+
+
+.order-card {
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+}
+.order-card:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.status-badge {
+    font-size: 0.8rem;
+    padding: 5px 10px;
+    border-radius: 20px;
+}
+.status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+.status-confirmed {
+    background-color: #cce5ff;
+    color: #004085;
+}
+.status-preparing {
+    background-color: #e2e3e5;
+    color: #383d41;
+}
+.status-out_for_delivery {
+    background-color: #d4edda;
+    color: #155724;
+}
+.status-delivered, .status-completed {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+.status-cancelled {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+/* Modal customization */
+.order-modal .modal-dialog {
+    max-width: 800px;
+}
+.order-items-table th {
+    white-space: nowrap;
+}
+.modal-footer {
+    justify-content: space-between;
+}
+#downloadBillBtn {
+    margin-right: auto;
+}
+
+
+
+
+
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    .print-content, .print-content * {
+        visibility: visible;
+    }
+    .print-content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    .no-print {
+        display: none !important;
+    }
+}
+
+
+
+
+
+
+
 

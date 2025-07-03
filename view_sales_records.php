@@ -74,42 +74,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_record'])) {
             }
             
             $update_sql = "UPDATE sales_track SET 
-                            contacted_person = ?, 
-                            phone = ?, 
-                            owner_available = ?, 
-                            decision_maker_name = ?, 
-                            decision_maker_phone = ?, 
-                            follow_up_date = ?, 
-                            package_price = ?, 
-                            remark = ?,
-                            `current_date` = CURDATE(),
-                            `time_stamp` = CURRENT_TIME()
-                            WHERE id = ?";
-            $update_stmt = $conn->prepare($update_sql);
-            
-            if ($update_stmt) {
-                $update_stmt->bind_param("ssisssdsi", 
-                    $contacted_person,
-                    $phone,
-                    $owner_available,
-                    $decision_maker_name,
-                    $decision_maker_phone,
-                    $follow_up_date,
-                    $package_price,
-                    $updated_remark,
-                    $record_id);
-                
-                if ($update_stmt->execute()) {
-                    $success_message = "Record updated successfully!";
-                    header("Location: ".$_SERVER['PHP_SELF']);
-                    exit();
-                } else {
-                    $error_message = "Error updating record: " . $update_stmt->error;
-                }
-                $update_stmt->close();
-            } else {
-                $error_message = "Error preparing update statement: " . $conn->error;
-            }
+                contacted_person = ?, 
+                phone = ?, 
+                owner_available = ?, 
+                decision_maker_name = ?, 
+                decision_maker_phone = ?, 
+                follow_up_date = ?, 
+                package_price = ?, 
+                remark = ?,
+                record_date = CURDATE(),
+                time_stamp = CURRENT_TIME()
+                WHERE id = ?";
+
+$update_stmt = $conn->prepare($update_sql);
+
+if ($update_stmt) {
+    $update_stmt->bind_param("ssisssdsi", 
+        $contacted_person,
+        $phone,
+        $owner_available,
+        $decision_maker_name,
+        $decision_maker_phone,
+        $follow_up_date,
+        $package_price,
+        $updated_remark,
+        $record_id);
+    
+    if ($update_stmt->execute()) {
+        $success_message = "Record updated successfully!";
+        header("Location: ".$_SERVER['PHP_SELF']);
+        exit();
+    } else {
+        $error_message = "Error updating record: " . $update_stmt->error;
+    }
+    $update_stmt->close();
+} else {
+    $error_message = "Error preparing update statement: " . $conn->error;
+}
         }
     } else {
         $error_message = "Invalid record ID.";
@@ -173,7 +174,7 @@ if (!empty($search_query)) {
 }
 
 if (!empty($date_filter)) {
-    $where_clauses[] = "current_date = ?";
+    $where_clauses[] = "record_date = ?";
     $params[] = $date_filter;
     $param_types .= 's';
 }
@@ -211,7 +212,7 @@ $total_pages = ceil($total_records / $records_per_page);
 // Fetch paginated records
 $sales_track_list = [];
 $fetch_sales_sql = "SELECT 
-    id, user_id, user_name, current_date, time_stamp, 
+    id, user_id, user_name, record_date, time_stamp, 
     restaurant_name, contacted_person, phone, 
     decision_maker_name, decision_maker_phone, 
     location, street, city, state, 
@@ -220,7 +221,7 @@ $fetch_sales_sql = "SELECT
     CONCAT(street, ' ', city, ' ', state, ' ', location) AS full_address
     FROM sales_track 
     $where_sql
-    ORDER BY current_date DESC, time_stamp DESC
+    ORDER BY record_date DESC, time_stamp DESC
     LIMIT ?, ?";
 
 $fetch_sales_stmt = $conn->prepare($fetch_sales_sql);
@@ -450,7 +451,7 @@ $conn->close();
                                                                         <?php if ($role === 'admin'): ?>
                                                                             <td><?= htmlspecialchars($entry['user_name']) ?></td>
                                                                         <?php endif; ?>
-                                                                        <td><?= htmlspecialchars($entry['current_date']) ?></td>
+                                                                        <td><?= htmlspecialchars($entry['record_date']) ?></td>
                                                                         <td><?= date('h:i A', strtotime($entry['time_stamp'])) ?></td>
                                                                         <td><?= htmlspecialchars($entry['restaurant_name']) ?></td>
                                                                         
