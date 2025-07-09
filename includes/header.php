@@ -171,6 +171,10 @@
         .offer_popup .btn-close-black {
             background: var(--secondary-color);
         }
+        .btn:hover, .btn-check:checked + .btn, .btn.active, .btn.show, .btn:first-child:active, :not(.btn-check) + .btn:active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
     </style>
 </head>
 <body class="restaurant">

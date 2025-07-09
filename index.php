@@ -467,7 +467,7 @@
                 <div class="price">
                   <span class="offer-price">₹9,999</span>
                   <span>/ year</span>
-                  <span class="original-price">₹11,999</span>
+                  <span class="original-price">₹15,000</span>
                 </div>
                 <div class="offer-badge">
                   17% OFF

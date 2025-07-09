@@ -12,6 +12,18 @@
   cursor: pointer;
 }
 
+.form-label {
+  margin-bottom: .1rem;
+}
+
+.customer-details input:invalid {
+    border-color: #dc3545;
+}
+
+.customer-details input:valid {
+    border-color: #28a745;
+}
+
 /* Base Styles */
 body {
   font-size: 13px;
@@ -670,7 +682,7 @@ h6 {
 .restaurant .product-card .card-body .cart_btn_group {
   position: absolute;
   right: 15px;
-  bottom: 15px;
+  bottom: 10px;
 }
 
 .restaurant .product-card .card-body .cart_btn_group.top {
@@ -686,7 +698,8 @@ h6 {
 }
 
 .restaurant .product-card .card-body .btn.add-to-cart {
-  font-size: 12px;
+  font-size: 14px;
+  padding: 8px 0;
   width: 110px !important;
 }
 
@@ -735,7 +748,7 @@ h6 {
   width: 350px;
   height: 100vh;
   background: #fff;
-  z-index: 99999;
+  z-index: 99999999;
   transition: right 0.3s ease;
   padding: 20px;
   overflow-y: auto;
@@ -832,36 +845,60 @@ h6 {
 
 .cart-button-container {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: 0;
+  left: 0;
   z-index: 999;
+  width: 100%;
 }
 
 .cart-button {
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  /*box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);*/
   position: relative;
+  border-radius: 0;
 }
 
 .cart-count {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background: red;
-  color: white;
-  border-radius: 50%;
-  width: 25px;
-  height: 25px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100%;
+  text-align: center;
   font-size: 12px;
+  padding: 2px 0;
+  display: block;
 }
+
+
+
+
+.cart-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 15px;
+}
+
+.cart-button .cart-count {
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.cart-button .small {
+    font-size: 0.8em;
+    font-weight: normal;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+
+
+
+
+
+
 
 .cart-item-img {
   width: 50px;
@@ -904,6 +941,10 @@ h6 {
     background-color: var(--primary-color);
     border-color: var(--primary-color);
     color: white;
+}
+
+.order-type-buttons .w-50 {
+  width: 49.5% !important;
 }
 
 .customer-details {
@@ -992,6 +1033,116 @@ h6 {
     right: 10px;
 }
 
+
+
+
+.empty-cart-message {
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin: 10px;
+}
+
+.empty-cart-message i {
+    opacity: 0.7;
+}
+
+.empty-cart-message p {
+    margin-bottom: 1rem;
+}
+
+
+
+
+
+.toast-notification {
+    position: fixed;
+    top: 10px;
+    left: 0;
+    padding: 15px 20px;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 999999;
+    animation: slideIn 0.3s ease-out;
+    width: 100%;
+}
+
+.toast-notification.success {
+    border-left: 4px solid #28a745;
+}
+
+.toast-notification.error {
+    border-left: 4px solid #dc3545;
+}
+
+.toast-icon i {
+    font-size: 24px;
+}
+
+.toast-icon .bi-check-circle-fill {
+    color: #28a745;
+}
+
+.toast-icon .bi-exclamation-circle-fill {
+    color: #dc3545;
+}
+
+.toast-message {
+    flex-grow: 1;
+    font-size: 14px;
+}
+
+.toast-close {
+    cursor: pointer;
+    color: #6c757d;
+    padding-left: 10px;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+
+
+
+.cart-next-discount {
+  background-color: #f8f9fa;
+  border: 1px dotted;
+  border-radius: 5px;
+  margin: 5px 0;
+  font-size: 0.85rem;
+  animation: blink-bg 1.5s infinite;
+}
+
+@keyframes blink-bg {
+  0%, 100% { background-color: #f8f9fa; } /* Original color */
+  50% { background-color: #fff; } /* Slightly darker */
+}
+
+.cart-next-discount i {
+    margin-right: 5px;
+}
+
+
+
+
+
+
+
+
+
+
 @media (max-width: 576px) {
   .cart-sidebar {
     width: 100%;
@@ -1004,13 +1155,26 @@ h6 {
     width: 100%;
   }
   .restaurant .product-card .card-body .cart_btn_group {
-    right: 3px;
+    right: 10px;
   }
   .restaurant .product-card .card-body .btn.add-to-cart {
-    font-size: 11px;
-    width: 100px !important;
+    font-size: 14px;
+    width: 90px !important;
     height: auto !important;
-    padding: 3px;
+    padding: 10px 0;
+  }
+  .order-type-buttons .w-50 {
+    width: 49% !important;
+  }
+  .cart-items {
+    max-height: 100px;
+  }
+}
+
+
+@media only screen and (max-width: 360px) {
+  .cart-items {
+    max-height: 100px;
   }
 }
 

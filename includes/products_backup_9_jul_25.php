@@ -1,6 +1,8 @@
 
+
+
 <!-- Toast Notification -->
-<!-- <div class="cart_toast_notification position-fixed bottom-0 start-0" style="z-index: 999999;">
+<div class="cart_toast_notification position-fixed bottom-0 start-0" style="z-index: 999999;">
   <div id="cartToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
     <div class="toast-header bg-primary text-white" style="display:none;">
       <strong class="me-auto">Cart Update</strong>
@@ -10,7 +12,7 @@
       <span id="toastMessage">Item added to cart!</span>
     </div>
   </div>
-</div> -->
+</div>
 
 <!-- products.php -->
 <div class="products">
@@ -99,11 +101,10 @@
           <input type="text" class="form-control" id="dinningName" placeholder="Your name" required>
        </div>
        <div class="mb-1 col-half">
-            <label for="dinningPhone" class="form-label">Phone*</label>
-            <input type="tel" class="form-control" id="dinningPhone" placeholder="Your phone number" 
-                   pattern="[0-9]{10}" title="Please enter exactly 10 digits" required
-                   oninput="validatePhoneNumber(this)">
-        </div>
+          <label for="dinningPhone" class="form-label">Phone*</label>
+          <input type="tel" class="form-control" id="dinningPhone" placeholder="Your phone number" 
+       pattern="[0-9]{10,}" title="Please enter at least 10 digits" required>
+       </div>
        <!-- Add Order Notes for Dining -->
        <div class="mb-1 col-full">
           <label for="dinningNotes" class="form-label">Order Notes</label>
@@ -125,11 +126,10 @@
           <input type="text" class="form-control" id="customerName" placeholder="Your name" required>
        </div>
        <div class="mb-1 col-half">
-            <label for="customerPhone" class="form-label">Phone*</label>
-            <input type="tel" class="form-control" id="customerPhone" placeholder="Your phone number" 
-                   pattern="[0-9]{10}" title="Please enter exactly 10 digits" required
-                   oninput="validatePhoneNumber(this)">
-        </div>
+          <label for="customerPhone" class="form-label">Phone*</label>
+          <input type="tel" class="form-control" id="customerPhone" placeholder="Your phone number" 
+       pattern="[0-9]{10,}" title="Please enter at least 10 digits" required>
+       </div>
        <div class="mb-1 col-full">
           <label for="customerAddress" class="form-label">Address*</label>
           <textarea class="form-control" id="customerAddress" rows="2" placeholder="Delivery address" required></textarea>
@@ -183,7 +183,7 @@
                        data-price="<?= $product['price'] ?>"
                        data-max="<?= $product['quantity'] ?>"
                        data-image="<?= htmlspecialchars($product['image_path']) ?>"> 
-                    <i class="bi bi-cart-plus"></i> Add
+                    <i class="bi bi-cart-plus"></i> Add to Cart
                     </button>
                 </div>
                 <?php endif; ?>
@@ -227,13 +227,13 @@
  </div>
  
  <?php if ($delivery_active || $dining_active): ?>
-<div class="cart-button-container" style="display: none;">
+ <div class="cart-button-container">
     <button class="btn btn-primary cart-button" onclick="toggleCart()">
-        <span class="cart-count">0 item added</span>
-        <span class="small discount-message" style="display: none;"></span>
+    <i class="bi bi-cart"></i> 
+    <span class="cart-count">0</span>
     </button>
-</div>
-<?php endif; ?>
+ </div>
+ <?php endif; ?>
 </div>
 
 <script>
@@ -250,30 +250,6 @@ if (localStorage.getItem(cartKey)) {
     cart = JSON.parse(localStorage.getItem(cartKey));
     updateCartUI();
 }
-
-
-function formatNumber(num) {
-    num = typeof num === 'string' ? parseFloat(num) : num;
-    return num % 1 === 0 ? num.toString() : num.toFixed(2).replace(/\.?0+$/, '');
-}
-
-function validatePhoneNumber(input) {
-    // Remove any non-digit characters
-    input.value = input.value.replace(/\D/g, '');
-    
-    // Trim to 10 digits if longer
-    if (input.value.length > 10) {
-        input.value = input.value.substring(0, 10);
-    }
-    
-    // Check validity and show error if needed
-    if (input.value.length !== 10 && input.value.length > 0) {
-        input.setCustomValidity('Phone number must be exactly 10 digits');
-    } else {
-        input.setCustomValidity('');
-    }
-}
-
 
 // Add to cart button click handler
 document.querySelectorAll('.add-to-cart').forEach(button => {
@@ -292,14 +268,14 @@ document.querySelectorAll('.add-to-cart').forEach(button => {
         if (existingItem) {
             if (existingItem.quantity < existingItem.max) {
                 existingItem.quantity++;
-                // showToast(`${product.name} quantity increased to ${existingItem.quantity}`);
+                showToast(`${product.name} quantity increased to ${existingItem.quantity}`);
             } else {
-                // showToast(`Maximum quantity reached for ${product.name}`, true);
+                showToast(`Maximum quantity reached for ${product.name}`, true);
                 return;
             }
         } else {
             cart.push(product);
-            // showToast(`${product.name} added to cart`);
+            showToast(`${product.name} added to cart`);
             // Add pulse animation to cart button
             document.querySelector('.cart-button').classList.add('cart-item-added');
             setTimeout(() => {
@@ -309,19 +285,8 @@ document.querySelectorAll('.add-to-cart').forEach(button => {
 
         saveCart();
         updateCartUI();
-        
-        // Show cart button container if it's hidden
-        const cartButtonContainer = document.querySelector('.cart-button-container');
-        if (cartButtonContainer && cartButtonContainer.style.display === 'none') {
-            cartButtonContainer.style.display = 'block';
-        }
-        
     });
 });
-
-
-
-
 
 // Function to show toast notification
 function showToast(message, isError = false) {
@@ -366,10 +331,7 @@ function updateCartUI() {
     const deliveryDetails = document.querySelector('.delivery-details');
     const orderTypeButtons = document.querySelector('.order-type-buttons');
     const cartFooter = document.querySelector('.cart-footer');
-    const cartButtonContainer = document.querySelector('.cart-button-container');
     const emptyCartMsg = document.createElement('div');
-    const discountMessageElement = document.querySelector('.cart-button .discount-message');
-    const discountSection = document.getElementById('discountSection');
 
     // Clear existing empty message if any
     const existingEmptyMsg = cartItemsContainer.querySelector('.empty-cart-message');
@@ -399,12 +361,9 @@ function updateCartUI() {
         if (deliveryDetails) deliveryDetails.style.display = 'none';
         if (orderTypeButtons) orderTypeButtons.style.display = 'none';
         if (cartFooter) cartFooter.style.display = 'none';
-        if (discountMessageElement) discountMessageElement.style.display = 'none';
-        if (discountSection) discountSection.style.display = 'none';
         
-        // Update cart count and hide cart button container
-        document.querySelector('.cart-count').textContent = '0 items added';
-        if (cartButtonContainer) cartButtonContainer.style.display = 'none';
+        // Update cart count
+        document.querySelector('.cart-count').textContent = '0';
         return; // Exit early since cart is empty
     }
 
@@ -418,7 +377,6 @@ function updateCartUI() {
     // Show order type buttons if they were hidden
     if (orderTypeButtons) orderTypeButtons.style.display = 'block';
     if (cartFooter) cartFooter.style.display = 'block';
-    if (cartButtonContainer) cartButtonContainer.style.display = 'block';
 
     // Calculate subtotal and populate cart items
     cart.forEach((item, index) => {
@@ -431,7 +389,7 @@ function updateCartUI() {
             <div class="cart-item-info d-flex">
                 <div class="ms-1">
                     <h6>${item.name}</h6>
-                    <div>₹${formatNumber(item.price)} x ${item.quantity}</div>
+                    <div>₹${item.price.toFixed(2)} x ${item.quantity}</div>
                 </div>
             </div>
             <div class="cart-item-controls">
@@ -457,7 +415,8 @@ function updateCartUI() {
     // Calculate discount
     discountAmount = 0;
     discountType = '';
-    
+    const discountSection = document.getElementById('discountSection');
+
     <?php if (!empty($discounts)): ?>
         // Check each discount condition in order
         const discounts = <?= json_encode($discounts) ?>;
@@ -488,7 +447,7 @@ function updateCartUI() {
                 discountType = applicableDiscount.discount_in_percent + '% discount';
             } else if (applicableDiscount.discount_in_flat !== null && applicableDiscount.discount_in_flat > 0) {
                 discountAmount = parseFloat(applicableDiscount.discount_in_flat);
-                discountType = 'Flat ₹' + formatNumber(applicableDiscount.discount_in_flat) + ' OFF';
+                discountType = 'Flat OFF ₹' + discountAmount.toFixed(2);
             }
 
             // Ensure discountAmount doesn't exceed subtotal
@@ -497,35 +456,16 @@ function updateCartUI() {
             }
 
             // Show discount section only if a discount is actually applied
-            if (discountAmount > 0 && discountSection) {
+            if (discountAmount > 0) {
                 discountSection.style.display = 'block';
-                document.getElementById('discountAmount').textContent = formatNumber(discountAmount);
+                document.getElementById('discountAmount').textContent = discountAmount.toFixed(2);
                 document.getElementById('discountType').textContent = discountType;
-                
-                // Show discount applied message in cart button
-                if (discountMessageElement) {
-                    discountMessageElement.innerHTML = `<i class="bi bi-tag-fill"></i> ${discountType} applied!`;
-                    discountMessageElement.style.display = 'block';
-                }
-            } else if (discountSection) {
+            } else {
                 discountSection.style.display = 'none';
-                if (discountMessageElement) discountMessageElement.style.display = 'none';
             }
         } else {
-            // No discount applied but discounts available
-            if (discountSection) discountSection.style.display = 'none';
-            
-            // Show message about how to get discount in cart button
-            if (discountMessageElement && discounts.length > 0) {
-                const minDiscount = discounts[0].min_cart_value;
-                const needed = minDiscount - subtotal;
-                if (needed > 0) {
-                    discountMessageElement.innerHTML = `<i class="bi bi-tag"></i> Add ₹${formatNumber(needed)} more for discount`;
-                    discountMessageElement.style.display = 'block';
-                } else {
-                    discountMessageElement.style.display = 'none';
-                }
-            }
+            // Hide discount section if no applicable discount
+            discountSection.style.display = 'none';
         }
 
         // Show next discount info if there's a higher discount available
@@ -534,9 +474,9 @@ function updateCartUI() {
             let nextDiscountText = '';
             
             if (nextDiscount.discount_in_percent) {
-                nextDiscountText = `Add ₹${formatNumber(amountNeeded)} more for ${formatNumber(nextDiscount.discount_in_percent)}% discount`;
+                nextDiscountText = `Add ₹${amountNeeded.toFixed(2)} more to get ${nextDiscount.discount_in_percent}% discount`;
             } else if (nextDiscount.discount_in_flat) {
-                nextDiscountText = `Add ₹${formatNumber(amountNeeded)} more for ₹${formatNumber(nextDiscount.discount_in_flat)} OFF`;
+                nextDiscountText = `Add ₹${amountNeeded.toFixed(2)} more to get ₹${nextDiscount.discount_in_flat} OFF`;
             }
             
             // Create or update next discount info element
@@ -562,15 +502,14 @@ function updateCartUI() {
         }
     <?php else: ?>
         // Hide discount section if no discounts exist at all
-        if (discountSection) discountSection.style.display = 'none';
-        if (discountMessageElement) discountMessageElement.style.display = 'none';
+        discountSection.style.display = 'none';
         if (document.getElementById('nextDiscountInfo')) {
             document.getElementById('nextDiscountInfo').style.display = 'none';
         }
     <?php endif; ?>
 
     // Update subtotal and total
-    document.getElementById('cartSubtotal').textContent = formatNumber(subtotal);
+    document.getElementById('cartSubtotal').textContent = subtotal.toFixed(2);
 
     // Calculate GST on amount after discount
     let amountAfterDiscount = subtotal - discountAmount;
@@ -581,7 +520,7 @@ function updateCartUI() {
     let total = amountAfterDiscount;
     if (gstPercent > 0) {
         const gstAmount = (amountAfterDiscount * gstPercent) / 100;
-        document.getElementById('gstCharges').textContent = formatNumber(gstAmount);
+        document.getElementById('gstCharges').textContent = gstAmount.toFixed(2);
         total += gstAmount;
     }
 
@@ -592,7 +531,7 @@ function updateCartUI() {
         if (freeDeliveryMin > 0 && amountAfterDiscount >= freeDeliveryMin) {
             // Free delivery because subtotal meets minimum
             actualDeliveryCharge = 0;
-            document.getElementById('deliveryChargeText').textContent = 'FREE (Order above ₹' + formatNumber(freeDeliveryMin) + ')';
+            document.getElementById('deliveryChargeText').textContent = 'FREE (Order above ₹' + freeDeliveryMin + ')';
             if (cartDeliveryChargesRow) cartDeliveryChargesRow.classList.add('free');
         } else {
             // Apply normal delivery charge
@@ -601,9 +540,9 @@ function updateCartUI() {
                 // Show message about how much more to spend for free delivery
                 const neededForFree = freeDeliveryMin - amountAfterDiscount;
                 document.getElementById('deliveryChargeText').innerHTML =
-                    `₹${formatNumber(deliveryCharge)} <span class="free-delivery-text"> (Add ₹${formatNumber(neededForFree)} more for FREE delivery)</span>`;
+                    `₹${deliveryCharge.toFixed(2)} <span class="free-delivery-text"> (Add ₹${neededForFree.toFixed(2)} more for FREE delivery)</span>`;
             } else {
-                document.getElementById('deliveryChargeText').textContent = `₹${formatNumber(deliveryCharge)}`;
+                document.getElementById('deliveryChargeText').textContent = `₹${deliveryCharge.toFixed(2)}`;
             }
             if (cartDeliveryChargesRow) cartDeliveryChargesRow.classList.remove('free');
         }
@@ -614,9 +553,9 @@ function updateCartUI() {
         if (cartDeliveryChargesRow) cartDeliveryChargesRow.style.display = 'none';
     }
 
-    document.getElementById('cartTotal').textContent = formatNumber(total);
+    document.getElementById('cartTotal').textContent = total.toFixed(2);
     const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-    document.querySelector('.cart-count').textContent = itemCount + (itemCount === 1 ? ' item added' : ' items added');
+    document.querySelector('.cart-count').textContent = itemCount;
 
     // Handle delivery/dining button visibility
     <?php if ($delivery_active && $dining_active): ?>
@@ -635,13 +574,6 @@ function updateCartUI() {
         if (deliveryDetails) deliveryDetails.style.display = 'block';
     <?php endif; ?>
 }
-
-
-
-
-
-
-
 
 
 
@@ -691,14 +623,6 @@ function removeFromCart(index) {
     cart.splice(index, 1);
     saveCart();
     updateCartUI();
-    
-    // Hide cart button container if no items left
-    if (cart.length === 0) {
-        const cartButtonContainer = document.querySelector('.cart-button-container');
-        if (cartButtonContainer) {
-            cartButtonContainer.style.display = 'none';
-        }
-    }
 }
 
 // Cart toggle controls
@@ -749,33 +673,25 @@ function placeOrder() {
     
     // Collect customer details based on order type
     let customerName, customerPhone, deliveryAddress, tableNumber, orderNotes;
-    const phoneInput = isDelivery ? document.getElementById('customerPhone') : document.getElementById('dinningPhone');
     
-    // Validate phone number first
-    if (phoneInput.value.length !== 10) {
-        alert('Please enter a valid 10-digit phone number');
-        phoneInput.focus();
-        return;
-    }
-
     if (isDelivery) {
         customerName = document.getElementById('customerName').value;
-        customerPhone = phoneInput.value;
+        customerPhone = document.getElementById('customerPhone').value;
         deliveryAddress = document.getElementById('customerAddress').value;
         orderNotes = document.getElementById('customerNotes').value;
         
-        if (!customerName || !deliveryAddress) {
-            alert('Please provide your name and address');
+        if (!customerName || !customerPhone || !deliveryAddress) {
+            alert('Please provide your name, phone number and address');
             return;
         }
     } else {
         customerName = document.getElementById('dinningName').value;
-        customerPhone = phoneInput.value;
+        customerPhone = document.getElementById('dinningPhone').value;
         tableNumber = document.getElementById('tableNumber').value;
         orderNotes = document.getElementById('dinningNotes').value;
         
-        if (!customerName || !tableNumber) {
-            alert('Please provide your name and table number');
+        if (!customerName || !customerPhone || !tableNumber) {
+            alert('Please provide your name, phone number and table number');
             return;
         }
     }
@@ -815,12 +731,7 @@ function placeOrder() {
         },
         body: JSON.stringify(orderData)
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
         if (data.success) {
             // Only show toast if it's a dining order that will trigger WhatsApp
@@ -833,7 +744,7 @@ function placeOrder() {
             // If the response indicates to trigger WhatsApp
             if (data.trigger_whatsapp) {
                 // Wait 1 second then trigger WhatsApp function
-                setTimeout(placeOrderOnWhatsApp, 1000);
+                setTimeout(placeOrderOnWhatsApp, 3000);
             } else {
                 // For orders that don't trigger WhatsApp, reset the button immediately
                 placeOrderBtn.innerHTML = originalBtnText;
@@ -844,17 +755,16 @@ function placeOrder() {
                 saveCart();
                 updateCartUI();
                 closeCart();
-                
-                // Show success message
-                showToast('Order placed successfully!', 'success');
             }
         } else {
-            throw new Error(data.message || 'Failed to place order');
+            alert('Error: ' + (data.message || 'Failed to place order'));
+            placeOrderBtn.innerHTML = originalBtnText;
+            placeOrderBtn.disabled = false;
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert(error.message || 'Failed to place order. Please try again.');
+        alert('Failed to place order');
         placeOrderBtn.innerHTML = originalBtnText;
         placeOrderBtn.disabled = false;
     });
@@ -914,26 +824,16 @@ function placeOrderOnWhatsApp() {
     const freeDeliveryMin = <?= isset($delivery_charges['free_delivery_minimum']) ? $delivery_charges['free_delivery_minimum'] : 0 ?>;
     const gstPercent = <?= $gst_percent ?? 0 ?>;
     
-    // Get the appropriate phone input based on order type
-    const phoneInput = isDelivery ? document.getElementById('customerPhone') : document.getElementById('dinningPhone');
+    let customerName, customerPhone, orderDetails;
     
-    // Validate phone number (exactly 10 digits)
-    if (!phoneInput.value || phoneInput.value.length !== 10) {
-        alert('Please enter a valid 10-digit phone number');
-        phoneInput.focus();
-        return;
-    }
-
-    let customerName, orderDetails;
-    
-    if (isDelivery) {
+    if (isDelivery && cart.length > 0) {
         customerName = document.getElementById('customerName').value;
-        const customerPhone = phoneInput.value;
+        customerPhone = document.getElementById('customerPhone').value;
         const customerAddress = document.getElementById('customerAddress').value;
         const customerNotes = document.getElementById('customerNotes').value;
         
-        if (!customerName || !customerAddress) {
-            alert('Please provide your name and address');
+        if (!customerName || !customerPhone || !customerAddress) {
+            alert('Please provide your name, phone number and address');
             return;
         }
         
@@ -941,12 +841,12 @@ function placeOrderOnWhatsApp() {
         if (customerNotes) orderDetails += `\nNotes: ${customerNotes}`;
     } else {
         customerName = document.getElementById('dinningName').value;
-        const customerPhone = phoneInput.value;
+        customerPhone = document.getElementById('dinningPhone').value;
         const tableNumber = document.getElementById('tableNumber').value;
         const dinningNotes = document.getElementById('dinningNotes').value;
         
-        if (!customerName || !tableNumber) {
-            alert('Please provide your name and table number');
+        if (!customerName || !customerPhone || !tableNumber) {
+            alert('Please provide your name, phone number and table number');
             return;
         }
         
@@ -955,19 +855,18 @@ function placeOrderOnWhatsApp() {
     }
     <?php else: ?>
     let customerName = 'Guest';
+    let customerPhone = '';
     let orderDetails = `*Quick Order*`;
     <?php endif; ?>
 
-    // Get WhatsApp link from business info or use default phone
     const whatsappLink = "<?= $social_link['whatsapp'] ?? '' ?>";
     let phoneNumber = whatsappLink.match(/wa\.me\/(\d+)/)?.[1] || "<?= $user['phone'] ?? '' ?>";
 
     if (!phoneNumber) {
-        alert('WhatsApp number not available for this business');
+        alert('WhatsApp number not available');
         return;
     }
 
-    // Format order date
     const orderDate = new Date().toLocaleString('en-IN', {
         day: '2-digit',
         month: 'short',
@@ -987,7 +886,7 @@ function placeOrderOnWhatsApp() {
     const businessAddress = "<?= htmlspecialchars($business_info['business_address'] ?? '') ?>";
     const businessPhone = "<?= $user['phone'] ?? '' ?>";
 
-    // Format the WhatsApp message
+    // Format the message
     let message = `*${businessName.toUpperCase()}*\n`;
     message += `${businessAddress}\n`;
     message += `Phone: ${businessPhone}\n\n`;
@@ -1019,7 +918,7 @@ function placeOrderOnWhatsApp() {
         message += `GST (${gstPercent}%):    ₹${gstAmount}\n`;
     }
     
-    if (isDelivery) {
+    if (isDelivery && cart.length > 0) {
         if (freeDeliveryMin > 0 && (subtotal - discountAmount) >= freeDeliveryMin) {
             message += `Delivery:       FREE\n`;
             message += `(Order above ₹${freeDeliveryMin})\n`;
@@ -1033,7 +932,7 @@ function placeOrderOnWhatsApp() {
     }
 
     let total = (subtotal - discountAmount) + (gstPercent > 0 ? ((subtotal - discountAmount) * gstPercent / 100) : 0);
-    if (isDelivery) {
+    if (isDelivery && cart.length > 0) {
         total += parseFloat(deliveryCharge);
     }
     
@@ -1046,18 +945,13 @@ function placeOrderOnWhatsApp() {
     
     message += `Please confirm this order.`;
 
-    // Encode message for URL and open WhatsApp
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
+    window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
 
-    // Clear cart after successful WhatsApp order
+    // Optional: Clear cart after order
     cart = [];
     saveCart();
     updateCartUI();
     closeCart();
-    
-    // Show success notification
-    showToast('Order sent via WhatsApp!', 'success');
 }
 
 

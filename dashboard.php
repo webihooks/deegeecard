@@ -48,101 +48,50 @@ if (!$has_active_subscription && $is_trial) {
     }
 }
 
-// Handle form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['profile_url'])) {
-        $profile_url = trim($_POST['profile_url']);
-        
-        // Basic validation
-        if (empty($profile_url)) {
-            $error_message = "Profile URL cannot be empty";
-        } elseif (!preg_match('/^[a-zA-Z0-9-]+$/', $profile_url)) {
-            $error_message = "Profile URL can only contain letters, numbers, and hyphens";
-        } else {
-            // Check if URL is available
-            $check_sql = "SELECT user_id FROM profile_url_details WHERE profile_url = ?";
-            $check_stmt = $conn->prepare($check_sql);
-            $check_stmt->bind_param("s", $profile_url);
-            $check_stmt->execute();
-            $check_result = $check_stmt->get_result();
-            
-            if ($check_result->num_rows > 0) {
-                $existing_user = $check_result->fetch_assoc();
-                if ($existing_user['user_id'] != $user_id) {
-                    $error_message = "This profile URL is already taken";
-                }
-            }
-            $check_stmt->close();
-            
-            // If no errors, save the profile URL
-            if (empty($error_message)) {
-                // Check if user already has a profile URL
-                $existing_sql = "SELECT profile_url FROM profile_url_details WHERE user_id = ?";
-                $existing_stmt = $conn->prepare($existing_sql);
-                $existing_stmt->bind_param("i", $user_id);
-                $existing_stmt->execute();
-                $existing_result = $existing_stmt->get_result();
+// Get today's date
+$today = date('Y-m-d');
+
+// Today's sales summary
+$summary_sql = "SELECT 
+                  COUNT(*) as total_orders,
+                  SUM(total_amount) as total_sales,
+                  SUM(subtotal) as subtotal,
+                  SUM(discount_amount) as total_discounts,
+                  SUM(gst_amount) as total_tax,
+                  SUM(delivery_charge) as total_delivery,
+                  AVG(total_amount) as avg_order_value
+                FROM orders 
+                WHERE user_id = ? 
+                AND status != 'cancelled'
+                AND DATE(created_at) = ?";
                 
-                if ($existing_result->num_rows > 0) {
-                    // Update existing record
-                    $update_sql = "UPDATE profile_url_details SET profile_url = ?, updated_at = NOW() WHERE user_id = ?";
-                    $stmt = $conn->prepare($update_sql);
-                    $stmt->bind_param("si", $profile_url, $user_id);
-                } else {
-                    // Insert new record
-                    $insert_sql = "INSERT INTO profile_url_details (user_id, profile_url, created_at, updated_at) VALUES (?, ?, NOW(), NOW())";
-                    $stmt = $conn->prepare($insert_sql);
-                    $stmt->bind_param("is", $user_id, $profile_url);
-                }
-                
-                if ($stmt->execute()) {
-                    $success_message = "Profile URL saved successfully!";
-                    $current_profile_url = $profile_url;
-                } else {
-                    $error_message = "Error saving profile URL: " . $conn->error;
-                }
-                $stmt->close();
-            }
-        }
-    }
-}
+$stmt = $conn->prepare($summary_sql);
+$stmt->bind_param("is", $user_id, $today);
+$stmt->execute();
+$summary_data = $stmt->get_result()->fetch_assoc();
+$stmt->close();
 
-// Check for AJAX availability request
-if (isset($_GET['check_availability']) && isset($_GET['profile_url'])) {
-    $profile_url = trim($_GET['profile_url']);
-    $response = ['available' => true];
-    
-    if (!empty($profile_url)) {
-        $check_sql = "SELECT user_id FROM profile_url_details WHERE profile_url = ?";
-        $check_stmt = $conn->prepare($check_sql);
-        $check_stmt->bind_param("s", $profile_url);
-        $check_stmt->execute();
-        $check_result = $check_stmt->get_result();
-        
-        if ($check_result->num_rows > 0) {
-            $existing_user = $check_result->fetch_assoc();
-            $response['available'] = ($existing_user['user_id'] == $user_id);
-        }
-        $check_stmt->close();
-    }
-    
-    header('Content-Type: application/json');
-    echo json_encode($response);
-    exit();
+// Hourly sales data for today's chart
+$hourly_sales_sql = "SELECT 
+                    HOUR(created_at) as sale_hour,
+                    COUNT(*) as total_orders,
+                    SUM(total_amount) as total_sales
+                  FROM orders 
+                  WHERE user_id = ? 
+                  AND status != 'cancelled'
+                  AND DATE(created_at) = ?
+                  GROUP BY HOUR(created_at)
+                  ORDER BY sale_hour ASC";
+                  
+$stmt = $conn->prepare($hourly_sales_sql);
+$stmt->bind_param("is", $user_id, $today);
+$stmt->execute();
+$result = $stmt->get_result();
+$sales_data = [];
+while ($row = $result->fetch_assoc()) {
+    $sales_data[] = $row;
 }
-
-// Get current profile URL if exists
-$get_sql = "SELECT profile_url FROM profile_url_details WHERE user_id = ?";
-$get_stmt = $conn->prepare($get_sql);
-$get_stmt->bind_param("i", $user_id);
-$get_stmt->execute();
-$get_result = $get_stmt->get_result();
-
-if ($get_result->num_rows > 0) {
-    $row = $get_result->fetch_assoc();
-    $current_profile_url = $row['profile_url'];
-}
-$get_stmt->close();
+$stmt->close();
 
 $conn->close();
 ?>
@@ -161,6 +110,22 @@ $conn->close();
     <script src="assets/js/config.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.19.3/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .card-summary {
+            transition: all 0.3s ease;
+        }
+        .card-summary:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .today-header {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 
 <body>
@@ -168,67 +133,86 @@ $conn->close();
     <div class="wrapper">
         <?php include 'toolbar.php'; ?>
         
-
-<?php
-if ($role === 'admin') {
-    include 'admin_menu.php';
-} else {
-    if ($has_active_subscription || ($is_trial && strtotime($trial_end) > time())) {
-        include 'menu.php';
-    } else {
-        include 'unsubscriber_menu.php';
-    }
-}
-?>
-
+        <?php
+        if ($role === 'admin') {
+            include 'admin_menu.php';
+        } else {
+            if ($has_active_subscription || ($is_trial && strtotime($trial_end) > time())) {
+                include 'menu.php';
+            } else {
+                include 'unsubscriber_menu.php';
+            }
+        }
+        ?>
 
         <div class="page-content">
-            <div class="container">
+            <div class="container-fluid">
                 <div class="row">
-                    <div class="col-xl-9">
+                    <div class="col-xl-12">
                         <!-- Display trial notification if user is on trial -->
                         <?php if (!empty($trial_notification)) echo $trial_notification; ?>
                         
                         <div class="card">
                             <div class="card-header">
-                                <h4 class="card-title">Profile URL</h4>
+                                <h4 class="card-title">Today's Sales Report - <?php echo date('F j, Y'); ?></h4>
                             </div>
                             
                             <div class="card-body">
-                                <?php if (!empty($success_message)): ?>
-                                    <div class="alert alert-success"><?php echo $success_message; ?></div>
-                                <?php endif; ?>
-                                
-                                <?php if (!empty($error_message)): ?>
-                                    <div class="alert alert-danger"><?php echo $error_message; ?></div>
-                                <?php endif; ?>
-                                
-                                <form id="profileUrlForm" method="POST" action="">
-                                    <div class="mb-3">
-                                        <label for="profile_url" class="form-label">Your Profile URL</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><?php echo $_SERVER['HTTP_HOST']; ?>/deegeecard/</span>
-                                            <input type="text" class="form-control" id="profile_url" name="profile_url" 
-                                                   value="<?php echo htmlspecialchars($current_profile_url); ?>" 
-                                                   pattern="[a-zA-Z0-9-]+" 
-                                                   title="Only letters, numbers, and hyphens are allowed" required>
-                                            <button type="button" class="btn btn-outline-secondary" id="checkAvailability">Check Availability</button>
+                                <!-- Summary Cards -->
+                                <div class="row mb-4">
+                                    <div class="col-md-3">
+                                        <div class="card card-summary bg-primary text-white">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Today's Sales</h5>
+                                                <h3 class="card-text">₹<?php echo isset($summary_data['total_sales']) ? number_format($summary_data['total_sales'], 2) : '0.00'; ?></h3>
+                                                <p class="card-text mb-0"><?php echo isset($summary_data['total_orders']) ? $summary_data['total_orders'] : '0'; ?> orders</p>
+                                                <?php if (isset($summary_data['avg_order_value']) && $summary_data['total_orders'] > 0): ?>
+                                                    <p class="card-text">Avg: ₹<?php echo number_format($summary_data['avg_order_value'], 2); ?></p>
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
-                                        <div id="availabilityMessage" class="mt-2"></div>
-                                        <small class="text-muted">Example: yourname or your-business</small>
                                     </div>
-                                    
-                                    <button type="submit" class="btn btn-primary">Save Profile URL</button>
-                                </form>
-                                
-                                <?php if (!empty($current_profile_url)): ?>
-                                <div class="mt-4">
-                                    <h5>Your current profile link:</h5>
-                                    <a href="<?php echo 'http://' . $_SERVER['HTTP_HOST'] . '/deegeecard/' . $current_profile_url; ?>" target="_blank">
-                                        <?php echo 'http://' . $_SERVER['HTTP_HOST'] . '/deegeecard/' . $current_profile_url; ?>
-                                    </a>
+                                    <div class="col-md-3">
+                                        <div class="card card-summary bg-success text-white">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Subtotal</h5>
+                                                <h3 class="card-text">₹<?php echo isset($summary_data['subtotal']) ? number_format($summary_data['subtotal'], 2) : '0.00'; ?></h3>
+                                                <p class="card-text mb-0">Before discounts & taxes</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card card-summary bg-info text-white">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Taxes & Charges</h5>
+                                                <h3 class="card-text">₹<?php echo isset($summary_data['total_tax']) ? number_format($summary_data['total_tax'] + ($summary_data['total_delivery'] ?? 0), 2) : '0.00'; ?></h3>
+                                                <p class="card-text mb-0">GST: ₹<?php echo isset($summary_data['total_tax']) ? number_format($summary_data['total_tax'], 2) : '0.00'; ?></p>
+                                                <p class="card-text">Delivery: ₹<?php echo isset($summary_data['total_delivery']) ? number_format($summary_data['total_delivery'], 2) : '0.00'; ?></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card card-summary bg-warning text-dark">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Discounts</h5>
+                                                <h3 class="card-text">₹<?php echo isset($summary_data['total_discounts']) ? number_format($summary_data['total_discounts'], 2) : '0.00'; ?></h3>
+                                                <p class="card-text">Applied to orders</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <?php endif; ?>
+
+                                <!-- Chart Section -->
+                                <div class="row mb-4">
+                                    <div class="col-md-12">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Hourly Sales Trend</h5>
+                                                <canvas id="salesChart" height="100"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -244,6 +228,124 @@ if ($role === 'admin') {
     
     <script>
         $(document).ready(function() {
+            // Initialize Chart
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            
+            <?php if (!empty($sales_data)): ?>
+                // Prepare all hours (0-23) with default 0 values
+                const allHours = Array.from({length: 24}, (_, i) => i);
+                const salesByHour = Array(24).fill(0);
+                const ordersByHour = Array(24).fill(0);
+                
+                // Fill in the actual data
+                <?php foreach ($sales_data as $row): ?>
+                    salesByHour[<?php echo $row['sale_hour']; ?>] = <?php echo $row['total_sales']; ?>;
+                    ordersByHour[<?php echo $row['sale_hour']; ?>] = <?php echo $row['total_orders']; ?>;
+                <?php endforeach; ?>
+                
+                // Format hours for display (e.g., "12 PM")
+                const hourLabels = allHours.map(hour => {
+                    return hour === 0 ? '12 AM' : 
+                           hour < 12 ? hour + ' AM' : 
+                           hour === 12 ? '12 PM' : 
+                           (hour - 12) + ' PM';
+                });
+                
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: hourLabels,
+                        datasets: [
+                            {
+                                label: 'Sales (₹)',
+                                data: salesByHour,
+                                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: 'Orders',
+                                data: ordersByHour,
+                                backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                borderWidth: 1,
+                                type: 'line',
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Today\'s Sales by Hour'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label.includes('Sales')) {
+                                            label += ': ₹' + context.raw.toFixed(2);
+                                        } else {
+                                            label += ': ' + context.raw;
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: 'Sales (₹)'
+                                }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: 'Orders'
+                                },
+                                grid: {
+                                    drawOnChartArea: false
+                                }
+                            }
+                        }
+                    }
+                });
+            <?php else: ?>
+                // Empty chart when no data
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Array.from({length: 24}, (_, i) => {
+                            return i === 0 ? '12 AM' : 
+                                   i < 12 ? i + ' AM' : 
+                                   i === 12 ? '12 PM' : 
+                                   (i - 12) + ' PM';
+                        }),
+                        datasets: []
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'No sales data available for today yet'
+                            }
+                        }
+                    }
+                });
+            <?php endif; ?>
+
             // Check availability button click handler
             $('#checkAvailability').click(function() {
                 const profileUrl = $('#profile_url').val().trim();
