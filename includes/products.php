@@ -904,22 +904,20 @@ document.querySelector('.cart-footer button').addEventListener('click', placeOrd
 // Place order on WhatsApp
 function placeOrderOnWhatsApp() {
     if (cart.length === 0) {
-        alert('Your cart is empty');
+        showToast('Your cart is empty', 'error');
         return;
     }
 
     <?php if ($delivery_active || $dining_active): ?>
     const isDelivery = <?= $delivery_active ? 'document.getElementById("deliveryBtn").classList.contains("active")' : 'false' ?>;
-    const deliveryCharge = <?= isset($delivery_charges['delivery_charge']) ? $delivery_charges['delivery_charge'] : 0 ?>;
-    const freeDeliveryMin = <?= isset($delivery_charges['free_delivery_minimum']) ? $delivery_charges['free_delivery_minimum'] : 0 ?>;
-    const gstPercent = <?= $gst_percent ?? 0 ?>;
+    const deliveryCharge = <?= json_encode($delivery_charges['delivery_charge'] ?? 0) ?>;
+    const freeDeliveryMin = <?= json_encode($delivery_charges['free_delivery_minimum'] ?? 0) ?>;
+    const gstPercent = <?= json_encode($gst_percent ?? 0) ?>;
     
-    // Get the appropriate phone input based on order type
+    // Validate required fields
     const phoneInput = isDelivery ? document.getElementById('customerPhone') : document.getElementById('dinningPhone');
-    
-    // Validate phone number (exactly 10 digits)
     if (!phoneInput.value || phoneInput.value.length !== 10) {
-        alert('Please enter a valid 10-digit phone number');
+        showToast('Please enter a valid 10-digit phone number', 'error');
         phoneInput.focus();
         return;
     }
@@ -933,7 +931,7 @@ function placeOrderOnWhatsApp() {
         const customerNotes = document.getElementById('customerNotes').value;
         
         if (!customerName || !customerAddress) {
-            alert('Please provide your name and address');
+            showToast('Please provide your name and address', 'error');
             return;
         }
         
@@ -946,7 +944,7 @@ function placeOrderOnWhatsApp() {
         const dinningNotes = document.getElementById('dinningNotes').value;
         
         if (!customerName || !tableNumber) {
-            alert('Please provide your name and table number');
+            showToast('Please provide your name and table number', 'error');
             return;
         }
         
@@ -958,12 +956,12 @@ function placeOrderOnWhatsApp() {
     let orderDetails = `*Quick Order*`;
     <?php endif; ?>
 
-    // Get WhatsApp link from business info or use default phone
-    const whatsappLink = "<?= $social_link['whatsapp'] ?? '' ?>";
-    let phoneNumber = whatsappLink.match(/wa\.me\/(\d+)/)?.[1] || "<?= $user['phone'] ?? '' ?>";
+    // Get WhatsApp number safely
+    const whatsappLink = <?= json_encode($social_link['whatsapp'] ?? '') ?>;
+    let phoneNumber = whatsappLink.match(/wa\.me\/(\d+)/)?.[1] || <?= json_encode($user['phone'] ?? '') ?>;
 
     if (!phoneNumber) {
-        alert('WhatsApp number not available for this business');
+        showToast('WhatsApp number not available for this business', 'error');
         return;
     }
 
@@ -976,42 +974,41 @@ function placeOrderOnWhatsApp() {
         minute: '2-digit'
     });
 
-    // Calculate subtotal
+    // Calculate order totals
     let subtotal = 0;
     cart.forEach(item => {
         subtotal += item.price * item.quantity;
     });
 
-    // Business details from PHP variables
-    const businessName = "<?= htmlspecialchars($business_info['business_name'] ?? '') ?>";
-    const businessAddress = "<?= htmlspecialchars($business_info['business_address'] ?? '') ?>";
-    const businessPhone = "<?= $user['phone'] ?? '' ?>";
+    // Business details
+    const businessName = <?= json_encode(htmlspecialchars($business_info['business_name'] ?? '')) ?>;
+    const businessAddress = <?= json_encode(htmlspecialchars($business_info['business_address'] ?? '')) ?>;
+    const businessPhone = <?= json_encode($user['phone'] ?? '') ?>;
 
-    // Format the WhatsApp message
-    let message = `*${businessName.toUpperCase()}*\n`;
-    message += `${businessAddress}\n`;
-    message += `Phone: ${businessPhone}\n\n`;
-    
-    message += `Date: ${orderDate}\n`;
-    message += `Order Type: ${isDelivery ? 'DELIVERY' : 'DINING'}\n`;
-    message += `--------------------------\n`;
-    message += `*ITEMS ORDERED*\n`;
-    message += `--------------------------\n`;
+    // Build WhatsApp message
+    let message = `*${businessName.toUpperCase()}*\n` +
+                  `${businessAddress}\n` +
+                  `Phone: ${businessPhone}\n\n` +
+                  `Date: ${orderDate}\n` +
+                  `Order Type: ${isDelivery ? 'DELIVERY' : 'DINING'}\n` +
+                  `--------------------------\n` +
+                  `*ITEMS ORDERED*\n` +
+                  `--------------------------\n`;
 
-    // Add items in table-like format
+    // Add cart items
     cart.forEach(item => {
         const itemTotal = (item.price * item.quantity).toFixed(2);
-        message += `${item.name} x ${item.quantity}\n`;
-        message += `₹${item.price.toFixed(2)} x ${item.quantity} = ₹${itemTotal}\n\n`;
+        message += `${item.name} x ${item.quantity}\n` +
+                  `₹${item.price.toFixed(2)} x ${item.quantity} = ₹${itemTotal}\n\n`;
     });
 
-    message += `--------------------------\n`;
-    message += `Subtotal:        ₹${subtotal.toFixed(2)}\n`;
+    // Add pricing summary
+    message += `--------------------------\n` +
+               `Subtotal:        ₹${subtotal.toFixed(2)}\n`;
     
-    // Add discount line if applicable
     if (discountAmount > 0) {
-        message += `Discount:       -₹${discountAmount.toFixed(2)}\n`;
-        message += `(Applied ${discountType})\n`;
+        message += `Discount:       -₹${discountAmount.toFixed(2)}\n` +
+                   `(Applied ${discountType})\n`;
     }
     
     if (gstPercent > 0) {
@@ -1021,8 +1018,8 @@ function placeOrderOnWhatsApp() {
     
     if (isDelivery) {
         if (freeDeliveryMin > 0 && (subtotal - discountAmount) >= freeDeliveryMin) {
-            message += `Delivery:       FREE\n`;
-            message += `(Order above ₹${freeDeliveryMin})\n`;
+            message += `Delivery:       FREE\n` +
+                       `(Order above ₹${freeDeliveryMin})\n`;
         } else {
             message += `Delivery:       ₹${deliveryCharge.toFixed(2)}\n`;
             if (freeDeliveryMin > 0) {
@@ -1032,33 +1029,50 @@ function placeOrderOnWhatsApp() {
         }
     }
 
+    // Calculate total
     let total = (subtotal - discountAmount) + (gstPercent > 0 ? ((subtotal - discountAmount) * gstPercent / 100) : 0);
-    if (isDelivery) {
-        total += parseFloat(deliveryCharge);
+    if (isDelivery) total += parseFloat(deliveryCharge);
+    
+    message += `--------------------------\n` +
+               `*TOTAL:          ₹${total.toFixed(2)}*\n\n` +
+               `*CUSTOMER DETAILS*\n` +
+               `--------------------------\n` +
+               `${orderDetails}\n\n` +
+               `Please confirm this order.`;
+
+    // Safari-compatible WhatsApp opening
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    
+    // Solution 1: Create and click a hidden link (most reliable for Safari)
+    const link = document.createElement('a');
+    link.href = whatsappUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    
+    try {
+        link.click();
+    } catch (e) {
+        // Fallback if click fails
+        window.location.href = whatsappUrl;
     }
     
-    message += `--------------------------\n`;
-    message += `*TOTAL:          ₹${total.toFixed(2)}*\n\n`;
-    
-    message += `*CUSTOMER DETAILS*\n`;
-    message += `--------------------------\n`;
-    message += `${orderDetails}\n\n`;
-    
-    message += `Please confirm this order.`;
+    // Clean up
+    setTimeout(() => {
+        document.body.removeChild(link);
+    }, 1000);
 
-    // Encode message for URL and open WhatsApp
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
-
-    // Clear cart after successful WhatsApp order
+    // Reset cart
     cart = [];
     saveCart();
     updateCartUI();
     closeCart();
     
-    // Show success notification
-    showToast('Order sent via WhatsApp!', 'success');
+    // Delay toast to ensure WhatsApp opens first
+    setTimeout(() => {
+        showToast('Order sent via WhatsApp!', 'success');
+    }, 500);
 }
-
 
 </script>

@@ -108,15 +108,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
     }
 }
 
-// Fetch all orders for this user with pagination
+// Handle date filter
+$from_date = isset($_GET['from_date']) ? $_GET['from_date'] : date('Y-m-d');
+$to_date = isset($_GET['to_date']) ? $_GET['to_date'] : date('Y-m-d');
+
+// Validate dates
+if (!strtotime($from_date)) $from_date = date('Y-m-d');
+if (!strtotime($to_date)) $to_date = date('Y-m-d');
+
+// Ensure to_date is not before from_date
+if (strtotime($to_date) < strtotime($from_date)) {
+    $to_date = $from_date;
+}
+
+// Fetch all orders for this user with date filter and pagination
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $per_page = 10;
 $offset = ($page - 1) * $per_page;
 
+// Prepare date filter conditions
+$date_condition = "AND DATE(o.created_at) BETWEEN ? AND ?";
+
 // Get total count of orders
-$count_sql = "SELECT COUNT(*) FROM orders WHERE user_id = ?";
+$count_sql = "SELECT COUNT(*) FROM orders o WHERE o.user_id = ? $date_condition";
 $count_stmt = $conn->prepare($count_sql);
-$count_stmt->bind_param("i", $user_id);
+$count_stmt->bind_param("iss", $user_id, $from_date, $to_date);
 $count_stmt->execute();
 $count_stmt->bind_result($total_orders);
 $count_stmt->fetch();
@@ -144,13 +160,13 @@ $orders_sql = "SELECT
     COUNT(oi.item_id) as item_count
 FROM orders o
 LEFT JOIN order_items oi ON o.order_id = oi.order_id
-WHERE o.user_id = ?
+WHERE o.user_id = ? $date_condition
 GROUP BY o.order_id
 ORDER BY o.created_at DESC
 LIMIT ? OFFSET ?";
 
 $orders_stmt = $conn->prepare($orders_sql);
-$orders_stmt->bind_param("iii", $user_id, $per_page, $offset);
+$orders_stmt->bind_param("issii", $user_id, $from_date, $to_date, $per_page, $offset);
 $orders_stmt->execute();
 $result = $orders_stmt->get_result();
 
@@ -206,10 +222,35 @@ $conn->close();
                         <div class="card">
                             <div class="card-header">
                                 <h4 class="card-title">Order Management
-                                        <button id="fullscreenToggle" class="btn btn-primary btn-block fr">Enter Fullscreen</button>
+                                    <button id="fullscreenToggle" class="btn btn-primary btn-block fr">Enter Fullscreen</button>
                                 </h4>
                             </div>
                             <div class="card-body">
+                                <!-- Date Filter Form -->
+                                <form method="GET" action="orders.php" class="mb-4">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label for="from_date" class="form-label">From Date</label>
+                                            <input type="date" class="form-control" id="from_date" name="from_date" 
+                                                   value="<?php echo htmlspecialchars($from_date); ?>" max="<?php echo date('Y-m-d'); ?>">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="to_date" class="form-label">To Date</label>
+                                            <input type="date" class="form-control" id="to_date" name="to_date" 
+                                                   value="<?php echo htmlspecialchars($to_date); ?>" max="<?php echo date('Y-m-d'); ?>">
+                                        </div>
+                                        <div class="col-md-3 d-flex align-items-end">
+                                            <button type="submit" class="btn btn-primary">Filter</button>
+                                            <button type="button" id="resetFilter" class="btn btn-secondary ms-2">Today</button>
+                                        </div>
+                                        <div class="col-md-3 d-flex align-items-end justify-content-end">
+                                            <span class="text-muted">
+                                                Showing <?php echo count($orders); ?> of <?php echo $total_orders; ?> orders
+                                            </span>
+                                        </div>
+                                    </div>
+                                </form>
+
                                 <?php if (!empty($message)): ?>
                                     <div class="alert alert-<?php echo $message_type; ?>">
                                         <?php echo htmlspecialchars($message); ?>
@@ -218,7 +259,7 @@ $conn->close();
 
                                 <?php if (empty($orders)): ?>
                                     <div class="alert alert-info">
-                                        You haven't placed any orders yet.
+                                        No orders found for the selected date range.
                                     </div>
                                 <?php else: ?>
                                     <div class="table-responsive">
@@ -239,7 +280,7 @@ $conn->close();
                                             <tbody>
                                                 <?php foreach ($orders as $index => $order): ?>
                                                     <tr>
-                                                        <td><?php echo $index + 1; ?></td>
+                                                        <td><?php echo $index + 1 + $offset; ?></td>
                                                         <td>#<?php echo htmlspecialchars($order['order_id']); ?></td>
                                                         <td><?php echo date('M d, Y h:i A', strtotime($order['created_at'])); ?></td>
                                                         <td><?php echo htmlspecialchars($order['customer_name']); ?></td>
@@ -285,7 +326,7 @@ $conn->close();
                                             <ul class="pagination justify-content-center mt-3">
                                                 <?php if ($page > 1): ?>
                                                     <li class="page-item">
-                                                        <a class="page-link" href="?page=<?php echo $page - 1; ?>" aria-label="Previous">
+                                                        <a class="page-link" href="?page=<?php echo $page - 1; ?>&from_date=<?php echo $from_date; ?>&to_date=<?php echo $to_date; ?>" aria-label="Previous">
                                                             <span aria-hidden="true">&laquo;</span>
                                                         </a>
                                                     </li>
@@ -293,13 +334,13 @@ $conn->close();
                                                 
                                                 <?php for ($i = 1; $i <= $total_pages; $i++): ?>
                                                     <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
-                                                        <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                                                        <a class="page-link" href="?page=<?php echo $i; ?>&from_date=<?php echo $from_date; ?>&to_date=<?php echo $to_date; ?>"><?php echo $i; ?></a>
                                                     </li>
                                                 <?php endfor; ?>
                                                 
                                                 <?php if ($page < $total_pages): ?>
                                                     <li class="page-item">
-                                                        <a class="page-link" href="?page=<?php echo $page + 1; ?>" aria-label="Next">
+                                                        <a class="page-link" href="?page=<?php echo $page + 1; ?>&from_date=<?php echo $from_date; ?>&to_date=<?php echo $to_date; ?>" aria-label="Next">
                                                             <span aria-hidden="true">&raquo;</span>
                                                         </a>
                                                     </li>
@@ -421,7 +462,6 @@ $conn->close();
     <script src="assets/js/vendor.js"></script>
     <script src="assets/js/app.js"></script>
     
-
 <script>
 $(document).ready(function() {
     // ============== Initialize Data ==============
@@ -436,8 +476,8 @@ $(document).ready(function() {
     
     try {
         notificationAudio = new Audio('assets/sounds/notification.mp3');
-        notificationAudio.volume = 1; // Set moderate volume
-        notificationAudio.load(); // Preload audio
+        notificationAudio.volume = 1;
+        notificationAudio.load();
     } catch (e) {
         console.error('Audio initialization failed:', e);
     }
@@ -446,10 +486,9 @@ $(document).ready(function() {
         if (!notificationAudio) return;
         
         try {
-            notificationAudio.currentTime = 0; // Reset playback
+            notificationAudio.currentTime = 0;
             notificationAudio.play().catch(e => {
                 console.log('Audio play blocked:', e);
-                // Some browsers require user interaction first
                 $(document).one('click', function() {
                     notificationAudio.play().catch(console.error);
                 });
@@ -461,82 +500,97 @@ $(document).ready(function() {
 
     // ============== Polling Functions ==============
     function checkForNewOrders() {
-    if (!pollingActive || isReloading) return;
-    
-    console.log('[Poll] Checking for orders > ID:', lastOrderId);
-    
-    $.ajax({
-        url: 'check_new_orders.php',
-        type: 'GET',
-        data: { 
-            last_order_id: lastOrderId,
-            current_page: <?php echo $page; ?> // Add current page to the request
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.error) {
-                console.error('Poll error:', response.error);
-                return;
-            }
-            
-            if (response.new_orders?.length > 0) {
-                console.log('[Poll] New orders:', response.new_orders);
-                lastOrderId = Math.max(lastOrderId, ...response.new_orders.map(o => o.order_id));
+        // Only check for new orders if we're on the first page
+        if (!pollingActive || isReloading || <?php echo $page; ?> !== 1) {
+            return;
+        }
+
+        console.log('[Poll] Checking for orders > ID:', lastOrderId);
+        
+        $.ajax({
+            url: 'check_new_orders.php',
+            type: 'GET',
+            data: { 
+                last_order_id: lastOrderId,
+                from_date: '<?php echo $from_date; ?>',
+                to_date: '<?php echo $to_date; ?>'
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.error) {
+                    console.error('Poll error:', response.error);
+                    return;
+                }
                 
-                // Only show notification if we're on the first page
-                if (<?php echo $page; ?> === 1) {
-                    playNotification();
-                    showToast(`New ${response.new_orders.length > 1 ? 'orders' : 'order'} received! Redirecting...`, 'success');
+                if (response.current_filter_from === '<?php echo $from_date; ?>' && 
+                    response.current_filter_to === '<?php echo $to_date; ?>') {
                     
-                    setTimeout(() => {
-                        window.location.href = 'orders.php';
-                    }, 3000);
-                } else {
-                    // Just update the lastOrderId silently if we're not on page 1
-                    console.log('[Poll] New orders detected but we\'re not on page 1');
+                    if (response.new_orders?.length > 0) {
+                        console.log('[Poll] New orders:', response.new_orders);
+                        lastOrderId = Math.max(lastOrderId, ...response.new_orders.map(o => o.order_id));
+                        
+                        playNotification();
+                        showToast(`New ${response.new_orders.length > 1 ? 'orders' : 'order'} received!`, 'success');
+                        
+                        if (<?php echo $page; ?> === 1) {
+                            refreshOrders();
+                        }
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Poll failed:', status, error);
+            },
+            complete: function() {
+                if (pollingActive && !isReloading) {
+                    setTimeout(checkForNewOrders, POLL_INTERVAL);
                 }
             }
-        },
-        error: function(xhr, status, error) {
-            console.error('Poll failed:', status, error);
-        },
-        complete: function() {
-            if (pollingActive && !isReloading) {
-                setTimeout(checkForNewOrders, POLL_INTERVAL);
-            }
-        }
-    });
-}
+        });
+    }
 
     function refreshOrders() {
         if (isReloading) return;
+        isReloading = true;
         
         $.ajax({
-            url: window.location.href,
+            url: 'orders.php',
             type: 'GET',
-            data: { refresh: true },
+            data: { 
+                refresh: true,
+                from_date: '<?php echo $from_date; ?>',
+                to_date: '<?php echo $to_date; ?>',
+                page: <?php echo $page; ?>
+            },
             success: function(response) {
-                // Update table
-                $('.table-responsive').html($(response).find('.table-responsive').html());
-                
-                // Update ordersData
-                const scriptContent = $(response).filter('script').html();
-                const match = scriptContent.match(/ordersData\s*=\s*(\[.*?\])/);
-                
-                if (match?.[1]) {
-                    try {
-                        const newData = JSON.parse(match[1]);
-                        ordersData.splice(0, ordersData.length, ...newData);
-                        console.log('[Refresh] Orders data updated');
-                    } catch(e) {
-                        console.error('Data parse error:', e);
+                if (<?php echo $page; ?> === 1) {
+                    $('.table-responsive').html($(response).find('.table-responsive').html());
+                    
+                    const scriptContent = $(response).filter('script').html();
+                    const match = scriptContent.match(/ordersData\s*=\s*(\[.*?\])/);
+                    
+                    if (match?.[1]) {
+                        try {
+                            const newData = JSON.parse(match[1]);
+                            ordersData.splice(0, ordersData.length, ...newData);
+                            console.log('[Refresh] Orders data updated');
+                            
+                            if (newData.length > 0) {
+                                lastOrderId = Math.max(lastOrderId, ...newData.map(o => o.order_id));
+                            }
+                        } catch(e) {
+                            console.error('Data parse error:', e);
+                        }
                     }
+                    
+                    bindOrderHandlers();
                 }
-                
-                bindOrderHandlers();
             },
             error: function() {
                 console.error('Refresh failed');
+            },
+            complete: function() {
+                isReloading = false;
             }
         });
     }
@@ -572,17 +626,15 @@ $(document).ready(function() {
         
         setTimeout(() => {
             alert.alert('close');
-            window.location.href = 'orders.php';
+            window.location.href = 'orders.php?from_date=<?php echo $from_date; ?>&to_date=<?php echo $to_date; ?>';
         }, 2000);
     }
 
     function updateOrderModal(order) {
-        // Basic info
         $('#modalOrderId').text(order.order_id);
         $('#modalCustomerName').text(order.customer_name || 'Not specified');
         $('#modalCustomerPhone').text(order.customer_phone || 'Not specified');
         
-        // Order type specifics
         if (order.order_type === 'delivery') {
             $('#modalDeliveryAddress').show().find('#modalAddressText').text(order.delivery_address || 'Not specified');
             $('#modalTableNumber').hide();
@@ -591,27 +643,20 @@ $(document).ready(function() {
             $('#modalTableNumber').show().find('#modalTableText').text(order.table_number || 'Not specified');
         }
         
-        // Order summary
         $('#modalOrderType').text(formatOrderType(order));
         $('#modalOrderDate').text(new Date(order.created_at).toLocaleString());
         
-        // Status
         const statusBadge = $('#modalOrderStatus');
         statusBadge.text(formatStatus(order.status))
             .removeClass().addClass('status-badge status-' + order.status.toLowerCase());
         
-        // Items
         renderOrderItems(order.items || []);
-        
-        // Financials
         updateFinancials(order);
         
-        // Form fields
         $('#modalFormOrderId').val(order.order_id);
         $('#modalCancelOrderId').val(order.order_id);
         $('#modalStatusSelect').val(order.status);
         
-        // Action buttons
         const showActions = ['pending', 'confirmed', 'preparing'].includes(order.status);
         $('#statusUpdateForm, #cancelOrderForm').toggle(showActions);
     }
@@ -640,7 +685,6 @@ $(document).ready(function() {
     function updateFinancials(order) {
         $('#modalSubtotal').text(parseFloat(order.subtotal || 0).toFixed(2));
         
-        // Toggle and set discount
         const discountAmount = parseFloat(order.discount_amount || 0);
         $('#modalDiscountRow').toggle(discountAmount > 0);
         if (discountAmount > 0) {
@@ -648,17 +692,14 @@ $(document).ready(function() {
             $('#modalDiscountType').text(order.discount_type || 'Discount');
         }
         
-        // Toggle and set GST
         const gstAmount = parseFloat(order.gst_amount || 0);
         $('#modalGstRow').toggle(gstAmount > 0);
         if (gstAmount > 0) $('#modalGstAmount').text(gstAmount.toFixed(2));
         
-        // Toggle and set delivery
         const deliveryCharge = parseFloat(order.delivery_charge || 0);
         $('#modalDeliveryRow').toggle(deliveryCharge > 0);
         if (deliveryCharge > 0) $('#modalDeliveryCharge').text(deliveryCharge.toFixed(2));
         
-        // Total
         $('#modalTotalAmount').text(parseFloat(order.total_amount || 0).toFixed(2));
     }
 
@@ -735,15 +776,12 @@ $(document).ready(function() {
 
     // ============== UI Helpers ==============
     function showToast(message, type = 'success') {
-        // Remove existing toasts
         $('.toast-container').remove();
         
-        // Create toast container if it doesn't exist
         if ($('.toast-container').length === 0) {
             $('body').append('<div class="toast-container position-fixed top-0 end-0 p-3"></div>');
         }
         
-        // Create toast
         const toast = $(`
             <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="d-flex">
@@ -755,7 +793,6 @@ $(document).ready(function() {
             </div>
         `).appendTo('.toast-container');
         
-        // Show toast
         const toastInstance = new bootstrap.Toast(toast[0], {
             autohide: true,
             delay: 3000
@@ -774,53 +811,13 @@ $(document).ready(function() {
         return status ? status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' ') : 'Unknown';
     }
 
-    // ============== PDF Generation ==============
-    $('#downloadBillBtn').click(function() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        // Header
-        doc.setFont('helvetica', 'bold');
-        doc.text('<?php echo addslashes($business_name); ?>', 105, 10, { align: 'center' });
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        doc.text('<?php echo addslashes($business_address); ?>', 105, 15, { align: 'center' });
-        
-        // Order info
-        doc.text(`Order #${$('#modalOrderId').text()}`, 14, 25);
-        doc.text(`Date: ${$('#modalOrderDate').text()}`, 14, 30);
-        
-        // Items table
-        const items = [];
-        $('#modalOrderItems tr').each(function() {
-            const cols = $(this).find('td');
-            if (cols.length === 4) {
-                items.push([cols.eq(0).text(), cols.eq(1).text(), cols.eq(2).text(), cols.eq(3).text()]);
-            }
-        });
-        
-        doc.autoTable({
-            startY: 40,
-            head: [['Item', 'Price', 'Qty', 'Total']],
-            body: items,
-            margin: { left: 14 },
-            styles: { fontSize: 9 }
-        });
-        
-        // Save PDF
-        doc.save(`Order_${$('#modalOrderId').text()}.pdf`);
-    });
-
     // ============== Initialize ==============
     checkForNewOrders();
     bindOrderHandlers();
 
-    // Tab visibility handling
     $(window).on('blur', () => pollingActive = false)
              .on('focus', () => { pollingActive = true; checkForNewOrders(); });
 
-    // Add CSS for animations and alerts
     $('head').append(`
         <style>
             @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -859,51 +856,49 @@ $(document).ready(function() {
 
 const toggleBtn = document.getElementById('fullscreenToggle');
 
-        function isFullscreen() {
-          return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
-        }
+function isFullscreen() {
+    return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+}
 
-        function enterFullscreen() {
-          const elem = document.documentElement;
-          if (elem.requestFullscreen) {
-            elem.requestFullscreen();
-          } else if (elem.webkitRequestFullscreen) {
-            elem.webkitRequestFullscreen();
-          } else if (elem.msRequestFullscreen) {
-            elem.msRequestFullscreen();
-          }
-        }
+function enterFullscreen() {
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) {
+        elem.msRequestFullscreen();
+    }
+}
 
-        function exitFullscreen() {
-          if (document.exitFullscreen) {
-            document.exitFullscreen();
-          } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-          } else if (document.msExitFullscreen) {
-            document.msExitFullscreen();
-          }
-        }
+function exitFullscreen() {
+    if (document.exitFullscreen) {
+        document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+    }
+}
 
-        toggleBtn.addEventListener('click', () => {
-          if (isFullscreen()) {
-            exitFullscreen();
-          } else {
-            enterFullscreen();
-          }
-        });
+toggleBtn.addEventListener('click', () => {
+    if (isFullscreen()) {
+        exitFullscreen();
+    } else {
+        enterFullscreen();
+    }
+});
 
-        // Update button label based on fullscreen change
-        document.addEventListener('fullscreenchange', updateButtonLabel);
-        document.addEventListener('webkitfullscreenchange', updateButtonLabel);
-        document.addEventListener('msfullscreenchange', updateButtonLabel);
+document.addEventListener('fullscreenchange', updateButtonLabel);
+document.addEventListener('webkitfullscreenchange', updateButtonLabel);
+document.addEventListener('msfullscreenchange', updateButtonLabel);
 
-        function updateButtonLabel() {
-          toggleBtn.textContent = isFullscreen() ? 'Exit Fullscreen' : 'Enter Fullscreen';
-        }
+function updateButtonLabel() {
+    toggleBtn.textContent = isFullscreen() ? 'Exit Fullscreen' : 'Enter Fullscreen';
+}
 </script>
 
 
 
 </body>
 </html>
-
