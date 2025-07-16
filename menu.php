@@ -128,6 +128,9 @@
                   <li class="sub-nav-item">
                      <a class="sub-nav-link" href="qr-code-details.php">QR Code Details</a>
                   </li>
+                  <li class="sub-nav-item">
+                     <a class="sub-nav-link" href="upload_apk.php">Upload APK</a>
+                  </li>
                </ul>
             </div>
          </li>

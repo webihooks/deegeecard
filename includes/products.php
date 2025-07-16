@@ -910,9 +910,9 @@ function placeOrderOnWhatsApp() {
 
     <?php if ($delivery_active || $dining_active): ?>
     const isDelivery = <?= $delivery_active ? 'document.getElementById("deliveryBtn").classList.contains("active")' : 'false' ?>;
-    const deliveryCharge = <?= json_encode($delivery_charges['delivery_charge'] ?? 0) ?>;
-    const freeDeliveryMin = <?= json_encode($delivery_charges['free_delivery_minimum'] ?? 0) ?>;
-    const gstPercent = <?= json_encode($gst_percent ?? 0) ?>;
+    const deliveryCharge = Number(<?= json_encode($delivery_charges['delivery_charge'] ?? 0) ?>);
+    const freeDeliveryMin = Number(<?= json_encode($delivery_charges['free_delivery_minimum'] ?? 0) ?>);
+    const gstPercent = Number(<?= json_encode($gst_percent ?? 0) ?>);
     
     // Validate required fields
     const phoneInput = isDelivery ? document.getElementById('customerPhone') : document.getElementById('dinningPhone');
@@ -1019,9 +1019,9 @@ function placeOrderOnWhatsApp() {
     if (isDelivery) {
         if (freeDeliveryMin > 0 && (subtotal - discountAmount) >= freeDeliveryMin) {
             message += `Delivery:       FREE\n` +
-                       `(Order above ₹${freeDeliveryMin})\n`;
+                       `(Order above ₹${freeDeliveryMin.toFixed(2)})\n`;
         } else {
-            message += `Delivery:       ₹${deliveryCharge.toFixed(2)}\n`;
+            message += `Delivery:       ₹${Number(deliveryCharge).toFixed(2)}\n`;
             if (freeDeliveryMin > 0) {
                 const neededForFree = freeDeliveryMin - (subtotal - discountAmount);
                 message += `(Add ₹${neededForFree.toFixed(2)} more for FREE delivery)\n`;
@@ -1031,7 +1031,7 @@ function placeOrderOnWhatsApp() {
 
     // Calculate total
     let total = (subtotal - discountAmount) + (gstPercent > 0 ? ((subtotal - discountAmount) * gstPercent / 100) : 0);
-    if (isDelivery) total += parseFloat(deliveryCharge);
+    if (isDelivery && !isNaN(deliveryCharge)) total += Number(deliveryCharge);
     
     message += `--------------------------\n` +
                `*TOTAL:          ₹${total.toFixed(2)}*\n\n` +

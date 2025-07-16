@@ -156,6 +156,8 @@ if ($dining_delivery_stmt) {
 $dining_active = $dining_delivery_data['dining_active'] ?? 0;
 $delivery_active = $dining_delivery_data['delivery_active'] ?? 0;
 
+
+
 // Include HTML components
 // These files will have access to all the variables defined above (e.g., $user, $discounts, $primary_color, etc.)
 require_once 'includes/header.php';
@@ -176,5 +178,3 @@ require_once 'includes/footer.php';
 // It's good practice to close the connection when it's no longer needed
 $conn = null;
 ?>
-
-
