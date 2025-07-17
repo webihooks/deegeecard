@@ -175,9 +175,106 @@
             background: var(--primary-color);
             border-color: var(--primary-color);
         }
+        /* Loader Styles */
+        .loader-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid <?php echo $primary_color; ?>;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        body.loading {
+            overflow: hidden;
+            height: 100vh;
+        }
+        .bouncing-loader {
+            display: flex;
+            gap: 8px;
+        }
+        .bouncing-loader div {
+            width: 12px;
+            height: 12px;
+            background: <?php echo $primary_color; ?>;
+            border-radius: 50%;
+            animation: bounce 0.6s infinite alternate;
+        }
+        .bouncing-loader div:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .bouncing-loader div:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes bounce {
+            to { transform: translateY(-12px); }
+        }
     </style>
 </head>
 <body class="restaurant">
+
+<!-- Loader -->
+<div class="loader-container" id="loader">
+    <div class="bouncing-loader">
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+</div>
+<script>
+    // Hide loader when page is fully loaded
+    window.addEventListener('load', function() {
+        const loader = document.getElementById('loader');
+        // Add fade out effect
+        loader.style.opacity = '0';
+        // Remove loader after fade out completes
+        setTimeout(() => {
+            loader.style.display = 'none';
+        }, 500); // Match this with the CSS transition duration
+    });
+
+    // Optional: Show loader when navigating away
+    window.addEventListener('beforeunload', function() {
+        document.getElementById('loader').style.display = 'flex';
+        document.getElementById('loader').style.opacity = '1';
+    });
+
+    // Add loading class to body immediately
+    document.body.classList.add('loading');
+    
+    window.addEventListener('load', function() {
+        const loader = document.getElementById('loader');
+        loader.style.opacity = '0';
+        setTimeout(() => {
+            loader.style.display = 'none';
+            document.body.classList.remove('loading');
+        }, 500);
+    });
+</script>
 
 
 <?php if ($show_subscription_popup): ?>
