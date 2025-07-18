@@ -477,6 +477,18 @@ h6 {
   color: #333;
 }
 
+
+.copyright {
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 30px;
+}
+
+.copyright a {
+  color: #fb5b29;
+}
+
+
 .share-buttons {
   display: flex;
   justify-content: center;
