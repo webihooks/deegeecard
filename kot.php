@@ -435,7 +435,7 @@ $(document).ready(function() {
     let notificationAudio = null;
     
     try {
-        notificationAudio = new Audio('assets/sounds/notification.mp3');
+        notificationAudio = new Audio('assets/sounds/new_notification.mp3?v=' + Date.now());
         notificationAudio.volume = 1; // Set moderate volume
         notificationAudio.load(); // Preload audio
     } catch (e) {
@@ -490,7 +490,7 @@ $(document).ready(function() {
                     
                     setTimeout(() => {
                         window.location.href = 'orders.php';
-                    }, 3000);
+                    }, 5000);
                 } else {
                     // Just update the lastOrderId silently if we're not on page 1
                     console.log('[Poll] New orders detected but we\'re not on page 1');

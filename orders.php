@@ -15,6 +15,14 @@ $user_id = $_SESSION['user_id'];
 $message = '';
 $message_type = 'success';
 
+// Get selected date from request or default to today
+$selected_date = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
+
+// Validate date format
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $selected_date)) {
+    $selected_date = date('Y-m-d');
+}
+
 // Fetch user details
 $sql = "SELECT name, email, phone, address, role FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
@@ -110,13 +118,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
 
 // Fetch all orders for this user with pagination
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$per_page = 10;
+$per_page = 50;
 $offset = ($page - 1) * $per_page;
 
-// Get total count of orders
-$count_sql = "SELECT COUNT(*) FROM orders WHERE user_id = ?";
+// Get total count of orders for selected date
+$count_sql = "SELECT COUNT(*) FROM orders WHERE user_id = ? AND DATE(created_at) = ?";
 $count_stmt = $conn->prepare($count_sql);
-$count_stmt->bind_param("i", $user_id);
+$count_stmt->bind_param("is", $user_id, $selected_date);
 $count_stmt->execute();
 $count_stmt->bind_result($total_orders);
 $count_stmt->fetch();
@@ -124,8 +132,7 @@ $count_stmt->close();
 
 $total_pages = ceil($total_orders / $per_page);
 
-// Fetch orders with items
-$orders = [];
+// Fetch orders with items for selected date
 $orders_sql = "SELECT 
     o.order_id, 
     o.customer_name, 
@@ -144,15 +151,16 @@ $orders_sql = "SELECT
     COUNT(oi.item_id) as item_count
 FROM orders o
 LEFT JOIN order_items oi ON o.order_id = oi.order_id
-WHERE o.user_id = ?
+WHERE o.user_id = ? AND DATE(o.created_at) = ?
 GROUP BY o.order_id
 ORDER BY o.created_at DESC
 LIMIT ? OFFSET ?";
 
 $orders_stmt = $conn->prepare($orders_sql);
-$orders_stmt->bind_param("iii", $user_id, $per_page, $offset);
+$orders_stmt->bind_param("isii", $user_id, $selected_date, $per_page, $offset);
 $orders_stmt->execute();
 $result = $orders_stmt->get_result();
+$orders = [];
 
 while ($order = $result->fetch_assoc()) {
     // Get order items
@@ -180,7 +188,7 @@ $conn->close();
     <link href="assets/css/vendor.min.css" rel="stylesheet" />
     <link href="assets/css/icons.min.css" rel="stylesheet" />
     <link href="assets/css/app.min.css" rel="stylesheet" />
-    <link href="assets/css/style.css" rel="stylesheet" />
+    <link href="assets/css/style.css?<?php echo time(); ?>" rel="stylesheet" />
     <script src="assets/js/config.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
@@ -206,7 +214,15 @@ $conn->close();
                         <div class="card">
                             <div class="card-header">
                                 <h4 class="card-title">Order Management
-                                        <button id="fullscreenToggle" class="btn btn-primary btn-block fr">Enter Fullscreen</button>
+                                    <div class="float-end">
+                                        <form method="GET" class="d-inline-flex">
+                                            <input type="date" name="date" class="form-control me-2" 
+                                                   value="<?php echo htmlspecialchars($selected_date); ?>" 
+                                                   max="<?php echo date('Y-m-d'); ?>">
+                                            <button type="submit" class="btn btn-primary">View Orders</button>
+                                        </form>
+                                        <button type="button" id="fullscreenToggle" class="btn btn-primary ms-2">Fullscreen</button>
+                                    </div>
                                 </h4>
                             </div>
                             <div class="card-body">
@@ -216,9 +232,11 @@ $conn->close();
                                     </div>
                                 <?php endif; ?>
 
+                                <h5 class="mb-3">Orders for <?php echo date('F j, Y', strtotime($selected_date)); ?></h5>
+
                                 <?php if (empty($orders)): ?>
                                     <div class="alert alert-info">
-                                        You haven't placed any orders yet.
+                                        No orders found for <?php echo date('F j, Y', strtotime($selected_date)); ?>.
                                     </div>
                                 <?php else: ?>
                                     <div class="table-responsive">
@@ -227,7 +245,7 @@ $conn->close();
                                                 <tr>
                                                     <th>Sr. No.</th>
                                                     <th>Order ID</th>
-                                                    <th>Date</th>
+                                                    <th>Time</th>
                                                     <th>Customer</th>
                                                     <th>Type</th>
                                                     <th>Items</th>
@@ -239,9 +257,9 @@ $conn->close();
                                             <tbody>
                                                 <?php foreach ($orders as $index => $order): ?>
                                                     <tr>
-                                                        <td><?php echo $index + 1; ?></td>
+                                                        <td><?php echo $index + 1 + $offset; ?></td>
                                                         <td>#<?php echo htmlspecialchars($order['order_id']); ?></td>
-                                                        <td><?php echo date('M d, Y h:i A', strtotime($order['created_at'])); ?></td>
+                                                        <td><?php echo date('h:i A', strtotime($order['created_at'])); ?></td>
                                                         <td><?php echo htmlspecialchars($order['customer_name']); ?></td>
                                                         <td>
                                                             <?php 
@@ -285,7 +303,7 @@ $conn->close();
                                             <ul class="pagination justify-content-center mt-3">
                                                 <?php if ($page > 1): ?>
                                                     <li class="page-item">
-                                                        <a class="page-link" href="?page=<?php echo $page - 1; ?>" aria-label="Previous">
+                                                        <a class="page-link" href="?date=<?php echo $selected_date; ?>&page=<?php echo $page - 1; ?>" aria-label="Previous">
                                                             <span aria-hidden="true">&laquo;</span>
                                                         </a>
                                                     </li>
@@ -293,13 +311,13 @@ $conn->close();
                                                 
                                                 <?php for ($i = 1; $i <= $total_pages; $i++): ?>
                                                     <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
-                                                        <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                                                        <a class="page-link" href="?date=<?php echo $selected_date; ?>&page=<?php echo $i; ?>"><?php echo $i; ?></a>
                                                     </li>
                                                 <?php endfor; ?>
                                                 
                                                 <?php if ($page < $total_pages): ?>
                                                     <li class="page-item">
-                                                        <a class="page-link" href="?page=<?php echo $page + 1; ?>" aria-label="Next">
+                                                        <a class="page-link" href="?date=<?php echo $selected_date; ?>&page=<?php echo $page + 1; ?>" aria-label="Next">
                                                             <span aria-hidden="true">&raquo;</span>
                                                         </a>
                                                     </li>
@@ -392,18 +410,18 @@ $conn->close();
                         <div class="input-group">
                             <select class="form-select" name="new_status" id="modalStatusSelect">
                                 <option value="confirmed">Confirmed</option>
-                                <!-- Dont remove comment <option value="preparing">Preparing</option>
+                                <option value="preparing">Preparing</option>
                                 <option value="out_for_delivery">Out for Delivery</option>
-                                <option value="delivered">Delivered</option> -->
+                                <option value="delivered">Delivered</option>
                                 <option value="completed">Completed</option>
                             </select>
                             <button type="submit" name="update_status" class="btn btn-primary">Update Status</button>
                         </div>
                     </form>
 
-                    <!-- <button type="button" class="btn btn-success" id="downloadBillBtn">
+                    <button type="button" class="btn btn-success" id="downloadBillBtn">
                         <i class="bi bi-file-earmark-pdf"></i> Download Bill
-                    </button> -->
+                    </button>
                     
                     <form method="POST" action="orders.php" class="d-inline ms-2" id="cancelOrderForm">
                         <input type="hidden" name="order_id" id="modalCancelOrderId">
@@ -421,475 +439,291 @@ $conn->close();
     <script src="assets/js/vendor.js"></script>
     <script src="assets/js/app.js"></script>
     
+    <script>
+    $(document).ready(function() {
+        // ============== Initialize Data ==============
+        let ordersData = <?php echo json_encode($orders); ?>;
 
-<script>
-$(document).ready(function() {
-    // ============== Initialize Data ==============
-    let ordersData = <?php echo json_encode($orders); ?>;
-    const POLL_INTERVAL = 10000; // 10 seconds
-    let lastOrderId = <?php echo !empty($orders) ? max(array_column($orders, 'order_id')) : 0; ?>;
-    let pollingActive = true;
-    let isReloading = false;
-
-    // ============== Audio Notification ==============
-    let notificationAudio = null;
-    
-    try {
-        notificationAudio = new Audio('assets/sounds/notification.mp3');
-        notificationAudio.volume = 1; // Set moderate volume
-        notificationAudio.load(); // Preload audio
-    } catch (e) {
-        console.error('Audio initialization failed:', e);
-    }
-
-    function playNotification() {
-        if (!notificationAudio) return;
-        
-        try {
-            notificationAudio.currentTime = 0; // Reset playback
-            notificationAudio.play().catch(e => {
-                console.log('Audio play blocked:', e);
-                // Some browsers require user interaction first
-                $(document).one('click', function() {
-                    notificationAudio.play().catch(console.error);
-                });
-            });
-        } catch (e) {
-            console.error('Audio playback error:', e);
+        // ============== Order Management ==============
+        function bindOrderHandlers() {
+            $('.view-order').off('click').on('click', viewOrderHandler);
+            $('.cancel-order').off('click').on('click', cancelOrderHandler);
         }
-    }
 
-    // ============== Polling Functions ==============
-    function checkForNewOrders() {
-    if (!pollingActive || isReloading) return;
-    
-    console.log('[Poll] Checking for orders > ID:', lastOrderId);
-    
-    $.ajax({
-        url: 'check_new_orders.php',
-        type: 'GET',
-        data: { 
-            last_order_id: lastOrderId,
-            current_page: <?php echo $page; ?> // Add current page to the request
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.error) {
-                console.error('Poll error:', response.error);
+        function viewOrderHandler() {
+            const orderId = $(this).data('order-id');
+            const order = ordersData.find(o => o.order_id == orderId);
+            
+            if (!order) {
+                console.error('Order not found:', orderId, 'in:', ordersData);
+                showErrorAndReload('Order not loaded. Reloading...');
                 return;
             }
             
-            if (response.new_orders?.length > 0) {
-                console.log('[Poll] New orders:', response.new_orders);
-                lastOrderId = Math.max(lastOrderId, ...response.new_orders.map(o => o.order_id));
-                
-                // Only show notification if we're on the first page
-                if (<?php echo $page; ?> === 1) {
-                    playNotification();
-                    showToast(`New ${response.new_orders.length > 1 ? 'orders' : 'order'} received! Redirecting...`, 'success');
-                    
-                    setTimeout(() => {
-                        window.location.href = 'orders.php';
-                    }, 3000);
-                } else {
-                    // Just update the lastOrderId silently if we're not on page 1
-                    console.log('[Poll] New orders detected but we\'re not on page 1');
-                }
+            updateOrderModal(order);
+        }
+
+        function showErrorAndReload(message) {
+            if (window.POLLING_CONFIG.isReloading) return;
+            window.POLLING_CONFIG.isReloading = true;
+            
+            const alert = $(`
+                <div class="alert alert-danger alert-dismissible fade show alert-fixed" role="alert">
+                    <strong>Error:</strong> ${message}
+                </div>
+            `).appendTo('body');
+            
+            setTimeout(() => {
+                alert.alert('close');
+                window.location.href = 'orders.php?date=<?php echo $selected_date; ?>';
+            }, 2000);
+        }
+
+        function updateOrderModal(order) {
+            // Basic info
+            $('#modalOrderId').text(order.order_id);
+            $('#modalCustomerName').text(order.customer_name || 'Not specified');
+            $('#modalCustomerPhone').text(order.customer_phone || 'Not specified');
+            
+            // Order type specifics
+            if (order.order_type === 'delivery') {
+                $('#modalDeliveryAddress').show().find('#modalAddressText').text(order.delivery_address || 'Not specified');
+                $('#modalTableNumber').hide();
+            } else {
+                $('#modalDeliveryAddress').hide();
+                $('#modalTableNumber').show().find('#modalTableText').text(order.table_number || 'Not specified');
             }
-        },
-        error: function(xhr, status, error) {
-            console.error('Poll failed:', status, error);
-        },
-        complete: function() {
-            if (pollingActive && !isReloading) {
-                setTimeout(checkForNewOrders, POLL_INTERVAL);
+            
+            // Order summary
+            $('#modalOrderType').text(formatOrderType(order));
+            $('#modalOrderDate').text(new Date(order.created_at).toLocaleString());
+            
+            // Status
+            const statusBadge = $('#modalOrderStatus');
+            statusBadge.text(formatStatus(order.status))
+                .removeClass().addClass('status-badge status-' + order.status.toLowerCase());
+            
+            // Items
+            renderOrderItems(order.items || []);
+            
+            // Financials
+            updateFinancials(order);
+            
+            // Form fields
+            $('#modalFormOrderId').val(order.order_id);
+            $('#modalCancelOrderId').val(order.order_id);
+            $('#modalStatusSelect').val(order.status);
+            
+            // Action buttons
+            const showActions = ['pending', 'confirmed', 'preparing'].includes(order.status);
+            $('#statusUpdateForm, #cancelOrderForm').toggle(showActions);
+        }
+
+        function renderOrderItems(items) {
+            const $container = $('#modalOrderItems').empty();
+            
+            if (items.length === 0) {
+                $container.append('<tr><td colspan="4" class="text-center">No items found</td></tr>');
+                return;
             }
-        }
-    });
-}
-
-    function refreshOrders() {
-        if (isReloading) return;
-        
-        $.ajax({
-            url: window.location.href,
-            type: 'GET',
-            data: { refresh: true },
-            success: function(response) {
-                // Update table
-                $('.table-responsive').html($(response).find('.table-responsive').html());
-                
-                // Update ordersData
-                const scriptContent = $(response).filter('script').html();
-                const match = scriptContent.match(/ordersData\s*=\s*(\[.*?\])/);
-                
-                if (match?.[1]) {
-                    try {
-                        const newData = JSON.parse(match[1]);
-                        ordersData.splice(0, ordersData.length, ...newData);
-                        console.log('[Refresh] Orders data updated');
-                    } catch(e) {
-                        console.error('Data parse error:', e);
-                    }
-                }
-                
-                bindOrderHandlers();
-            },
-            error: function() {
-                console.error('Refresh failed');
-            }
-        });
-    }
-
-    // ============== Order Management ==============
-    function bindOrderHandlers() {
-        $('.view-order').off('click').on('click', viewOrderHandler);
-        $('.cancel-order').off('click').on('click', cancelOrderHandler);
-    }
-
-    function viewOrderHandler() {
-        const orderId = $(this).data('order-id');
-        const order = ordersData.find(o => o.order_id == orderId);
-        
-        if (!order) {
-            console.error('Order not found:', orderId, 'in:', ordersData);
-            showErrorAndReload('Order not loaded. Reloading...');
-            return;
-        }
-        
-        updateOrderModal(order);
-    }
-
-    function showErrorAndReload(message) {
-        if (isReloading) return;
-        isReloading = true;
-        
-        const alert = $(`
-            <div class="alert alert-danger alert-dismissible fade show alert-fixed" role="alert">
-                <strong>Error:</strong> ${message}
-            </div>
-        `).appendTo('body');
-        
-        setTimeout(() => {
-            alert.alert('close');
-            window.location.href = 'orders.php';
-        }, 2000);
-    }
-
-    function updateOrderModal(order) {
-        // Basic info
-        $('#modalOrderId').text(order.order_id);
-        $('#modalCustomerName').text(order.customer_name || 'Not specified');
-        $('#modalCustomerPhone').text(order.customer_phone || 'Not specified');
-        
-        // Order type specifics
-        if (order.order_type === 'delivery') {
-            $('#modalDeliveryAddress').show().find('#modalAddressText').text(order.delivery_address || 'Not specified');
-            $('#modalTableNumber').hide();
-        } else {
-            $('#modalDeliveryAddress').hide();
-            $('#modalTableNumber').show().find('#modalTableText').text(order.table_number || 'Not specified');
-        }
-        
-        // Order summary
-        $('#modalOrderType').text(formatOrderType(order));
-        $('#modalOrderDate').text(new Date(order.created_at).toLocaleString());
-        
-        // Status
-        const statusBadge = $('#modalOrderStatus');
-        statusBadge.text(formatStatus(order.status))
-            .removeClass().addClass('status-badge status-' + order.status.toLowerCase());
-        
-        // Items
-        renderOrderItems(order.items || []);
-        
-        // Financials
-        updateFinancials(order);
-        
-        // Form fields
-        $('#modalFormOrderId').val(order.order_id);
-        $('#modalCancelOrderId').val(order.order_id);
-        $('#modalStatusSelect').val(order.status);
-        
-        // Action buttons
-        const showActions = ['pending', 'confirmed', 'preparing'].includes(order.status);
-        $('#statusUpdateForm, #cancelOrderForm').toggle(showActions);
-    }
-
-    function renderOrderItems(items) {
-        const $container = $('#modalOrderItems').empty();
-        
-        if (items.length === 0) {
-            $container.append('<tr><td colspan="4" class="text-center">No items found</td></tr>');
-            return;
-        }
-        
-        items.forEach(item => {
-            const total = (parseFloat(item.price || 0) * parseInt(item.quantity || 0)).toFixed(2);
-            $container.append(`
-                <tr>
-                    <td>${item.product_name || 'Unnamed'}</td>
-                    <td>₹${parseFloat(item.price || 0).toFixed(2)}</td>
-                    <td>${item.quantity}</td>
-                    <td>₹${total}</td>
-                </tr>
-            `);
-        });
-    }
-
-    function updateFinancials(order) {
-        $('#modalSubtotal').text(parseFloat(order.subtotal || 0).toFixed(2));
-        
-        // Toggle and set discount
-        const discountAmount = parseFloat(order.discount_amount || 0);
-        $('#modalDiscountRow').toggle(discountAmount > 0);
-        if (discountAmount > 0) {
-            $('#modalDiscountAmount').text(discountAmount.toFixed(2));
-            $('#modalDiscountType').text(order.discount_type || 'Discount');
-        }
-        
-        // Toggle and set GST
-        const gstAmount = parseFloat(order.gst_amount || 0);
-        $('#modalGstRow').toggle(gstAmount > 0);
-        if (gstAmount > 0) $('#modalGstAmount').text(gstAmount.toFixed(2));
-        
-        // Toggle and set delivery
-        const deliveryCharge = parseFloat(order.delivery_charge || 0);
-        $('#modalDeliveryRow').toggle(deliveryCharge > 0);
-        if (deliveryCharge > 0) $('#modalDeliveryCharge').text(deliveryCharge.toFixed(2));
-        
-        // Total
-        $('#modalTotalAmount').text(parseFloat(order.total_amount || 0).toFixed(2));
-    }
-
-    // ============== Order Actions ==============
-    function cancelOrderHandler(e) {
-        e.preventDefault();
-        const orderId = $(this).data('order-id');
-        
-        if (confirm('Are you sure you want to cancel this order?')) {
-            processOrderAction({
-                action: 'cancel_order',
-                order_id: orderId,
-                button: $(this),
-                success: () => updateOrderStatusUI(orderId, 'cancelled')
+            
+            items.forEach(item => {
+                const total = (parseFloat(item.price || 0) * parseInt(item.quantity || 0)).toFixed(2);
+                $container.append(`
+                    <tr>
+                        <td>${item.product_name || 'Unnamed'}</td>
+                        <td>₹${parseFloat(item.price || 0).toFixed(2)}</td>
+                        <td>${item.quantity}</td>
+                        <td>₹${total}</td>
+                    </tr>
+                `);
             });
         }
-    }
 
-    $('#cancelOrderForm').submit(function(e) {
-        e.preventDefault();
-        cancelOrderHandler(e);
-    });
-
-    $('#statusUpdateForm').submit(function(e) {
-        e.preventDefault();
-        processOrderAction({
-            action: 'update_status',
-            order_id: $('#modalFormOrderId').val(),
-            new_status: $('#modalStatusSelect').val(),
-            button: $(this).find('button[type="submit"]'),
-            success: () => updateOrderStatusUI($('#modalFormOrderId').val(), $('#modalStatusSelect').val())
-        });
-    });
-
-    function processOrderAction({action, order_id, new_status, button, success}) {
-        const originalText = button.html();
-        button.html('<i class="bi bi-arrow-repeat spin"></i> Processing...').prop('disabled', true);
-        
-        $.ajax({
-            url: 'orders.php',
-            type: 'POST',
-            data: { 
-                [action]: true,
-                order_id,
-                ...(new_status && {new_status})
-            },
-            success: function() {
-                success();
-                $('#orderModal').modal('hide');
-                showToast(`Order ${action.replace('_', ' ')} successful!`, 'success');
-            },
-            error: function(xhr) {
-                showErrorAndReload(`Action failed: ${xhr.responseText || 'Unknown error'}`);
-            },
-            complete: function() {
-                if (!isReloading) {
-                    button.html(originalText).prop('disabled', false);
-                }
+        function updateFinancials(order) {
+            $('#modalSubtotal').text(parseFloat(order.subtotal || 0).toFixed(2));
+            
+            // Toggle and set discount
+            const discountAmount = parseFloat(order.discount_amount || 0);
+            $('#modalDiscountRow').toggle(discountAmount > 0);
+            if (discountAmount > 0) {
+                $('#modalDiscountAmount').text(discountAmount.toFixed(2));
+                $('#modalDiscountType').text(order.discount_type || 'Discount');
             }
-        });
-    }
-
-    function updateOrderStatusUI(orderId, newStatus) {
-        const statusText = formatStatus(newStatus);
-        const $badge = $(`tr:has(button[data-order-id="${orderId}"]) .status-badge`);
-        
-        $badge.text(statusText)
-            .removeClass()
-            .addClass(`status-badge status-${newStatus.toLowerCase()}`);
-        
-        $(`.cancel-order[data-order-id="${orderId}"]`)
-            .toggle(['pending', 'confirmed', 'preparing'].includes(newStatus));
-    }
-
-    // ============== UI Helpers ==============
-    function showToast(message, type = 'success') {
-        // Remove existing toasts
-        $('.toast-container').remove();
-        
-        // Create toast container if it doesn't exist
-        if ($('.toast-container').length === 0) {
-            $('body').append('<div class="toast-container position-fixed top-0 end-0 p-3"></div>');
+            
+            // Toggle and set GST
+            const gstAmount = parseFloat(order.gst_amount || 0);
+            $('#modalGstRow').toggle(gstAmount > 0);
+            if (gstAmount > 0) $('#modalGstAmount').text(gstAmount.toFixed(2));
+            
+            // Toggle and set delivery
+            const deliveryCharge = parseFloat(order.delivery_charge || 0);
+            $('#modalDeliveryRow').toggle(deliveryCharge > 0);
+            if (deliveryCharge > 0) $('#modalDeliveryCharge').text(deliveryCharge.toFixed(2));
+            
+            // Total
+            $('#modalTotalAmount').text(parseFloat(order.total_amount || 0).toFixed(2));
         }
-        
-        // Create toast
-        const toast = $(`
-            <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        ${message}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            </div>
-        `).appendTo('.toast-container');
-        
-        // Show toast
-        const toastInstance = new bootstrap.Toast(toast[0], {
-            autohide: true,
-            delay: 3000
-        });
-        toastInstance.show();
-    }
 
-    function formatOrderType(order) {
-        if (!order.order_type) return 'Unknown type';
-        return order.order_type === 'dining' 
-            ? `Dining (Table ${order.table_number || 'N/A'})` 
-            : order.order_type.charAt(0).toUpperCase() + order.order_type.slice(1);
-    }
-
-    function formatStatus(status) {
-        return status ? status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' ') : 'Unknown';
-    }
-
-    // ============== PDF Generation ==============
-    $('#downloadBillBtn').click(function() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        // Header
-        doc.setFont('helvetica', 'bold');
-        doc.text('<?php echo addslashes($business_name); ?>', 105, 10, { align: 'center' });
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        doc.text('<?php echo addslashes($business_address); ?>', 105, 15, { align: 'center' });
-        
-        // Order info
-        doc.text(`Order #${$('#modalOrderId').text()}`, 14, 25);
-        doc.text(`Date: ${$('#modalOrderDate').text()}`, 14, 30);
-        
-        // Items table
-        const items = [];
-        $('#modalOrderItems tr').each(function() {
-            const cols = $(this).find('td');
-            if (cols.length === 4) {
-                items.push([cols.eq(0).text(), cols.eq(1).text(), cols.eq(2).text(), cols.eq(3).text()]);
-            }
-        });
-        
-        doc.autoTable({
-            startY: 40,
-            head: [['Item', 'Price', 'Qty', 'Total']],
-            body: items,
-            margin: { left: 14 },
-            styles: { fontSize: 9 }
-        });
-        
-        // Save PDF
-        doc.save(`Order_${$('#modalOrderId').text()}.pdf`);
-    });
-
-    // ============== Initialize ==============
-    checkForNewOrders();
-    bindOrderHandlers();
-
-    // Tab visibility handling
-    $(window).on('blur', () => pollingActive = false)
-             .on('focus', () => { pollingActive = true; checkForNewOrders(); });
-
-    // Add CSS for animations and alerts
-    $('head').append(`
-        <style>
-            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-            .bi-arrow-repeat.spin { animation: spin 1s linear infinite; }
+        // ============== Order Actions ==============
+        function cancelOrderHandler(e) {
+            e.preventDefault();
+            const orderId = $(this).data('order-id');
             
-            .alert-fixed {
-                position: fixed;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                z-index: 9999;
-                min-width: 300px;
-                text-align: center;
+            if (confirm('Are you sure you want to cancel this order?')) {
+                processOrderAction({
+                    action: 'cancel_order',
+                    order_id: orderId,
+                    button: $(this),
+                    success: () => updateOrderStatusUI(orderId, 'cancelled')
+                });
             }
-            
-            .toast-container {
-                z-index: 9999;
-            }
-            
-            .status-badge {
-                padding: 3px 8px;
-                border-radius: 12px;
-                font-size: 0.8em;
-                font-weight: 500;
-                display: inline-block;
-            }
-            .status-pending { background-color: #ffc107; color: #000; }
-            .status-confirmed { background-color: #17a2b8; color: #fff; }
-            .status-preparing { background-color: #fd7e14; color: #fff; }
-            .status-completed { background-color: #28a745; color: #fff; }
-            .status-cancelled { background-color: #dc3545; color: #fff; }
-            .status-delivered { background-color: #6f42c1; color: #fff; }
-        </style>
-    `);
-});
+        }
 
-const toggleBtn = document.getElementById('fullscreenToggle');
+        $('#cancelOrderForm').submit(function(e) {
+            e.preventDefault();
+            cancelOrderHandler(e);
+        });
+
+        $('#statusUpdateForm').submit(function(e) {
+            e.preventDefault();
+            processOrderAction({
+                action: 'update_status',
+                order_id: $('#modalFormOrderId').val(),
+                new_status: $('#modalStatusSelect').val(),
+                button: $(this).find('button[type="submit"]'),
+                success: () => updateOrderStatusUI($('#modalFormOrderId').val(), $('#modalStatusSelect').val())
+            });
+        });
+
+        function processOrderAction({action, order_id, new_status, button, success}) {
+            const originalText = button.html();
+            button.html('<i class="bi bi-arrow-repeat spin"></i> Processing...').prop('disabled', true);
+            
+            $.ajax({
+                url: 'orders.php',
+                type: 'POST',
+                data: { 
+                    [action]: true,
+                    order_id,
+                    ...(new_status && {new_status})
+                },
+                success: function() {
+                    success();
+                    $('#orderModal').modal('hide');
+                    window.showToast(`Order ${action.replace('_', ' ')} successful!`, 'success');
+                },
+                error: function(xhr) {
+                    showErrorAndReload(`Action failed: ${xhr.responseText || 'Unknown error'}`);
+                },
+                complete: function() {
+                    if (!window.POLLING_CONFIG.isReloading) {
+                        button.html(originalText).prop('disabled', false);
+                    window.location.href = 'orders.php?date=<?php echo $selected_date; ?>';
+                    }
+                }
+            });
+        }
+
+        function updateOrderStatusUI(orderId, newStatus) {
+            const statusText = formatStatus(newStatus);
+            const $badge = $(`tr:has(button[data-order-id="${orderId}"]) .status-badge`);
+            
+            $badge.text(statusText)
+                .removeClass()
+                .addClass(`status-badge status-${newStatus.toLowerCase()}`);
+            
+            $(`.cancel-order[data-order-id="${orderId}"]`)
+                .toggle(['pending', 'confirmed', 'preparing'].includes(newStatus));
+        }
+
+        // ============== UI Helpers ==============
+        function formatOrderType(order) {
+            if (!order.order_type) return 'Unknown type';
+            return order.order_type === 'dining' 
+                ? `Dining (Table ${order.table_number || 'N/A'})` 
+                : order.order_type.charAt(0).toUpperCase() + order.order_type.slice(1);
+        }
+
+        function formatStatus(status) {
+            return status ? status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' ') : 'Unknown';
+        }
+
+        // ============== PDF Generation ==============
+        $('#downloadBillBtn').click(function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Header
+            doc.setFont('helvetica', 'bold');
+            doc.text('<?php echo addslashes($business_name); ?>', 105, 10, { align: 'center' });
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.text('<?php echo addslashes($business_address); ?>', 105, 15, { align: 'center' });
+            
+            // Order info
+            doc.text(`Order #${$('#modalOrderId').text()}`, 14, 25);
+            doc.text(`Date: ${$('#modalOrderDate').text()}`, 14, 30);
+            
+            // Items table
+            const items = [];
+            $('#modalOrderItems tr').each(function() {
+                const cols = $(this).find('td');
+                if (cols.length === 4) {
+                    items.push([cols.eq(0).text(), cols.eq(1).text(), cols.eq(2).text(), cols.eq(3).text()]);
+                }
+            });
+            
+            doc.autoTable({
+                startY: 40,
+                head: [['Item', 'Price', 'Qty', 'Total']],
+                body: items,
+                margin: { left: 14 },
+                styles: { fontSize: 9 }
+            });
+            
+            // Save PDF
+            doc.save(`Order_${$('#modalOrderId').text()}.pdf`);
+        });
+
+        // ============== Fullscreen Toggle ==============
+        const toggleBtn = document.getElementById('fullscreenToggle');
 
         function isFullscreen() {
-          return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+            return document.fullscreenElement || 
+                   document.webkitFullscreenElement || 
+                   document.msFullscreenElement;
         }
 
         function enterFullscreen() {
-          const elem = document.documentElement;
-          if (elem.requestFullscreen) {
-            elem.requestFullscreen();
-          } else if (elem.webkitRequestFullscreen) {
-            elem.webkitRequestFullscreen();
-          } else if (elem.msRequestFullscreen) {
-            elem.msRequestFullscreen();
-          }
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+            }
         }
 
         function exitFullscreen() {
-          if (document.exitFullscreen) {
-            document.exitFullscreen();
-          } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-          } else if (document.msExitFullscreen) {
-            document.msExitFullscreen();
-          }
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
         }
 
-        toggleBtn.addEventListener('click', () => {
-          if (isFullscreen()) {
-            exitFullscreen();
-          } else {
-            enterFullscreen();
-          }
+        toggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (isFullscreen()) {
+                exitFullscreen();
+            } else {
+                enterFullscreen();
+            }
         });
 
         // Update button label based on fullscreen change
@@ -898,12 +732,12 @@ const toggleBtn = document.getElementById('fullscreenToggle');
         document.addEventListener('msfullscreenchange', updateButtonLabel);
 
         function updateButtonLabel() {
-          toggleBtn.textContent = isFullscreen() ? 'Exit Fullscreen' : 'Enter Fullscreen';
+            toggleBtn.textContent = isFullscreen() ? 'Exit Fullscreen' : 'Fullscreen';
         }
-</script>
 
-
-
+        // ============== Initialize ==============
+        bindOrderHandlers();
+    });
+    </script>
 </body>
 </html>
-

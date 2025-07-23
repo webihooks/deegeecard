@@ -381,3 +381,69 @@ box-shadow: 0 10px 20px rgba(0,0,0,0.1);
     min-height:150px;
 }
 
+
+
+
+/* Toast notifications */
+.toast-container {
+    z-index: 1100;
+}
+
+.toast {
+    min-width: 250px;
+}
+
+/* Status badges */
+.status-badge {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.status-pending {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.status-confirmed {
+    background-color: #17a2b8;
+    color: #fff;
+}
+
+.status-preparing {
+    background-color: #fd7e14;
+    color: #fff;
+}
+
+.status-out_for_delivery {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.status-delivered, .status-completed {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.status-cancelled {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+
+
+
+
+
+/* Android WebView Specific Styles */
+@media screen and (-webkit-min-device-pixel-ratio:0) and (max-width: 768px) {
+  
+  /* Fullscreen button */
+  #fullscreenToggle {
+    display: none; /* Hide in WebView as it's not applicable */
+  }
+  
+}
+

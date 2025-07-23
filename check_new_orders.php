@@ -1,28 +1,35 @@
 <?php
-session_start();
 require 'db_connection.php';
 
+header('Content-Type: application/json');
+
+// Get parameters
+$last_order_id = isset($_GET['last_order_id']) ? (int)$_GET['last_order_id'] : 0;
+$current_page = isset($_GET['current_page']) ? (int)$_GET['current_page'] : 1;
+$selected_date = isset($_GET['selected_date']) ? $_GET['selected_date'] : date('Y-m-d');
+$page_load_time = isset($_GET['page_load_time']) ? $_GET['page_load_time'] : time();
+
+// Validate date format
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $selected_date)) {
+    $selected_date = date('Y-m-d');
+}
+
+session_start();
 if (!isset($_SESSION['user_id'])) {
-    die(json_encode(['error' => 'Unauthorized']));
+    echo json_encode(['error' => 'Not authenticated']);
+    exit;
 }
 
 $user_id = $_SESSION['user_id'];
-$last_order_id = isset($_GET['last_order_id']) ? (int)$_GET['last_order_id'] : 0;
-$from_date = isset($_GET['from_date']) ? $_GET['from_date'] : date('Y-m-d');
-$to_date = isset($_GET['to_date']) ? $_GET['to_date'] : date('Y-m-d');
 
-// Validate dates
-if (!strtotime($from_date)) $from_date = date('Y-m-d');
-if (!strtotime($to_date)) $to_date = date('Y-m-d');
-
-// Get new orders since last_order_id within the date range
-$sql = "SELECT order_id FROM orders 
-        WHERE user_id = ? 
-        AND order_id > ? 
-        AND DATE(created_at) BETWEEN ? AND ?
+// Only get orders created AFTER the page loaded
+$sql = "SELECT order_id, customer_name, total_amount, status 
+        FROM orders 
+        WHERE user_id = ? AND order_id > ? AND DATE(created_at) = ? AND created_at > FROM_UNIXTIME(?)
         ORDER BY order_id DESC";
+
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("iiss", $user_id, $last_order_id, $from_date, $to_date);
+$stmt->bind_param("iisi", $user_id, $last_order_id, $selected_date, $page_load_time);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -36,7 +43,8 @@ $conn->close();
 
 echo json_encode([
     'new_orders' => $new_orders,
-    'current_filter_from' => $from_date,
-    'current_filter_to' => $to_date
+    'last_order_id' => $last_order_id,
+    'current_page' => $current_page,
+    'selected_date' => $selected_date
 ]);
 ?>

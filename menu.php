@@ -1,3 +1,187 @@
+<!-- <script src="assets/js/polling.js?<?php echo time(); ?>"></script> -->
+<script>
+// Global polling configuration
+const POLLING_CONFIG = {
+    interval: 10000, // 10 seconds
+    active: true,
+    lastOrderId: 0,
+    isReloading: false,
+    notificationSound: 'assets/sounds/new_order.mp3?' + Date.now(), // Cache buster
+    pageLoadTime: Math.floor(Date.now() / 1000)
+};
+
+// Initialize polling for new orders
+function initOrderPolling() {
+    // Store page load time in session storage
+    sessionStorage.setItem('pageLoadTime', POLLING_CONFIG.pageLoadTime);
+    
+    // Set initial lastOrderId from existing orders on page
+    const orderElements = document.querySelectorAll('[data-order-id]');
+    if (orderElements.length > 0) {
+        const orderIds = Array.from(orderElements)
+            .map(el => parseInt(el.dataset.orderId))
+            .filter(id => !isNaN(id));
+        
+        if (orderIds.length > 0) {
+            POLLING_CONFIG.lastOrderId = Math.max(...orderIds);
+        }
+    }
+
+    // Start polling
+    checkForNewOrders();
+    
+    // Tab visibility handling
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', () => POLLING_CONFIG.active = false);
+    window.addEventListener('focus', () => {
+        POLLING_CONFIG.active = true; 
+        checkForNewOrders();
+    });
+}
+
+function handleVisibilityChange() {
+    POLLING_CONFIG.active = !document.hidden;
+    if (POLLING_CONFIG.active) {
+        checkForNewOrders();
+    }
+}
+
+function checkForNewOrders() {
+    if (!POLLING_CONFIG.active || POLLING_CONFIG.isReloading) return;
+    
+    const pageLoadTime = sessionStorage.getItem('pageLoadTime') || POLLING_CONFIG.pageLoadTime;
+    
+    fetch(`check_new_orders.php?last_order_id=${POLLING_CONFIG.lastOrderId}&page_load_time=${pageLoadTime}`)
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                console.error('Poll error:', data.error);
+                return;
+            }
+            
+            if (data.new_orders?.length > 0) {
+                POLLING_CONFIG.lastOrderId = Math.max(
+                    POLLING_CONFIG.lastOrderId, 
+                    ...data.new_orders.map(o => o.order_id)
+                );
+                
+                // Play notification sound
+                playNotification();
+                
+                // Show toast notification
+                const orderText = data.new_orders.length > 1 ? 
+                    `${data.new_orders.length} new orders` : 
+                    'New order';
+                showToast(`${orderText} received!`, 'success');
+                
+                // Special handling for orders page
+                if (window.location.pathname.includes('orders.php')) {
+                    setTimeout(() => {
+                        if (!POLLING_CONFIG.isReloading) {
+                            POLLING_CONFIG.isReloading = true;
+                            window.location.reload();
+                        }
+                    }, 5000);
+                }
+            }
+        })
+        .catch(error => console.error('Poll failed:', error))
+        .finally(() => {
+            if (POLLING_CONFIG.active && !POLLING_CONFIG.isReloading) {
+                setTimeout(checkForNewOrders, POLLING_CONFIG.interval);
+            }
+        });
+}
+
+// Notification functions (same as before)
+let notificationAudio = null;
+
+function initNotificationAudio() {
+    try {
+        notificationAudio = new Audio(POLLING_CONFIG.notificationSound);
+        notificationAudio.volume = 0.5;
+        notificationAudio.load();
+    } catch (e) {
+        console.error('Audio initialization failed:', e);
+    }
+}
+
+function playNotification() {
+    if (!notificationAudio) {
+        initNotificationAudio();
+        if (!notificationAudio) return;
+    }
+    
+    try {
+        notificationAudio.currentTime = 0;
+        const playPromise = notificationAudio.play();
+        
+        if (playPromise !== undefined) {
+            playPromise.catch(e => {
+                console.log('Audio play blocked:', e);
+                document.addEventListener('click', function handler() {
+                    document.removeEventListener('click', handler);
+                    notificationAudio.play().catch(console.error);
+                }, { once: true });
+            });
+        }
+    } catch (e) {
+        console.error('Audio playback error:', e);
+    }
+}
+
+function showToast(message, type = 'success') {
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        document.body.appendChild(toastContainer);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    const toastInstance = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: 5000
+    });
+    toastInstance.show();
+    
+    toast.addEventListener('hidden.bs.toast', () => {
+        toast.remove();
+    });
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+        initNotificationAudio();
+        initOrderPolling();
+    }
+});
+
+window.addEventListener('beforeunload', () => {
+    sessionStorage.removeItem('pageLoadTime');
+});   
+</script>
+
 <div class="main-nav">
    <!-- Sidebar Logo -->
    <div class="logo-box">
