@@ -1,4 +1,3 @@
-<!-- <script src="assets/js/polling.js?<?php echo time(); ?>"></script> -->
 <script>
 // Global polling configuration
 const POLLING_CONFIG = {
