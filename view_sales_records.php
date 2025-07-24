@@ -41,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_record'])) {
     $follow_up_date = trim($_POST['follow_up_date']);
     $package_price = trim($_POST['package_price']);
     $new_remark = trim($_POST['new_remark']);
+    $status = trim($_POST['status']); // New status field
     
     if ($record_id > 0) {
         // First verify the user has permission to update this record
@@ -82,35 +83,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_record'])) {
                 follow_up_date = ?, 
                 package_price = ?, 
                 remark = ?,
+                status = ?,
                 record_date = CURDATE(),
                 time_stamp = CURRENT_TIME()
                 WHERE id = ?";
 
-$update_stmt = $conn->prepare($update_sql);
+            $update_stmt = $conn->prepare($update_sql);
 
-if ($update_stmt) {
-    $update_stmt->bind_param("ssisssdsi", 
-        $contacted_person,
-        $phone,
-        $owner_available,
-        $decision_maker_name,
-        $decision_maker_phone,
-        $follow_up_date,
-        $package_price,
-        $updated_remark,
-        $record_id);
-    
-    if ($update_stmt->execute()) {
-        $success_message = "Record updated successfully!";
-        header("Location: ".$_SERVER['PHP_SELF']);
-        exit();
-    } else {
-        $error_message = "Error updating record: " . $update_stmt->error;
-    }
-    $update_stmt->close();
-} else {
-    $error_message = "Error preparing update statement: " . $conn->error;
-}
+            if ($update_stmt) {
+                $update_stmt->bind_param("ssisssdssi", 
+                    $contacted_person,
+                    $phone,
+                    $owner_available,
+                    $decision_maker_name,
+                    $decision_maker_phone,
+                    $follow_up_date,
+                    $package_price,
+                    $updated_remark,
+                    $status,
+                    $record_id);
+                
+                if ($update_stmt->execute()) {
+                    $success_message = "Record updated successfully!";
+                    header("Location: ".$_SERVER['PHP_SELF']);
+                    exit();
+                } else {
+                    $error_message = "Error updating record: " . $update_stmt->error;
+                }
+                $update_stmt->close();
+            } else {
+                $error_message = "Error preparing update statement: " . $conn->error;
+            }
         }
     } else {
         $error_message = "Invalid record ID.";
@@ -118,7 +121,7 @@ if ($update_stmt) {
 }
 
 // Pagination setup
-$records_per_page = 50;
+$records_per_page = 500;
 $current_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 if ($current_page < 1) {
     $current_page = 1;
@@ -131,6 +134,7 @@ $date_filter = isset($_GET['date_filter']) ? trim($_GET['date_filter']) : '';
 $follow_up_filter = isset($_GET['follow_up_filter']) ? trim($_GET['follow_up_filter']) : '';
 $owner_filter = isset($_GET['owner_filter']) ? (int)$_GET['owner_filter'] : -1;
 $sales_person_filter = isset($_GET['sales_person_filter']) ? (int)$_GET['sales_person_filter'] : ($role === 'admin' ? 0 : $user_id);
+$status_filter = isset($_GET['status_filter']) ? trim($_GET['status_filter']) : 'in process'; 
 
 // Fetch all team members for admin filter dropdown
 $team_members = [];
@@ -191,6 +195,17 @@ if ($owner_filter >= 0) {
     $param_types .= 'i';
 }
 
+// Status filter - default to 'in process' but allow override
+if (empty($_GET['status_filter'])) {
+    $where_clauses[] = "status = ?";
+    $params[] = 'in process';
+    $param_types .= 's';
+} elseif (!empty($status_filter)) {
+    $where_clauses[] = "status = ?";
+    $params[] = $status_filter;
+    $param_types .= 's';
+}
+
 $where_sql = empty($where_clauses) ? '' : 'WHERE ' . implode(' AND ', $where_clauses);
 
 // Fetch total records count
@@ -210,23 +225,23 @@ if ($count_stmt) {
 $total_pages = ceil($total_records / $records_per_page);
 
 // Fetch paginated records
-$sales_track_list = [];
 $fetch_sales_sql = "SELECT 
     id, user_id, user_name, record_date, time_stamp, 
     restaurant_name, contacted_person, phone, 
     decision_maker_name, decision_maker_phone, 
     location, street, city, state, 
     postal_code, country, follow_up_date, 
-    package_price, remark, owner_available,
+    package_price, remark, owner_available, status,
     CONCAT(street, ' ', city, ' ', state, ' ', location) AS full_address
     FROM sales_track 
     $where_sql
-    ORDER BY record_date DESC, time_stamp DESC
+    ORDER BY follow_up_date ASC
     LIMIT ?, ?";
 
 $fetch_sales_stmt = $conn->prepare($fetch_sales_sql);
 
 if ($fetch_sales_stmt) {
+    // Add pagination parameters
     $params[] = $offset;
     $params[] = $records_per_page;
     $param_types .= 'ii';
@@ -260,6 +275,30 @@ $conn->close();
     <link href="assets/css/style.css?<?php echo time(); ?>" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
+    <style>
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+        
+        .status-badge.in-process {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-badge.completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-badge.not-interested {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
     <script src="assets/js/config.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.19.3/jquery.validate.min.js"></script>
@@ -295,7 +334,11 @@ $conn->close();
                                 <div class="filter-section">
                                     <form id="filterForm" method="GET" action="">
                                         <div class="row filter-row">
-                                            <div class="col-md-2 search-box">
+                                            
+
+
+<div class="row mt-1">
+                                            <div class="col-md-4 search-box">
                                                 <label class="form-label">Search</label>
                                                 <input type="text" class="form-control" name="search" placeholder="Search..." 
                                                        value="<?= htmlspecialchars($search_query) ?>">
@@ -303,12 +346,20 @@ $conn->close();
                                                     <span class="clear-search" style="display:none;" onclick="clearSearch()">&times;</span>
                                                 <?php endif; ?>
                                             </div>
-                                            <div class="col-md-2">
+                                            
+
+
+
+                                            <div class="col-md-4">
                                                 <label class="form-label">Date</label>
                                                 <input type="date" class="form-control" name="date_filter" 
                                                        value="<?= htmlspecialchars($date_filter) ?>">
                                             </div>
-                                            <div class="col-md-2">
+                                            
+
+
+
+                                            <div class="col-md-4">
                                                 <label class="form-label">Follow up Date</label>
                                                 <div class="input-group date" id="followUpDatePicker">
                                                     <input type="text" class="form-control" name="follow_up_filter" 
@@ -318,8 +369,13 @@ $conn->close();
                                                     </div>
                                                 </div>
                                             </div>
+</div>                                            
                                             <?php if ($role === 'admin'): ?>
-                                            <div class="col-md-3">
+                                            
+
+
+<div class="row mt-1">
+                                            <div class="col-md-4">
                                                 <label class="form-label">Team member</label>
                                                 <select class="form-control team-member-filter" name="sales_person_filter">
                                                     <option value="0">All Team Members</option>
@@ -331,7 +387,11 @@ $conn->close();
                                                 </select>
                                             </div>
                                             <?php endif; ?>
-                                            <div class="col-md-2">
+                                            
+
+
+
+                                            <div class="col-md-4">
                                                 <label class="form-label">Owner Status</label>
                                                 <select class="form-control" name="owner_filter">
                                                     <option value="-1" <?= $owner_filter == -1 ? 'selected' : '' ?>>Owner: All</option>
@@ -339,13 +399,33 @@ $conn->close();
                                                     <option value="0" <?= $owner_filter == 0 ? 'selected' : '' ?>>Owner: Not Available</option>
                                                 </select>
                                             </div>
-                                            <div class="col-md-1 mt-3">
+                                            
+
+
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">Status</label>
+                                                <select class="form-control" name="status_filter">
+                                                    <!-- <option value="">All Statuses</option> -->
+                                                    <option value="in process" <?= ($status_filter === 'in process' || empty($_GET['status_filter'])) ? 'selected' : '' ?>>In Process</option>
+                                                    <option value="completed" <?= $status_filter === 'completed' ? 'selected' : '' ?>>Completed</option>
+                                                    <option value="not interested" <?= $status_filter === 'not interested' ? 'selected' : '' ?>>Not Interested</option>
+                                                </select>
+                                            </div>
+</div>
+
+
+
+<div class="row mt-2">
+                                            <div class="col-md-12">
                                                 <button type="submit" class="btn btn-primary btn-block">Apply</button>
                                             </div>
+</div>
+
                                         </div>
                                     </form>
                                     
-                                    <?php if (!empty($search_query) || !empty($date_filter) || !empty($follow_up_filter) || $owner_filter >= 0 || ($role === 'admin' && $sales_person_filter > 0)): ?>
+                                    <?php if (!empty($search_query) || !empty($date_filter) || !empty($follow_up_filter) || $owner_filter >= 0 || ($role === 'admin' && $sales_person_filter > 0) || !empty($status_filter)): ?>
                                         <div class="row">
                                             <div class="col-md-12">
                                                 <div class="filter-results">
@@ -378,6 +458,9 @@ $conn->close();
                                                             <span class="badge badge-info">Owner: Available</span>
                                                         <?php elseif ($owner_filter == 0): ?>
                                                             <span class="badge badge-info">Owner: Not Available</span>
+                                                        <?php endif; ?>
+                                                        <?php if (!empty($status_filter)): ?>
+                                                            <span class="badge badge-info">Status: <?= ucfirst($status_filter) ?></span>
                                                         <?php endif; ?>
                                                         <a href="?" class="badge badge-danger">Clear all</a>
                                                     </small>
@@ -412,10 +495,9 @@ $conn->close();
                                                                 <th>Date</th>
                                                                 <th>Time</th>
                                                                 <th>Restaurant</th>
-                                                                
                                                                 <th>Owner</th>
-                                                                
                                                                 <th>Follow Up</th>
+                                                                <th>Status</th>
                                                                 <th>Price</th>
                                                                 <th>Remark</th>
                                                                 <th>Contact</th>
@@ -423,7 +505,6 @@ $conn->close();
                                                                 <th>D.M.</th>
                                                                 <th>D.M. Phone</th>
                                                                 <th>Location Details</th>
-                                                                
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -441,7 +522,8 @@ $conn->close();
                                                                                     data-decision-maker-name="<?= htmlspecialchars($entry['decision_maker_name']) ?>"
                                                                                     data-decision-maker-phone="<?= htmlspecialchars($entry['decision_maker_phone']) ?>"
                                                                                     data-follow-up-date="<?= htmlspecialchars($entry['follow_up_date']) ?>"
-                                                                                    data-package-price="<?= htmlspecialchars($entry['package_price']) ?>">
+                                                                                    data-package-price="<?= htmlspecialchars($entry['package_price']) ?>"
+                                                                                    data-status="<?= htmlspecialchars($entry['status']) ?>">
                                                                                 <i class="fas fa-edit"></i> Update
                                                                             </button>
                                                                             <?php endif; ?>
@@ -454,13 +536,14 @@ $conn->close();
                                                                         <td><?= htmlspecialchars($entry['record_date']) ?></td>
                                                                         <td><?= date('h:i A', strtotime($entry['time_stamp'])) ?></td>
                                                                         <td><?= htmlspecialchars($entry['restaurant_name']) ?></td>
-                                                                        
                                                                         <td><?= $entry['owner_available'] ? 'Yes' : 'No' ?></td>
-                                                                        
-
                                                                         <td><?= htmlspecialchars($entry['follow_up_date']) ?></td>
+                                                                        <td>
+                                                                            <span class="status-badge <?= str_replace(' ', '-', $entry['status']) ?>">
+                                                                                <?= ucfirst($entry['status']) ?>
+                                                                            </span>
+                                                                        </td>
                                                                         <td><?= number_format($entry['package_price']) ?></td>
-                                                                        
                                                                         <td>
                                                                             <?php if (!empty($entry['remark'])): ?>
                                                                                 <div class="remark-container">
@@ -485,13 +568,10 @@ $conn->close();
                                                                                 </div>
                                                                             <?php endif; ?>
                                                                         </td>
-
                                                                         <td><?= htmlspecialchars($entry['contacted_person']) ?></td>
                                                                         <td><?= htmlspecialchars($entry['phone']) ?></td>
-
                                                                         <td><?= htmlspecialchars($entry['decision_maker_name']) ?></td>
                                                                         <td><?= htmlspecialchars($entry['decision_maker_phone']) ?></td>
-                                                                        
                                                                         <td>
                                                                             <?php
                                                                                 $fullAddress = [];
@@ -510,13 +590,11 @@ $conn->close();
                                                                                 echo implode('<br>', $fullAddress);
                                                                             ?>
                                                                         </td>
-                                                                        
-                                                                        
                                                                     </tr>
                                                                 <?php endforeach; ?>
                                                             <?php else: ?>
                                                                 <tr>
-                                                                    <td colspan="<?= ($role === 'admin') ? '16' : '15' ?>" class="text-center">No records found</td>
+                                                                    <td colspan="<?= ($role === 'admin') ? '17' : '16' ?>" class="text-center">No records found</td>
                                                                 </tr>
                                                             <?php endif; ?>
                                                         </tbody>
@@ -632,19 +710,29 @@ $conn->close();
                         </div>
                         
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="follow_up_date">Follow Up Date</label>
                                     <input type="date" class="form-control" name="follow_up_date" id="modalFollowUpDate">
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="package_price">Package Price</label>
                                     <input type="number" step="0.01" class="form-control" name="package_price" id="modalPackagePrice">
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="status">Status</label>
+                                    <select class="form-control" name="status" id="modalStatus">
+                                        <option value="in process">In Process</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="not interested">Not Interested</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
                                 <div class="form-group form-check mt-4 pt-2">
                                     <input type="checkbox" class="form-check-input" name="owner_available" id="modalOwnerAvailable">
                                     <label class="form-check-label" for="owner_available">Owner Available</label>
@@ -671,18 +759,13 @@ $conn->close();
     </div>
 
     <script>
-
-        //dont remove this query start
         $(document).ready(function() {
-        // Handle modal close functionality
+            // Handle modal close functionality
             $(document).on('click', '#updateRecordModal .btn-secondary', function(e) {
                 e.preventDefault();
                 $('#updateRecordModal').modal('hide');
             });
-        });
-        //dont remove this query end
 
-        $(document).ready(function() {
             // Initialize date picker for follow up filter
             $('#followUpDatePicker').datepicker({
                 format: 'yyyy-mm-dd',
@@ -701,13 +784,6 @@ $conn->close();
             // Update record button click handler
             $(document).on('click', '.update-record-btn', function(e) {
                 e.preventDefault();
-
-                // Get all data attributes
-                var recordData = $(this).data();
-
-                // Set form values
-                $('#modalRecordId').val(recordData.recordId);
-                $('#modalRestaurantName').val(recordData.restaurantName);
                 
                 var recordId = $(this).data('record-id');
                 var restaurantName = $(this).data('restaurant-name');
@@ -718,7 +794,10 @@ $conn->close();
                 var decisionMakerPhone = $(this).data('decision-maker-phone');
                 var followUpDate = $(this).data('follow-up-date');
                 var packagePrice = $(this).data('package-price');
+                var status = $(this).data('status');
                 
+                $('#modalRecordId').val(recordId);
+                $('#modalRestaurantName').val(restaurantName);
                 $('#modalContactedPerson').val(contactedPerson);
                 $('#modalPhone').val(phone);
                 $('#modalOwnerAvailable').prop('checked', ownerAvailable);
@@ -726,6 +805,7 @@ $conn->close();
                 $('#modalDecisionMakerPhone').val(decisionMakerPhone);
                 $('#modalFollowUpDate').val(followUpDate);
                 $('#modalPackagePrice').val(packagePrice);
+                $('#modalStatus').val(status);
                 $('#modalNewRemark').val('');
     
                 $('#updateRecordModal').modal('show');
@@ -805,7 +885,7 @@ $conn->close();
                     // Remove page parameter if exists
                     filters = filters.replace(/page=\d+&?/, '');
                     // Add to existing href
-                    href += (href.indexOf('?') === -1 ? '?' : '&') + filters;
+                    href += (href.indexOf('?') === -1 ? '?' : '&') + filters
                 }
                 $(this).attr('href', href);
             });
