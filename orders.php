@@ -1,6 +1,7 @@
 <?php
 // Start the session
 session_start();
+date_default_timezone_set('Asia/Kolkata'); // for Indian Standard Time
 
 // Include the database connection file
 require 'db_connection.php';

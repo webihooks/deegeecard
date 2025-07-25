@@ -1,3 +1,5 @@
+
+
 <!-- products.php -->
 <div class="products">
  <h6>Products</h6>
@@ -37,7 +39,6 @@
 <!-- Cart Section (shown initially) -->
 <div class="cart_group" id="cartGroup">
     <div class="cart-items" id="cartItems"></div>
-    
     <div class="cart-total-details">
         <div class="cart-subtotal">
             Subtotal: ₹<span id="cartSubtotal">0.00</span>
@@ -48,9 +49,6 @@
             Discount: -₹<span id="discountAmount">0.00</span>
             (<span id="discountType"></span>)
         </div>
-        
-        <!-- Coupon Section -->
-        <div class="cart-coupon" id="couponSection" style="display: none;"></div>
         
         <?php if ($gst_percent > 0): ?>
         <div class="cart-gst-charges">
@@ -68,8 +66,6 @@
             Total: ₹<span id="cartTotal">0.00</span>
         </div>
     </div>
-
-    
     <!-- View Cart Button -->
     <button class="btn btn-outline-secondary mb-3 w-100" id="viewCartBtn" style="display: none;">
         <i class="bi bi-cart"></i> View Cart
@@ -94,22 +90,6 @@
 
 <!-- Customer Details Section (hidden initially) -->
 <div id="customerDetailsSection" style="display: none;">
-
-
-<!-- Add this near your cart button -->
-<?php if ($has_coupons && ($delivery_active || $dining_active)): ?>
-<div class="coupon-form mb-3" id="couponForm">
-    <h6>Have a coupon code?</h6>
-    <div class="input-group">
-        <input type="text" class="form-control" id="couponCode" placeholder="Enter coupon code">
-        <button class="btn btn-outline-secondary" type="button" id="applyCouponBtn">Apply</button>
-    </div>
-    <small class="text-success mt-1" id="couponMessage" style="display: none;"></small>
-    <small class="text-danger mt-1" id="couponError" style="display: none;"></small>
-</div>
-<?php endif; ?>
-
-
     
     
     <?php if ($dining_active): ?>
@@ -144,18 +124,6 @@
 
     <?php if ($delivery_active): ?>
     <div class="customer-details delivery-details" id="deliveryDetails" style="display: none;">
-
-
-        
-
-
-
-
-
-
-
-
-
        <h6>Delivery Information</h6>
        <div class="mb-1 col-half">
           <label for="customerName" class="form-label">Name*</label>
@@ -404,139 +372,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <?php endif; ?>
 </div>
 
-
-
-
-
-
-
-
 <script>
-// Coupon
-    // Add these variables at the top with your other cart variables
-let appliedCoupon = null;
-let couponDiscount = 0;
-
-// Add this event listener for the apply coupon button
-document.getElementById('applyCouponBtn')?.addEventListener('click', applyCoupon);
-
-
-
-
-// Add this function to handle coupon validation
-async function applyCoupon() {
-    try {
-        const couponCode = document.getElementById('couponCode').value.trim();
-        const phoneNumber = document.getElementById('customerPhone')?.value || 
-                          document.getElementById('dinningPhone')?.value;
-        
-        if (!couponCode) {
-            showCouponError('Please enter a coupon code');
-            return;
-        }
-        
-        // Show loading state
-        const applyBtn = document.getElementById('applyCouponBtn');
-        applyBtn.disabled = true;
-        applyBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Applying...';
-        
-        // Calculate current cart total for validation
-        const currentTotal = calculateCartTotal();
-        
-        const response = await fetch('validate_coupon.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                coupon_code: couponCode,
-                phone_number: phoneNumber,
-                cart_total: currentTotal,
-                user_id: <?= $user_id ?>
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            // Store coupon data globally
-            window.appliedCoupon = {
-                coupon_code: couponCode,
-                discount_amount: data.discount_amount,
-                coupon_id: data.coupon_id
-            };
-            window.couponDiscount = data.discount_amount;
-            
-            // Update UI
-            document.getElementById('couponError').style.display = 'none';
-            document.getElementById('couponMessage').textContent = data.message || 'Coupon applied successfully!';
-            document.getElementById('couponMessage').style.display = 'block';
-            
-            // Refresh cart totals
-            updateCartUI();
-        } else {
-            showCouponError(data.message || 'Invalid coupon code');
-        }
-    } catch (error) {
-        console.error('Coupon error:', error);
-        showCouponError('Failed to apply coupon. Please try again.');
-    } finally {
-        const applyBtn = document.getElementById('applyCouponBtn');
-        if (applyBtn) {
-            applyBtn.disabled = false;
-            applyBtn.innerHTML = 'Apply';
-        }
-    }
-}
-
-
-
-
-function showCouponError(message) {
-    const errorElement = document.getElementById('couponError');
-    errorElement.textContent = message;
-    errorElement.style.display = 'block';
-    document.getElementById('couponMessage').style.display = 'none';
-}
-
-function calculateCartTotal() {
-    // Calculate subtotal
-    let subtotal = 0;
-    cart.forEach(item => {
-        subtotal += item.price * item.quantity;
-    });
-    
-    // Apply existing discount if any
-    subtotal -= discountAmount;
-    
-    // Add GST if applicable
-    if (<?= $gst_percent ?? 0 ?> > 0) {
-        subtotal += (subtotal * <?= $gst_percent ?? 0 ?>) / 100;
-    }
-    
-    // Add delivery charges if applicable
-    const isDelivery = <?= $delivery_active ? 'document.getElementById("deliveryBtn").classList.contains("active")' : 'false' ?>;
-    if (isDelivery && <?= isset($delivery_charges['delivery_charge']) ? 'true' : 'false' ?>) {
-        const deliveryCharge = <?= $delivery_charges['delivery_charge'] ?? 0 ?>;
-        const freeDeliveryMin = <?= $delivery_charges['free_delivery_minimum'] ?? 0 ?>;
-        const amountAfterDiscount = subtotal - discountAmount;
-        
-        if (freeDeliveryMin <= 0 || amountAfterDiscount < freeDeliveryMin) {
-            subtotal += deliveryCharge;
-        }
-    }
-    
-    return subtotal;
-}
-// Coupon
-
-
-
-
-
-
-
-
 // Detect store name from URL
 const storeName = window.location.pathname.split('/')[1] || 'default';
 const cartKey = `cart_${storeName}`;
@@ -659,7 +495,6 @@ function saveCart() {
 
 
 function updateCartUI() {
-    // 1. Get DOM elements
     const cartItemsContainer = document.getElementById('cartItems');
     const cartTotalDetails = document.querySelector('.cart-total-details');
     const dinningBtn = document.getElementById('dinningBtn');
@@ -668,19 +503,21 @@ function updateCartUI() {
     const orderTypeButtons = document.querySelector('.order-type-buttons');
     const cartFooter = document.querySelector('.cart-footer');
     const cartButtonContainer = document.querySelector('.cart-button-container');
+    const emptyCartMsg = document.createElement('div');
     const discountMessageElement = document.querySelector('.cart-button .discount-message');
     const discountSection = document.getElementById('discountSection');
-    const couponSection = document.getElementById('couponSection');
 
-    // 2. Clear existing elements
+    // Clear existing empty message if any
     const existingEmptyMsg = cartItemsContainer.querySelector('.empty-cart-message');
-    if (existingEmptyMsg) existingEmptyMsg.remove();
-    
+    if (existingEmptyMsg) {
+        existingEmptyMsg.remove();
+    }
+
     cartItemsContainer.innerHTML = '';
 
-    // 3. Handle empty cart case
+    // Handle empty cart case
     if (cart.length === 0) {
-        const emptyCartMsg = document.createElement('div');
+        // Create and show empty cart message
         emptyCartMsg.className = 'empty-cart-message text-center py-4';
         emptyCartMsg.innerHTML = `
             <i class="bi bi-cart-x fs-1 text-muted"></i>
@@ -691,27 +528,39 @@ function updateCartUI() {
         `;
         cartItemsContainer.appendChild(emptyCartMsg);
         
-        // Hide all cart-related elements
-        [cartTotalDetails, dinningBtn, dinningDetails, deliveryDetails, 
-         orderTypeButtons, cartFooter, discountMessageElement, discountSection,
-         couponSection, cartButtonContainer].forEach(el => {
-            if (el) el.style.display = 'none';
-        });
+        // Hide elements that shouldn't show when cart is empty
+        if (cartTotalDetails) cartTotalDetails.style.display = 'none';
+        if (dinningBtn) dinningBtn.style.display = 'none';
+        if (dinningDetails) dinningDetails.style.display = 'none';
+        if (deliveryDetails) deliveryDetails.style.display = 'none';
+        if (orderTypeButtons) orderTypeButtons.style.display = 'none';
+        if (cartFooter) cartFooter.style.display = 'none';
+        if (discountMessageElement) discountMessageElement.style.display = 'none';
+        if (discountSection) discountSection.style.display = 'none';
         
+        // Update cart count and hide cart button container
         document.querySelector('.cart-count').textContent = '0 items added';
-        return;
+        if (cartButtonContainer) cartButtonContainer.style.display = 'none';
+        return; // Exit early since cart is empty
     }
 
-    // 4. Cart has items - show all elements
-    [orderTypeButtons, cartFooter, cartButtonContainer].forEach(el => {
-        if (el) el.style.display = 'block';
-    });
-
-    // 5. Render cart items and calculate subtotal
+    // Cart has items - proceed with normal display
     let subtotal = 0;
+    const isDelivery = <?= $delivery_active ? 'document.getElementById("deliveryBtn").classList.contains("active")' : 'false' ?>;
+    const deliveryCharge = <?= isset($delivery_charges['delivery_charge']) ? $delivery_charges['delivery_charge'] : 0 ?>;
+    const freeDeliveryMin = <?= isset($delivery_charges['free_delivery_minimum']) ? $delivery_charges['free_delivery_minimum'] : 0 ?>;
+    const gstPercent = <?= $gst_percent ?? 0 ?>;
+
+    // Show order type buttons if they were hidden
+    if (orderTypeButtons) orderTypeButtons.style.display = 'block';
+    if (cartFooter) cartFooter.style.display = 'block';
+    if (cartButtonContainer) cartButtonContainer.style.display = 'block';
+
+    // Calculate subtotal and populate cart items
     cart.forEach((item, index) => {
         subtotal += item.price * item.quantity;
-        
+        const productImage = item.image_path ? item.image_path : 'images/no-image.jpg';
+
         const itemElement = document.createElement('div');
         itemElement.className = 'cart-item';
         itemElement.innerHTML = `
@@ -726,7 +575,7 @@ function updateCartUI() {
                     <i class="bi bi-dash"></i>
                 </button>
                 <input type="number" value="${item.quantity}" min="1" max="${item.max}"
-                       onchange="updateQuantityInput(${index}, this.value)">
+                        onchange="updateQuantityInput(${index}, this.value)">
                 <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${index}, 1)">
                     <i class="bi bi-plus"></i>
                 </button>
@@ -738,119 +587,183 @@ function updateCartUI() {
         cartItemsContainer.appendChild(itemElement);
     });
 
-    // 6. Calculate discounts
-    let discountAmount = 0;
-    let discountType = '';
-    const isDelivery = <?= $delivery_active ? 'document.getElementById("deliveryBtn").classList.contains("active")' : 'false' ?>;
-    const deliveryCharge = <?= isset($delivery_charges['delivery_charge']) ? $delivery_charges['delivery_charge'] : 0 ?>;
-    const freeDeliveryMin = <?= isset($delivery_charges['free_delivery_minimum']) ? $delivery_charges['free_delivery_minimum'] : 0 ?>;
-    const gstPercent = <?= $gst_percent ?? 0 ?>;
+    // Show cart total details
+    if (cartTotalDetails) cartTotalDetails.style.display = 'block';
 
+    // Calculate discount
+    discountAmount = 0;
+    discountType = '';
+    
     <?php if (!empty($discounts)): ?>
+        // Check each discount condition in order
         const discounts = <?= json_encode($discounts) ?>;
         let applicableDiscount = null;
         let nextDiscount = null;
 
+        // Sort discounts by min_cart_value ascending
         discounts.sort((a, b) => a.min_cart_value - b.min_cart_value);
 
+        // Find applicable discount and next discount
         for (let i = 0; i < discounts.length; i++) {
             const discount = discounts[i];
-            if (subtotal >= discount.min_cart_value) applicableDiscount = discount;
-            if (!nextDiscount && subtotal < discount.min_cart_value) nextDiscount = discount;
+            
+            // Check if this discount is applicable
+            if (subtotal >= discount.min_cart_value) {
+                applicableDiscount = discount;
+            }
+            
+            // Find the next discount that's not yet applicable
+            if (!nextDiscount && subtotal < discount.min_cart_value) {
+                nextDiscount = discount;
+            }
         }
 
         if (applicableDiscount) {
-            if (applicableDiscount.discount_in_percent > 0) {
+            if (applicableDiscount.discount_in_percent !== null && applicableDiscount.discount_in_percent > 0) {
                 discountAmount = (subtotal * applicableDiscount.discount_in_percent) / 100;
-                discountType = `${applicableDiscount.discount_in_percent}% discount`;
-            } else if (applicableDiscount.discount_in_flat > 0) {
+                discountType = applicableDiscount.discount_in_percent + '% discount';
+            } else if (applicableDiscount.discount_in_flat !== null && applicableDiscount.discount_in_flat > 0) {
                 discountAmount = parseFloat(applicableDiscount.discount_in_flat);
-                discountType = `Flat ₹${formatNumber(applicableDiscount.discount_in_flat)} OFF`;
+                discountType = 'Flat ₹' + formatNumber(applicableDiscount.discount_in_flat) + ' OFF';
             }
 
-            discountAmount = Math.min(discountAmount, subtotal);
+            // Ensure discountAmount doesn't exceed subtotal
+            if (discountAmount > subtotal) {
+                discountAmount = subtotal;
+            }
 
+            // Show discount section only if a discount is actually applied
             if (discountAmount > 0 && discountSection) {
                 discountSection.style.display = 'block';
                 document.getElementById('discountAmount').textContent = formatNumber(discountAmount);
                 document.getElementById('discountType').textContent = discountType;
                 
+                // Show discount applied message in cart button
                 if (discountMessageElement) {
                     discountMessageElement.innerHTML = `<i class="bi bi-tag-fill"></i> ${discountType} applied!`;
                     discountMessageElement.style.display = 'block';
                 }
+            } else if (discountSection) {
+                discountSection.style.display = 'none';
+                if (discountMessageElement) discountMessageElement.style.display = 'none';
             }
-        } else if (discountMessageElement && discounts.length > 0) {
-            const minDiscount = discounts[0].min_cart_value;
-            const needed = minDiscount - subtotal;
-            if (needed > 0) {
-                discountMessageElement.innerHTML = `<i class="bi bi-tag"></i> Add ₹${formatNumber(needed)} more for discount`;
-                discountMessageElement.style.display = 'block';
+        } else {
+            // No discount applied but discounts available
+            if (discountSection) discountSection.style.display = 'none';
+            
+            // Show message about how to get discount in cart button
+            if (discountMessageElement && discounts.length > 0) {
+                const minDiscount = discounts[0].min_cart_value;
+                const needed = minDiscount - subtotal;
+                if (needed > 0) {
+                    discountMessageElement.innerHTML = `<i class="bi bi-tag"></i> Add ₹${formatNumber(needed)} more for discount`;
+                    discountMessageElement.style.display = 'block';
+                } else {
+                    discountMessageElement.style.display = 'none';
+                }
             }
+        }
+
+        // Show next discount info if there's a higher discount available
+        if (nextDiscount) {
+            const amountNeeded = nextDiscount.min_cart_value - subtotal;
+            let nextDiscountText = '';
+            
+            if (nextDiscount.discount_in_percent) {
+                nextDiscountText = `Add ₹${formatNumber(amountNeeded)} more for ${formatNumber(nextDiscount.discount_in_percent)}% discount`;
+            } else if (nextDiscount.discount_in_flat) {
+                nextDiscountText = `Add ₹${formatNumber(amountNeeded)} more for ₹${formatNumber(nextDiscount.discount_in_flat)} OFF`;
+            }
+            
+            // Create or update next discount info element
+            if (!document.getElementById('nextDiscountInfo')) {
+                const nextDiscountElement = document.createElement('div');
+                nextDiscountElement.id = 'nextDiscountInfo';
+                nextDiscountElement.className = 'cart-next-discount text-center py-2 text-success';
+                nextDiscountElement.innerHTML = `<small><i class="bi bi-tag"></i> ${nextDiscountText}</small>`;
+                
+                // Insert after discount section or before GST section
+                const insertPoint = discountSection.nextElementSibling || 
+                                   document.querySelector('.cart-gst-charges') || 
+                                   document.querySelector('.cart-delivery-charges') ||
+                                   document.querySelector('.cart-total');
+                insertPoint.parentNode.insertBefore(nextDiscountElement, insertPoint);
+            } else {
+                document.getElementById('nextDiscountInfo').innerHTML = `<small><i class="bi bi-tag"></i> ${nextDiscountText}</small>`;
+                document.getElementById('nextDiscountInfo').style.display = 'block';
+            }
+        } else if (document.getElementById('nextDiscountInfo')) {
+            // Hide if no next discount available
+            document.getElementById('nextDiscountInfo').style.display = 'none';
+        }
+    <?php else: ?>
+        // Hide discount section if no discounts exist at all
+        if (discountSection) discountSection.style.display = 'none';
+        if (discountMessageElement) discountMessageElement.style.display = 'none';
+        if (document.getElementById('nextDiscountInfo')) {
+            document.getElementById('nextDiscountInfo').style.display = 'none';
         }
     <?php endif; ?>
 
-    // 7. Calculate totals
-    let amountAfterDiscount = Math.max(0, subtotal - discountAmount);
+    // Update subtotal and total
+    document.getElementById('cartSubtotal').textContent = formatNumber(subtotal);
+
+    // Calculate GST on amount after discount
+    let amountAfterDiscount = subtotal - discountAmount;
+    if (amountAfterDiscount < 0) {
+        amountAfterDiscount = 0;
+    }
+
     let total = amountAfterDiscount;
-    
-// Add GST
     if (gstPercent > 0) {
         const gstAmount = (amountAfterDiscount * gstPercent) / 100;
         document.getElementById('gstCharges').textContent = formatNumber(gstAmount);
         total += gstAmount;
     }
 
-    // Add delivery charges
+    // Calculate delivery charges ONLY if cart is NOT empty and delivery is active AND selected
     let actualDeliveryCharge = 0;
+    const cartDeliveryChargesRow = document.querySelector('.cart-delivery-charges');
     if (isDelivery && deliveryCharge !== undefined) {
-        // ... [existing delivery charge logic] ...
-        total += actualDeliveryCharge;
-    }
-
-    // 8. Apply coupon discount (MOVE THIS AFTER ALL OTHER CALCULATIONS)
-    if (window.appliedCoupon && window.couponDiscount) {
-        total -= window.couponDiscount;
-        
-        // Ensure total doesn't go negative
-        total = Math.max(0, total);
-        
-        // Update coupon display
-        const couponSection = document.getElementById('couponSection');
-        if (couponSection) {
-            couponSection.style.display = 'block';
-            couponSection.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <span>
-                        <i class="bi bi-tag-fill text-success"></i>
-                        Coupon (${window.appliedCoupon.coupon_code}): 
-                        <span class="text-success">-₹${formatNumber(window.couponDiscount)}</span>
-                    </span>
-                    <button class="btn btn-sm btn-outline-danger" onclick="removeCoupon()">
-                        <i class="bi bi-x"></i> Remove
-                    </button>
-                </div>
-            `;
+        if (freeDeliveryMin > 0 && amountAfterDiscount >= freeDeliveryMin) {
+            // Free delivery because subtotal meets minimum
+            actualDeliveryCharge = 0;
+            document.getElementById('deliveryChargeText').textContent = 'FREE (Order above ₹' + formatNumber(freeDeliveryMin) + ')';
+            if (cartDeliveryChargesRow) cartDeliveryChargesRow.classList.add('free');
+        } else {
+            // Apply normal delivery charge
+            actualDeliveryCharge = parseFloat(deliveryCharge);
+            if (freeDeliveryMin > 0) {
+                // Show message about how much more to spend for free delivery
+                const neededForFree = freeDeliveryMin - amountAfterDiscount;
+                document.getElementById('deliveryChargeText').innerHTML =
+                    `₹${formatNumber(deliveryCharge)} <span class="free-delivery-text"> (Add ₹${formatNumber(neededForFree)} more for FREE delivery)</span>`;
+            } else {
+                document.getElementById('deliveryChargeText').textContent = `₹${formatNumber(deliveryCharge)}`;
+            }
+            if (cartDeliveryChargesRow) cartDeliveryChargesRow.classList.remove('free');
         }
+        
+        if (cartDeliveryChargesRow) cartDeliveryChargesRow.style.display = 'block';
+        total += actualDeliveryCharge;
     } else {
-        const couponSection = document.getElementById('couponSection');
-        if (couponSection) couponSection.style.display = 'none';
+        if (cartDeliveryChargesRow) cartDeliveryChargesRow.style.display = 'none';
     }
 
-    // 9. Update all total displays
-    document.getElementById('cartSubtotal').textContent = formatNumber(subtotal);
     document.getElementById('cartTotal').textContent = formatNumber(total);
-    
     const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-    document.querySelector('.cart-count').textContent = `${itemCount} ${itemCount === 1 ? 'item' : 'items'} added`;
+    document.querySelector('.cart-count').textContent = itemCount + (itemCount === 1 ? ' item added' : ' items added');
 
-    // 10. Handle order type visibility
+    // Handle delivery/dining button visibility
     <?php if ($delivery_active && $dining_active): ?>
         if (dinningBtn) dinningBtn.style.display = 'inline-block';
-        if (document.getElementById('deliveryBtn').classList.contains('active')) {
+        
+        // Re-apply original logic for active button display
+        const deliveryBtn = document.getElementById('deliveryBtn');
+        if (deliveryBtn && deliveryBtn.classList.contains('active')) {
             if (deliveryDetails) deliveryDetails.style.display = 'block';
             if (dinningDetails) dinningDetails.style.display = 'none';
-        } else {
+        } else if (dinningBtn && dinningBtn.classList.contains('active')) {
             if (deliveryDetails) deliveryDetails.style.display = 'none';
             if (dinningDetails) dinningDetails.style.display = 'block';
         }
@@ -859,41 +772,11 @@ function updateCartUI() {
     <?php endif; ?>
 }
 
-// Helper function to format numbers
-function formatNumber(num) {
-    return parseFloat(num).toFixed(2);
-}
 
 
 
 
 
-
-
-
-function removeCoupon() {
-    // Clear coupon data
-    window.appliedCoupon = null;
-    window.couponDiscount = 0;
-    
-    // Reset coupon form
-    const couponCodeInput = document.getElementById('couponCode');
-    if (couponCodeInput) {
-        couponCodeInput.value = '';
-        couponCodeInput.readOnly = false;
-    }
-    
-    // Hide messages
-    document.getElementById('couponMessage').style.display = 'none';
-    document.getElementById('couponError').style.display = 'none';
-    
-    // Hide coupon display in cart
-    const couponSection = document.getElementById('couponSection');
-    if (couponSection) couponSection.style.display = 'none';
-    
-    // Refresh cart
-    updateCartUI();
-}
 
 
 
@@ -989,191 +872,131 @@ document.getElementById('dinningBtn').addEventListener('click', function() {
 
 
 
-async function placeOrder() {
-    // Validate cart is not empty
+function placeOrder() {
     if (cart.length === 0) {
-        showToast('Your cart is empty', 'error');
+        alert('Your cart is empty');
         return;
     }
 
-    // Get order type
     const isDelivery = <?= $delivery_active ? 'document.getElementById("deliveryBtn").classList.contains("active")' : 'false' ?>;
+    const deliveryCharge = <?= isset($delivery_charges['delivery_charge']) ? $delivery_charges['delivery_charge'] : 0 ?>;
+    const freeDeliveryMin = <?= isset($delivery_charges['free_delivery_minimum']) ? $delivery_charges['free_delivery_minimum'] : 0 ?>;
+    const gstPercent = <?= $gst_percent ?? 0 ?>;
     
-    // Get required elements
-    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    // Collect customer details based on order type
+    let customerName, customerPhone, deliveryAddress, tableNumber, orderNotes;
     const phoneInput = isDelivery ? document.getElementById('customerPhone') : document.getElementById('dinningPhone');
-    const nameInput = isDelivery ? document.getElementById('customerName') : document.getElementById('dinningName');
     
-    // Validate inputs
-    try {
-        // Validate phone number
-        if (!phoneInput.value || phoneInput.value.length !== 10) {
-            throw new Error('Please enter a valid 10-digit phone number');
-        }
-
-        // Validate name
-        if (!nameInput.value.trim()) {
-            throw new Error('Please enter your name');
-        }
-
-        // Additional validation for delivery
-        if (isDelivery) {
-            const addressInput = document.getElementById('customerAddress');
-            if (!addressInput.value.trim()) {
-                throw new Error('Please enter delivery address');
-            }
-        } else {
-            const tableInput = document.getElementById('tableNumber');
-            if (!tableInput.value) {
-                throw new Error('Please select a table number');
-            }
-        }
-    } catch (error) {
-        showToast(error.message, 'error');
+    // Validate phone number first
+    if (phoneInput.value.length !== 10) {
+        alert('Please enter a valid 10-digit phone number');
+        phoneInput.focus();
         return;
     }
 
+    if (isDelivery) {
+        customerName = document.getElementById('customerName').value;
+        customerPhone = phoneInput.value;
+        deliveryAddress = document.getElementById('customerAddress').value;
+        orderNotes = document.getElementById('customerNotes').value;
+        
+        if (!customerName || !deliveryAddress) {
+            alert('Please provide your name and address');
+            return;
+        }
+    } else {
+        customerName = document.getElementById('dinningName').value;
+        customerPhone = phoneInput.value;
+        tableNumber = document.getElementById('tableNumber').value;
+        orderNotes = document.getElementById('dinningNotes').value;
+        
+        if (!customerName || !tableNumber) {
+            alert('Please provide your name and table number');
+            return;
+        }
+    }
+    
     // Prepare order data
     const orderData = {
         user_id: <?= $user_id ?>,
         order_type: isDelivery ? 'delivery' : 'dining',
-        customer_name: nameInput.value.trim(),
-        customer_phone: phoneInput.value,
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        delivery_address: isDelivery ? deliveryAddress : null,
+        table_number: !isDelivery ? tableNumber : null,
+        order_notes: orderNotes || null,
         items: cart.map(item => ({
-            id: item.id,
             name: item.name,
             price: item.price,
-            quantity: item.quantity,
-            image_path: item.image_path
+            quantity: item.quantity
         })),
-        subtotal: calculateSubtotal(),
         discount_amount: discountAmount,
         discount_type: discountType,
-        gst_percent: <?= $gst_percent ?? 0 ?>,
-        delivery_charge: isDelivery ? calculateDeliveryCharge() : 0,
-        payment_method: 'cod', // Default to cash on delivery
-        notes: isDelivery 
-            ? document.getElementById('customerNotes').value.trim() 
-            : document.getElementById('dinningNotes').value.trim(),
-        // Additional fields based on order type
-        ...(isDelivery ? {
-            delivery_address: document.getElementById('customerAddress').value.trim()
-        } : {
-            table_number: document.getElementById('tableNumber').value
-        }),
-        // Include coupon if applied
-        ...(appliedCoupon ? {
-            coupon_id: appliedCoupon.id,
-            coupon_code: appliedCoupon.code,
-            coupon_discount: couponDiscount
-        } : {})
+        gst_percent: gstPercent,
+        delivery_charge: deliveryCharge,
+        free_delivery_min: freeDeliveryMin
     };
-
+    
     // Show loading state
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
     const originalBtnText = placeOrderBtn.innerHTML;
-    placeOrderBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Placing Order...';
-    placeOrderBtn.disabled = true;
-
-    try {
-        // Send order to server
-        const response = await fetch('place_order.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(orderData)
-        });
-
-        // Check for HTTP errors
+    placeOrderBtn.innerHTML = 'Place Order';
+    placeOrderBtn.disabled = false;
+    
+    // Send order data to server
+    fetch('place_order.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData)
+    })
+    .then(response => {
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || `Server error: ${response.status}`);
+            throw new Error('Network response was not ok');
         }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Only show toast if it's a dining order that will trigger WhatsApp
+            if (!isDelivery && data.trigger_whatsapp) {
+                showToast('Order placed successfully!', 'success');
+            }
 
-        const result = await response.json();
-
-        // Check for application errors
-        if (!result.success) {
-            throw new Error(result.message || 'Order failed');
+            closeCart();
+            
+            // If the response indicates to trigger WhatsApp
+            if (data.trigger_whatsapp) {
+                // Wait 1 second then trigger WhatsApp function
+                setTimeout(placeOrderOnWhatsApp, 1000);
+            } else {
+                // For orders that don't trigger WhatsApp, reset the button immediately
+                placeOrderBtn.innerHTML = originalBtnText;
+                placeOrderBtn.disabled = false;
+                
+                // Clear cart if order was successful
+                cart = [];
+                saveCart();
+                updateCartUI();
+                closeCart();
+                
+                // Show success message
+                showToast('Order placed successfully!', 'success');
+            }
+        } else {
+            throw new Error(data.message || 'Failed to place order');
         }
-
-        // Success handling
-        showToast('Order placed successfully!', 'success');
-        
-        // Clear cart if successful
-        cart = [];
-        saveCart();
-        updateCartUI();
-        closeCart();
-
-        // Trigger WhatsApp if configured
-        if (result.trigger_whatsapp) {
-            setTimeout(placeOrderOnWhatsApp, 1000);
-        }
-
-        // Redirect to thank you page if needed
-        if (result.redirect_url) {
-            setTimeout(() => {
-                window.location.href = result.redirect_url;
-            }, 1500);
-        }
-
-    } catch (error) {
-        console.error('Order error:', error);
-        showToast(error.message || 'Failed to place order. Please try again.', 'error');
-    } finally {
-        // Reset button state
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(error.message || 'Failed to place order. Please try again.');
         placeOrderBtn.innerHTML = originalBtnText;
         placeOrderBtn.disabled = false;
-    }
+    });
 }
 
-// Helper functions used by placeOrder()
-function calculateSubtotal() {
-    return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-}
 
-function calculateDeliveryCharge() {
-    const subtotal = calculateSubtotal() - discountAmount;
-    const deliveryCharge = <?= $delivery_charges['delivery_charge'] ?? 0 ?>;
-    const freeDeliveryMin = <?= $delivery_charges['free_delivery_minimum'] ?? 0 ?>;
-    
-    return (freeDeliveryMin > 0 && subtotal >= freeDeliveryMin) ? 0 : deliveryCharge;
-}
-
-/**
- * Calculates the total order amount including discounts, taxes, and delivery charges
- * @returns {number} The total amount rounded to 2 decimal places
- */
-function calculateTotal() {
-    try {
-        const subtotal = calculateSubtotal();
-        
-        // Ensure amounts are valid numbers
-        if (isNaN(subtotal) || isNaN(discountAmount)) {
-            throw new Error('Invalid calculation values');
-        }
-        
-        const amountAfterDiscount = Math.max(0, subtotal - discountAmount);
-        const gstPercent = <?= $gst_percent ?? 0 ?>;
-        const gstAmount = gstPercent > 0 ? amountAfterDiscount * (gstPercent / 100) : 0;
-        const deliveryCharge = calculateDeliveryCharge();
-        
-        // Round to 2 decimal places to avoid floating point precision issues
-        const total = parseFloat((amountAfterDiscount + gstAmount + deliveryCharge).toFixed(2));
-        
-        // Validate the final total
-        if (total < 0) {
-            console.warn('Negative total calculated. Returning 0.');
-            return 0;
-        }
-        
-        return total;
-    } catch (error) {
-        console.error('Error in calculateTotal:', error);
-        return 0; // Fallback value
-    }
-}
 
 
 

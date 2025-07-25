@@ -282,8 +282,11 @@ window.addEventListener('beforeunload', () => {
                      <a class="sub-nav-link" href="discount.php">Discount</a>
                   </li>
                   <li class="sub-nav-item">
-                     <a class="sub-nav-link" href="loyalty.php">Loyalty Card</a>
+                     <a class="sub-nav-link" href="coupon.php">Coupon Code</a>
                   </li>
+                  <!-- <li class="sub-nav-item">
+                     <a class="sub-nav-link" href="loyalty.php">Loyalty Card</a>
+                  </li> -->
                   <li class="sub-nav-item">
                      <a class="sub-nav-link" href="products.php">Products</a>
                   </li>

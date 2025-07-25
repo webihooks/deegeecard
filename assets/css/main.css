@@ -730,6 +730,12 @@ h6 {
   margin-bottom: 0;
 }
 
+
+#productsContainer .product-item:last-child .product-card {
+  border-bottom: 0;
+}
+
+
 .restaurant .product-card .card-body .mt-3 {
   margin-top: 5px !important;
 }
@@ -800,7 +806,7 @@ h6 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0px;
+  margin-bottom: 10px;
   padding-bottom: 5px;
   border-bottom: 1px solid #eee;
 }
@@ -810,10 +816,26 @@ h6 {
 }
 
 .cart-items {
-  margin-bottom: 20px;
-  max-height: 200px;
-  overflow-y: scroll;
+  margin-bottom: 5px;
+  max-height: 40vh; /* 40% of viewport height */
+  overflow-y: auto;  /* Better than scroll as it only shows scrollbar when needed */
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+/* Optional: Style the scrollbar */
+.cart-items::-webkit-scrollbar {
+  width: 6px;
+}
+.cart-items::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.cart-items::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+.cart-items::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 .cart-item {
@@ -957,7 +979,7 @@ h6 {
 }
 
 .order-type-buttons .w-50 {
-  width: 49.5% !important;
+  width: 49.3% !important;
 }
 
 .customer-details {
@@ -1150,9 +1172,88 @@ h6 {
 
 
 
+#viewCartBtn {
+  font-size: 15px;
+}
 
 
 
+
+
+/* Coupon section styles */
+/*#couponSection {
+    margin-bottom: 1rem;
+}
+
+#couponSection .input-group {
+    display: flex;
+    width: 100%;
+}
+
+#couponCode {
+    flex-grow: 1;
+}
+
+#applyCouponBtn {
+    white-space: nowrap;
+    font-size: 14px;
+}
+
+.cart-coupon {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1px 1px 1px 10px !important;
+  border-radius: 0.25rem;
+  margin: 0.5rem 0;
+  border: 1px dotted green;
+}*/
+
+
+
+.cart-coupon {
+    padding: 8px 0;
+    border-top: 1px dashed #eee;
+    border-bottom: 1px dashed #eee;
+    margin: 8px 0;
+}
+
+.cart-coupon .btn {
+    padding: 0.15rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+.coupon-form {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 15px;
+}
+
+
+
+
+
+
+
+/* Fade Animation Styles */
+.fade-element {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.fade-in {
+    opacity: 1;
+}
+
+.fade-out {
+    opacity: 0;
+}
+
+/* Ensure elements are properly hidden */
+[style*="display: none"] {
+    display: none !important;
+}
 
 
 
@@ -1180,15 +1281,23 @@ h6 {
     width: 49% !important;
   }
   .cart-items {
-    max-height: 100px;
-  }
+      margin-bottom: 5px;
+      max-height: 40vh; /* 40% of viewport height */
+      overflow-y: auto;  /* Better than scroll as it only shows scrollbar when needed */
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    }
 }
 
 
 @media only screen and (max-width: 360px) {
   .cart-items {
-    max-height: 100px;
-  }
+      margin-bottom: 5px;
+      max-height: 40vh; /* 40% of viewport height */
+      overflow-y: auto;  /* Better than scroll as it only shows scrollbar when needed */
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    }
 }
 
 
