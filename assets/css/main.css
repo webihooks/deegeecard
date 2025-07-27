@@ -730,6 +730,12 @@ h6 {
   margin-bottom: 0;
 }
 
+
+#productsContainer .product-item:last-child .product-card {
+  border-bottom: 0;
+}
+
+
 .restaurant .product-card .card-body .mt-3 {
   margin-top: 5px !important;
 }
@@ -786,7 +792,7 @@ h6 {
 }
 
 .cart-total-details div {
-    padding: 3px 0;
+    padding: 1px 0;
 }
 
 .cart-total-details div:last-child {
@@ -800,7 +806,7 @@ h6 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0px;
+  margin-bottom: 10px;
   padding-bottom: 5px;
   border-bottom: 1px solid #eee;
 }
@@ -810,10 +816,26 @@ h6 {
 }
 
 .cart-items {
-  margin-bottom: 20px;
-  max-height: 200px;
-  overflow-y: scroll;
+  margin-bottom: 5px;
+  max-height: 40vh; /* 40% of viewport height */
+  overflow-y: auto;  /* Better than scroll as it only shows scrollbar when needed */
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+/* Optional: Style the scrollbar */
+.cart-items::-webkit-scrollbar {
+  width: 6px;
+}
+.cart-items::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.cart-items::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+.cart-items::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 .cart-item {
@@ -957,7 +979,7 @@ h6 {
 }
 
 .order-type-buttons .w-50 {
-  width: 49.5% !important;
+  width: 49.3% !important;
 }
 
 .customer-details {
@@ -1150,9 +1172,63 @@ h6 {
 
 
 
+#viewCartBtn {
+  font-size: 15px;
+}
 
 
 
+
+
+
+/* Add to your CSS */
+#couponMessage {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.8rem;
+}
+
+#applyCouponBtn {
+    min-width: 80px;
+}
+/* Add to your CSS */
+#couponMessage, #discountSection {
+    transition: all 0.3s ease;
+}
+
+.cart-button .discount-message {
+    transition: opacity 0.3s ease;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* Fade Animation Styles */
+.fade-element {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.fade-in {
+    opacity: 1;
+}
+
+.fade-out {
+    opacity: 0;
+}
+
+/* Ensure elements are properly hidden */
+[style*="display: none"] {
+    display: none !important;
+}
 
 
 
@@ -1180,16 +1256,118 @@ h6 {
     width: 49% !important;
   }
   .cart-items {
-    max-height: 100px;
-  }
+      margin-bottom: 5px;
+      max-height: 40vh; /* 40% of viewport height */
+      overflow-y: auto;  /* Better than scroll as it only shows scrollbar when needed */
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    }
 }
 
 
 @media only screen and (max-width: 360px) {
   .cart-items {
-    max-height: 100px;
-  }
+      margin-bottom: 5px;
+      max-height: 40vh; /* 40% of viewport height */
+      overflow-y: auto;  /* Better than scroll as it only shows scrollbar when needed */
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    }
 }
+
+
+
+
+
+
+
+
+
+/* Order Success Popup */
+.order-success-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.order-success-popup.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.order-success-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.order-success-popup.active .order-success-content {
+    transform: translateY(0);
+}
+
+.order-success-icon {
+    font-size: 50px;
+    color: #28a745;
+    margin-bottom: 20px;
+}
+
+.order-success-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.order-success-message {
+    margin-bottom: 20px;
+    color: #555;
+}
+
+.order-success-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.order-success-btn:hover {
+    background-color: #218838;
+}
+.order-success-content h4 {
+  font-size: 15px;
+  font-style: italic;
+  line-height: 24px;
+  color: #333;
+}
+
+
+
+
+
+
+
+
+
+
 
 
 

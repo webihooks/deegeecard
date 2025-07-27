@@ -1,321 +1,213 @@
 
-<!-- Toast Notification -->
-<!-- <div class="cart_toast_notification position-fixed bottom-0 start-0" style="z-index: 999999;">
-  <div id="cartToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-    <div class="toast-header bg-primary text-white" style="display:none;">
-      <strong class="me-auto">Cart Update</strong>
-      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-    </div>
-    <div class="toast-body">
-      <span id="toastMessage">Item added to cart!</span>
-    </div>
-  </div>
-</div> -->
-
 <!-- products.php -->
 <div class="products">
- <h6>Products</h6>
- <div class="mb-3">
-    <div class="input-group">
-       <input type="text" id="productSearch" class="form-control" placeholder="Search products...">
-       <button class="btn btn-outline-secondary" type="button" id="clearSearch">
-       <i class="bi bi-x"></i>
-       </button>
-    </div>
- </div>
- 
- <?php if ($delivery_active || $dining_active): ?>
- <!-- Shopping Cart Sidebar -->
- <div class="cart-sidebar">
-    <div class="cart-header">
-       <h5>Your Cart</h5>
-       <button class="btn-close" onclick="closeCart()"></button>
-    </div>
-    <div class="cart-items" id="cartItems"></div>
-
-    <div class="cart-total-details">
-        <div class="cart-subtotal">
-            Subtotal: ₹<span id="cartSubtotal">0.00</span>
-        </div>
-        
-        <!-- Discount Section -->
-        <div class="cart-discount" id="discountSection" style="display: none;">
-            Discount: -₹<span id="discountAmount">0.00</span>
-            (<span id="discountType"></span>)
-        </div>
-        
-        <?php if ($gst_percent > 0): ?>
-        <div class="cart-gst-charges">
-            GST (<?= $gst_percent ?>%): ₹<span id="gstCharges">0.00</span>
-        </div>
-        <?php endif; ?>
-        
-        <?php if ($delivery_active && isset($delivery_charges)): ?>
-        <div class="cart-delivery-charges">
-            Delivery: <span id="deliveryChargeText">₹0.00</span>
-        </div>
-        <?php endif; ?>
-        
-        <div class="cart-total">
-            Total: ₹<span id="cartTotal">0.00</span>
+    <h6>Products</h6>
+    <div class="mb-3">
+        <div class="input-group">
+            <input type="text" id="productSearch" class="form-control" placeholder="Search products...">
+            <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                <i class="bi bi-x"></i>
+            </button>
         </div>
     </div>
 
-    <!-- Order Type Buttons -->
     <?php if ($delivery_active || $dining_active): ?>
-    <div class="order-type-buttons mb-3">
-        <?php if ($delivery_active): ?>
-        <button class="btn btn-outline-primary w-50 active" id="deliveryBtn">
-            <i class="bi bi-truck"></i> Delivery
-        </button>
-        <?php endif; ?>
-        <?php if ($dining_active): ?>
-        <button class="btn btn-outline-primary w-50 <?= $delivery_active ? '' : 'active' ?>" id="dinningBtn">
-            <i class="bi bi-cup-hot"></i> Dining
-        </button>
-        <?php endif; ?>
-    </div>
-    <?php endif; ?>
-
-
-
-
-
-    <!-- Dinning Details -->
-    <?php if ($dining_active): ?>
-    <div class="customer-details dinning-details" style="display: <?= $delivery_active ? 'none' : 'block' ?>;">
-       <h6>Dinning Information</h6>
-       <div class="mb-1 col-full">
-          <label for="tableNumber" class="form-label">Table No.*</label>
-          <select class="form-control" id="tableNumber" required>
-            <option value="">Select Table</option>
-            <?php for ($i = 1; $i <= $table_count; $i++): ?>
-                <option value="<?= $i ?>">Table <?= $i ?></option>
-            <?php endfor; ?>
-          </select>
-       </div>
-       <div class="mb-1 col-half">
-          <label for="dinningName" class="form-label">Name*</label>
-          <input type="text" class="form-control" id="dinningName" placeholder="Your name" required>
-       </div>
-       <div class="mb-1 col-half">
-            <label for="dinningPhone" class="form-label">Phone*</label>
-            <input type="tel" class="form-control" id="dinningPhone" placeholder="Your phone number" 
-                   pattern="[0-9]{10}" title="Please enter exactly 10 digits" required
-                   oninput="validatePhoneNumber(this)">
-        </div>
-       <!-- Add Order Notes for Dining -->
-       <div class="mb-1 col-full">
-          <label for="dinningNotes" class="form-label">Order Notes</label>
-          <textarea class="form-control" id="dinningNotes" rows="2" placeholder="Any special instructions"></textarea>
-       </div>
-    </div>
-    <?php endif; ?>
-
-
-
-
-
-    <!-- Delivery Details -->
-    <?php if ($delivery_active): ?>
-    <div class="customer-details delivery-details" style="display:<?= $delivery_active ? 'block' : 'none' ?>;">
-       <h6>Delivery Information</h6>
-       <div class="mb-1 col-half">
-          <label for="customerName" class="form-label">Name*</label>
-          <input type="text" class="form-control" id="customerName" placeholder="Your name" required>
-       </div>
-       <div class="mb-1 col-half">
-            <label for="customerPhone" class="form-label">Phone*</label>
-            <input type="tel" class="form-control" id="customerPhone" placeholder="Your phone number" 
-                   pattern="[0-9]{10}" title="Please enter exactly 10 digits" required
-                   oninput="validatePhoneNumber(this)">
-        </div>
-       <div class="mb-1 col-full">
-          <label for="customerAddress" class="form-label">Address*</label>
-          <textarea class="form-control" id="customerAddress" rows="2" placeholder="Delivery address" required></textarea>
-       </div>
-       <div class="mb-1 col-full">
-          <label for="customerNotes" class="form-label">Order Notes</label>
-          <textarea class="form-control" id="customerNotes" rows="2" placeholder="Any special instructions"></textarea>
-       </div>
-    </div>
-    <?php endif; ?>
-
-    <div class="cart-footer">
-        <button class="btn btn-success w-100" id="placeOrderBtn">Place Order</button>
-        <button class="btn btn-success w-100 mt-2" onclick="placeOrderOnWhatsApp()" style="display:none;">
-            <i class="bi bi-whatsapp"></i> Place Order via WhatsApp
-        </button>
-    </div>
-
-
- </div>
- <?php endif; ?>
-
- <div class="row" id="productsContainer">
-    <?php if (!empty($products)): ?>
-    <?php foreach ($products as $product): ?>
-    <div class="col-sm-12 product-item" 
-       data-name="<?= htmlspecialchars(strtolower($product['product_name'])) ?>"
-       data-desc="<?= htmlspecialchars(strtolower($product['description'])) ?>">
-       <div class="card product-card">
-          
-
-
-
-            <div class="card-body">
-                <h5 class="card-title"><?= htmlspecialchars($product['product_name']) ?></h5>
-                <p class="card-text"><?= htmlspecialchars($product['description']) ?></p>
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="text-primary fw-bold">₹<?= number_format($product['price']) ?></span>
-                    <span class="badge bg-<?= ($product['quantity'] > 0) ? 'success' : 'danger' ?>" style="display: none;">
-                        <?= ($product['quantity'] > 0) ? 'In Stock' : 'Out of Stock' ?>
-                    </span>
-                </div>
-                <?php if ($product['quantity'] > 0): ?>
-                <small class="text-muted">Quantity: <?= $product['quantity'] ?></small>
-                <?php endif; ?>
-                <?php if ($product['quantity'] > 0 && ($delivery_active || $dining_active)): ?>
-                <div class="mt-3 cart_btn_group <?= empty($product['image_path']) ? 'top' : '' ?>">
-                    <button class="btn btn-primary w-100 add-to-cart" 
-                       data-id="<?= htmlspecialchars($product['product_name']) ?>"
-                       data-name="<?= htmlspecialchars($product['product_name']) ?>"
-                       data-price="<?= $product['price'] ?>"
-                       data-max="<?= $product['quantity'] ?>"
-                       data-image="<?= htmlspecialchars($product['image_path']) ?>"> 
-                    <i class="bi bi-cart-plus"></i> Add
-                    </button>
-                </div>
-                <?php endif; ?>
+        <!-- Shopping Cart Sidebar -->
+        <div class="cart-sidebar">
+            <div class="cart-header">
+                <h5>Your Cart</h5>
+                <button class="btn-close" onclick="closeCart()"></button>
             </div>
 
-            <?php if (!empty($product['image_path'])): ?>
-            <div class="img-group">
-                <img src="<?= htmlspecialchars($product['image_path']) ?>" 
-                class="card-img-top product-img" 
-                alt="<?= htmlspecialchars($product['product_name']) ?>"
-                onerror="this.style.display='none'">
+
+
+
+
+
+            <!-- Cart Section (shown initially) -->
+            <div class="cart_group" id="cartGroup">
+                <div class="cart-items" id="cartItems"></div>
+                <div class="cart-total-details">
+                    <div class="cart-subtotal">
+                        Subtotal: ₹<span id="cartSubtotal">0.00</span>
+                    </div>
+
+                    <!-- Discount Section -->
+                    <div class="cart-discount" id="discountSection" style="display: none;">
+                        Discount: -₹<span id="discountAmount">0.00</span> (
+                        <span id="discountType"></span>)
+                    </div>
+
+                    <?php if ($gst_percent > 0): ?>
+                        <div class="cart-gst-charges">
+                            GST (
+                            <?= $gst_percent ?>%): ₹<span id="gstCharges">0.00</span>
+                        </div>
+                        <?php endif; ?>
+
+                            <?php if ($delivery_active && isset($delivery_charges)): ?>
+                                <div class="cart-delivery-charges">
+                                    Delivery: <span id="deliveryChargeText">₹0.00</span>
+                                </div>
+                                <?php endif; ?>
+
+                                    <div class="cart-total">
+                                        Total: ₹<span id="cartTotal">0.00</span>
+                                    </div>
+                </div>
+                <!-- View Cart Button -->
+                <button class="btn btn-outline-secondary mb-3 w-100" id="viewCartBtn" style="display: none;">
+                    <i class="bi bi-cart"></i> View Cart
+                </button>
             </div>
-            <?php endif; ?>
+
+            <!-- Order Type Buttons -->
+            <?php if ($delivery_active || $dining_active): ?>
+                <div class="order-type-buttons mb-3">
+                    <?php if ($delivery_active): ?>
+                        <button class="btn btn-outline-primary w-50" id="deliveryBtn">
+                            <i class="bi bi-truck"></i> Delivery
+                        </button>
+                        <?php endif; ?>
+                            <?php if ($dining_active): ?>
+                                <button class="btn btn-outline-primary w-50" id="dinningBtn">
+                                    <i class="bi bi-cup-hot"></i> Dining
+                                </button>
+                                <?php endif; ?>
+                </div>
+                <?php endif; ?>
+
+                    <!-- Customer Details Section (hidden initially) -->
+                    <div id="customerDetailsSection" style="display: none;">
 
 
-            <script>
-                document.querySelectorAll('.product-img').forEach(img => {
-                  img.addEventListener('error', function() {
-                    // Find the closest parent `.product-card`, then navigate to `.card-body .cart_btn_group`
-                    const productCard = this.closest('.product-card');
-                    if (productCard) {
-                      const cartBtnGroup = productCard.querySelector('.card-body .cart_btn_group');
-                      if (cartBtnGroup) {
-                        cartBtnGroup.classList.add('top'); // Add the "top" class
-                      }
-                    }
-                  });
-                });
-            </script>
+                        <?php if ($dining_active): ?>
+                            <div class="customer-details dinning-details" id="diningDetails" style="display: none;">
+                                <h6>Dinning Information</h6>
+                                <div class="mb-1 col-full">
+                                    <label for="tableNumber" class="form-label">Table No.*</label>
+                                    <select class="form-control" id="tableNumber" required>
+                                        <option value="">Select Table</option>
+                                        <?php for ($i = 1; $i <= $table_count; $i++): ?>
+                                            <option value="<?= $i ?>">Table
+                                                <?= $i ?>
+                                            </option>
+                                            <?php endfor; ?>
+                                    </select>
+                                </div>
+                                <div class="mb-1 col-half">
+                                    <label for="dinningName" class="form-label">Name*</label>
+                                    <input type="text" class="form-control" id="dinningName" placeholder="Your name" required>
+                                </div>
+                                <div class="mb-1 col-half">
+                                    <label for="dinningPhone" class="form-label">Phone*</label>
+                                    <input type="tel" class="form-control" id="dinningPhone" placeholder="Your phone number" pattern="[0-9]{10}" title="Please enter exactly 10 digits" required oninput="validatePhoneNumber(this)">
+                                </div>
+                                <!-- Add Order Notes for Dining -->
+                                <div class="mb-1 col-full">
+                                    <label for="dinningNotes" class="form-label">Order Notes</label>
+                                    <textarea class="form-control" id="dinningNotes" rows="2" placeholder="Any special instructions"></textarea>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+
+                                <?php if ($delivery_active): ?>
+                                    <div class="customer-details delivery-details" id="deliveryDetails" style="display: none;">
 
 
 
-       </div>
+
+
+
+
+
+<!-- Add this inside the delivery-details div in products.php -->
+<div class="mb-1 col-full">
+    <div class="input-group">
+        <input type="text" class="form-control" id="couponCode" placeholder="Enter coupon code">
+        <button class="btn btn-outline-secondary" type="button" id="applyCouponBtn">Apply</button>
     </div>
-    <?php endforeach; ?>
-    <?php else: ?>
-    <div class="col-12">
-       <div class="alert alert-info">No products available yet.</div>
-    </div>
-    <?php endif; ?>
- </div>
- 
- <?php if ($delivery_active || $dining_active): ?>
-<div class="cart-button-container" style="display: none;">
-    <button class="btn btn-primary cart-button" onclick="toggleCart()">
-        <span class="cart-count">0 item added</span>
-        <span class="small discount-message" style="display: none;"></span>
-    </button>
+    <small id="couponMessage" class="text-success"></small>
 </div>
-<?php endif; ?>
-</div>
+
+
+
 
 <script>
-// Detect store name from URL
-const storeName = window.location.pathname.split('/')[1] || 'default';
-const cartKey = `cart_${storeName}`;
-
+// Initialize cart at the very top
 let cart = [];
 let discountAmount = 0;
 let discountType = '';
 
+// Detect store name from URL
+const storeName = window.location.pathname.split('/')[1] || 'default';
+const cartKey = `cart_${storeName}`;
+
 // Initialize cart from localStorage
 if (localStorage.getItem(cartKey)) {
-    cart = JSON.parse(localStorage.getItem(cartKey));
-    updateCartUI();
-}
-
-
-function formatNumber(num) {
-    num = typeof num === 'string' ? parseFloat(num) : num;
-    return num % 1 === 0 ? num.toString() : num.toFixed(2).replace(/\.?0+$/, '');
-}
-
-function validatePhoneNumber(input) {
-    // Remove any non-digit characters
-    input.value = input.value.replace(/\D/g, '');
-    
-    // Trim to 10 digits if longer
-    if (input.value.length > 10) {
-        input.value = input.value.substring(0, 10);
-    }
-    
-    // Check validity and show error if needed
-    if (input.value.length !== 10 && input.value.length > 0) {
-        input.setCustomValidity('Phone number must be exactly 10 digits');
-    } else {
-        input.setCustomValidity('');
+    const savedCart = JSON.parse(localStorage.getItem(cartKey));
+    cart = savedCart.items || [];
+    if (savedCart.coupon) {
+        cart.coupon = savedCart.coupon;
     }
 }
 
 
-// Add to cart button click handler
-document.querySelectorAll('.add-to-cart').forEach(button => {
-    button.addEventListener('click', function() {
-        const product = {
-            id: this.dataset.id,
-            name: this.dataset.name,
-            price: parseFloat(this.dataset.price),
-            max: parseInt(this.dataset.max),
-            quantity: 1,
-            image_path: this.dataset.image
-        };
-
-        const existingItem = cart.find(item => item.id === product.id);
-
-        if (existingItem) {
-            if (existingItem.quantity < existingItem.max) {
-                existingItem.quantity++;
-                // showToast(`${product.name} quantity increased to ${existingItem.quantity}`);
-            } else {
-                // showToast(`Maximum quantity reached for ${product.name}`, true);
-                return;
-            }
+// Add this to your JavaScript section
+document.getElementById('applyCouponBtn').addEventListener('click', function() {
+    const couponCode = document.getElementById('couponCode').value.trim();
+    const customerPhone = document.getElementById('customerPhone').value.trim(); // Get phone number
+    const couponMessage = document.getElementById('couponMessage');
+    
+    if (!couponCode) {
+        couponMessage.textContent = 'Please enter a coupon code';
+        couponMessage.className = 'text-danger';
+        return;
+    }
+    
+    if (!customerPhone || customerPhone.length !== 10) {
+        couponMessage.textContent = 'Please enter a valid phone number first';
+        couponMessage.className = 'text-danger';
+        return;
+    }
+    
+    // Show loading state
+    const applyBtn = document.getElementById('applyCouponBtn');
+    applyBtn.disabled = true;
+    applyBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Applying...';
+    
+    // Send AJAX request to validate coupon
+    fetch('validate_coupon.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            user_id: <?= $user_id ?>,
+            coupon_code: couponCode,
+            cart_subtotal: calculateSubtotal(),
+            customer_phone: customerPhone // Pass phone number
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            applyCoupon(data.discount_type, data.discount_value, data.coupon_code);
+            couponMessage.textContent = data.message;
+            couponMessage.className = 'text-success';
         } else {
-            cart.push(product);
-            // showToast(`${product.name} added to cart`);
-            // Add pulse animation to cart button
-            document.querySelector('.cart-button').classList.add('cart-item-added');
-            setTimeout(() => {
-                document.querySelector('.cart-button').classList.remove('cart-item-added');
-            }, 500);
+            couponMessage.textContent = data.message;
+            couponMessage.className = 'text-danger';
         }
-
-        saveCart();
-        updateCartUI();
-        
-        // Show cart button container if it's hidden
-        const cartButtonContainer = document.querySelector('.cart-button-container');
-        if (cartButtonContainer && cartButtonContainer.style.display === 'none') {
-            cartButtonContainer.style.display = 'block';
-        }
-        
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        couponMessage.textContent = 'Failed to validate coupon. Please try again.';
+        couponMessage.className = 'text-danger';
+    })
+    .finally(() => {
+        applyBtn.disabled = false;
+        applyBtn.textContent = 'Apply';
     });
 });
 
@@ -323,41 +215,467 @@ document.querySelectorAll('.add-to-cart').forEach(button => {
 
 
 
-// Function to show toast notification
-function showToast(message, isError = false) {
-    const toastElement = document.getElementById('cartToast');
-    const toastMessage = document.getElementById('toastMessage');
+
+function calculateSubtotal() {
+    return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+}
+
+// In the applyCoupon function
+function applyCoupon(discount_type, discount_value, coupon_code) {
+    // Ensure discount_value is a number
+    discountAmount = Number(discount_value);
     
-    toastMessage.textContent = message;
-    
-    // Change style if it's an error message
-    if (isError) {
-        toastElement.querySelector('.toast-header').classList.remove('bg-primary');
-        toastElement.querySelector('.toast-header').classList.add('bg-danger');
-    } else {
-        toastElement.querySelector('.toast-header').classList.remove('bg-danger');
-        toastElement.querySelector('.toast-header').classList.add('bg-primary');
+    // Store coupon in cart for later use
+    if (!cart.coupon) {
+        cart.coupon = {};
     }
     
-    // Initialize and show the toast
-    const toast = new bootstrap.Toast(toastElement);
-    toast.show();
+    cart.coupon = {
+        code: coupon_code || 'COUPON', // Fallback to 'COUPON' if null
+        type: discount_type,
+        value: discountAmount  // Store as number
+    };
     
-    // Auto-hide after 2 seconds
-    setTimeout(() => {
-        toast.hide();
-    }, 2000);
+    saveCart();
+    updateCartUI();
 }
 
-// Save cart to localStorage
+// Modify your updateCartUI function to include coupon discount
+// Replace the discount calculation section with this:
+let couponDiscount = 0;
+
+
+if (cart.coupon) {
+    if (cart.coupon.type === 'percentage') {
+        discountAmount = Number((subtotal * Number(cart.coupon.value)) / 100);
+        discountType = cart.coupon.value + '% coupon (' + cart.coupon.code + ')';
+    } else {
+        discountAmount = Number(cart.coupon.value);
+        discountType = 'Flat ₹' + formatNumber(cart.coupon.value) + ' OFF (' + cart.coupon.code + ')';
+    }
+    
+    // Ensure coupon discount doesn't exceed subtotal
+    if (couponDiscount > subtotal) {
+        couponDiscount = subtotal;
+    }
+    
+    discountAmount = couponDiscount;
+    
+    // Show discount section
+    if (discountSection) {
+        discountSection.style.display = 'block';
+        document.getElementById('discountAmount').textContent = formatNumber(discountAmount);
+        document.getElementById('discountType').textContent = discountType;
+    }
+    
+    // Show discount applied message in cart button
+    if (discountMessageElement) {
+        discountMessageElement.innerHTML = `<i class="bi bi-tag-fill"></i> ${discountType} applied!`;
+        discountMessageElement.style.display = 'block';
+    }
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+                                        <h6>Delivery Information</h6>
+                                        <div class="mb-1 col-half">
+                                            <label for="customerName" class="form-label">Name*</label>
+                                            <input type="text" class="form-control" id="customerName" placeholder="Your name" required>
+                                        </div>
+                                        <div class="mb-1 col-half">
+                                            <label for="customerPhone" class="form-label">Phone*</label>
+                                            <input type="tel" class="form-control" id="customerPhone" placeholder="Your phone number" pattern="[0-9]{10}" title="Please enter exactly 10 digits" required oninput="validatePhoneNumber(this)">
+                                        </div>
+                                        <div class="mb-1 col-full">
+                                            <label for="customerAddress" class="form-label">Address*</label>
+                                            <textarea class="form-control" id="customerAddress" rows="2" placeholder="Delivery address" required></textarea>
+                                        </div>
+                                        <div class="mb-1 col-full">
+                                            <label for="customerNotes" class="form-label">Order Notes</label>
+                                            <textarea class="form-control" id="customerNotes" rows="2" placeholder="Any special instructions"></textarea>
+                                        </div>
+                                    </div>
+                                    <?php endif; ?>
+
+                                        <div class="cart-footer">
+                                            <button class="btn btn-success w-100" id="placeOrderBtn">Place Order</button>
+                                            <button class="btn btn-success w-100 mt-2" onclick="placeOrderOnWhatsApp()" style="display:none;">
+                                                <i class="bi bi-whatsapp"></i> Place Order via WhatsApp
+                                            </button>
+                                        </div>
+                    </div>
+
+
+
+
+
+
+                    <script>
+                        // Fade Animation Functions
+                        function fadeIn(element, callback) {
+                            element.style.display = 'block';
+                            // Force reflow to enable transition
+                            void element.offsetHeight;
+                            element.classList.add('fade-in');
+                            element.classList.remove('fade-out');
+                            
+                            setTimeout(() => {
+                                if (callback) callback();
+                            }, 300);
+                        }
+                        
+                        function fadeOut(element, callback) {
+                            element.classList.add('fade-out');
+                            element.classList.remove('fade-in');
+                            
+                            setTimeout(() => {
+                                element.style.display = 'none';
+                                if (callback) callback();
+                            }, 300);
+                        }
+                        
+                        // Initialize elements with fade classes
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const fadeElements = [
+                                document.getElementById('cartItems'),
+                                document.getElementById('customerDetailsSection'),
+                                document.getElementById('deliveryDetails'),
+                                document.getElementById('diningDetails')
+                            ].filter(el => el);
+                            
+                            fadeElements.forEach(el => {
+                                el.classList.add('fade-element');
+                                if (el.style.display !== 'none') {
+                                    el.classList.add('fade-in');
+                                }
+                            });
+                        });
+                        
+                        // Modified Event Listeners with Fade Animation
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const cartItems = document.getElementById('cartItems');
+                            const customerDetailsSection = document.getElementById('customerDetailsSection');
+                            const viewCartBtn = document.getElementById('viewCartBtn');
+                            
+                            // Initialize View Cart button as hidden (already set in HTML)
+                            viewCartBtn.classList.add('fade-element');
+                            
+                            <?php if ($delivery_active): ?>
+                            document.getElementById('deliveryBtn').addEventListener('click', function() {
+                                fadeOut(cartItems, function() {
+                                    fadeIn(customerDetailsSection);
+                                    fadeIn(document.getElementById('deliveryDetails'));
+                                    <?php if ($dining_active): ?>
+                                    fadeOut(document.getElementById('diningDetails'));
+                                    <?php endif; ?>
+                                });
+                                
+                                // Show the View Cart button when switching to delivery
+                                fadeIn(viewCartBtn);
+                                
+                                this.classList.add('active');
+                                <?php if ($dining_active): ?>
+                                document.getElementById('dinningBtn').classList.remove('active');
+                                <?php endif; ?>
+                                
+                                localStorage.setItem('selectedOrderType', 'delivery');
+                            });
+                            <?php endif; ?>
+                            
+                            <?php if ($dining_active): ?>
+                            document.getElementById('dinningBtn').addEventListener('click', function() {
+                                fadeOut(cartItems, function() {
+                                    fadeIn(customerDetailsSection);
+                                    fadeIn(document.getElementById('diningDetails'));
+                                    <?php if ($delivery_active): ?>
+                                    fadeOut(document.getElementById('deliveryDetails'));
+                                    <?php endif; ?>
+                                });
+                                
+                                // Show the View Cart button when switching to dining
+                                fadeIn(viewCartBtn);
+                                
+                                this.classList.add('active');
+                                <?php if ($delivery_active): ?>
+                                document.getElementById('deliveryBtn').classList.remove('active');
+                                <?php endif; ?>
+                                
+                                localStorage.setItem('selectedOrderType', 'dining');
+                            });
+                            <?php endif; ?>
+                            
+                            // View Cart button with fade animation
+                            viewCartBtn.addEventListener('click', function() {
+                                fadeOut(customerDetailsSection, function() {
+                                    fadeIn(cartItems);
+                                });
+                                
+                                // Hide the View Cart button when viewing cart
+                                fadeOut(viewCartBtn);
+                            });
+                            
+                            // Restore selected order type
+                            const selectedOrderType = localStorage.getItem('selectedOrderType');
+                            if (selectedOrderType === 'delivery' && <?= $delivery_active ? 'true' : 'false' ?>) {
+                                document.getElementById('deliveryBtn').classList.add('active');
+                                // Show View Cart button if coming from saved delivery state
+                                fadeIn(viewCartBtn);
+                            } else if (selectedOrderType === 'dining' && <?= $dining_active ? 'true' : 'false' ?>) {
+                                document.getElementById('dinningBtn').classList.add('active');
+                                // Show View Cart button if coming from saved dining state
+                                fadeIn(viewCartBtn);
+                            }
+                            // No else needed since button is hidden by default
+                        });
+                    </script>
+
+
+
+
+
+
+
+
+        </div>
+        <?php endif; ?>
+
+            <div class="row" id="productsContainer">
+                <?php if (!empty($products)): ?>
+                    <?php foreach ($products as $product): ?>
+                        <div class="col-sm-12 product-item" data-name="<?= htmlspecialchars(strtolower($product['product_name'])) ?>" data-desc="<?= htmlspecialchars(strtolower($product['description'])) ?>">
+                            <div class="card product-card">
+
+
+
+
+                                <div class="card-body">
+                                    <h5 class="card-title"><?= htmlspecialchars($product['product_name']) ?></h5>
+                                    <p class="card-text">
+                                        <?= htmlspecialchars($product['description']) ?>
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-primary fw-bold">₹<?= number_format($product['price']) ?></span>
+                                        <span class="badge bg-<?= ($product['quantity'] > 0) ? 'success' : 'danger' ?>" style="display: none;">
+                        <?= ($product['quantity'] > 0) ? 'In Stock' : 'Out of Stock' ?>
+                    </span>
+                                    </div>
+                                    <?php if ($product['quantity'] > 0): ?>
+                                        <small class="text-muted">Quantity: <?= $product['quantity'] ?></small>
+                                        <?php endif; ?>
+                                            <?php if ($product['quantity'] > 0 && ($delivery_active || $dining_active)): ?>
+                                                <div class="mt-3 cart_btn_group <?= empty($product['image_path']) ? 'top' : '' ?>">
+                                                    <button class="btn btn-primary w-100 add-to-cart" data-id="<?= htmlspecialchars($product['product_name']) ?>" data-name="<?= htmlspecialchars($product['product_name']) ?>" data-price="<?= $product['price'] ?>" data-max="<?= $product['quantity'] ?>" data-image="<?= htmlspecialchars($product['image_path']) ?>">
+                                                        <i class="bi bi-cart-plus"></i> Add
+                                                    </button>
+                                                </div>
+                                                <?php endif; ?>
+                                </div>
+
+                                <?php if (!empty($product['image_path'])): ?>
+                                    <div class="img-group">
+                                        <img src="<?= htmlspecialchars($product['image_path']) ?>" class="card-img-top product-img" alt="<?= htmlspecialchars($product['product_name']) ?>" onerror="this.style.display='none'">
+                                    </div>
+                                    <?php endif; ?>
+
+
+                                        <script>
+                                            document.querySelectorAll('.product-img').forEach(img => {
+                                              img.addEventListener('error', function() {
+                                                // Find the closest parent `.product-card`, then navigate to `.card-body .cart_btn_group`
+                                                const productCard = this.closest('.product-card');
+                                                if (productCard) {
+                                                  const cartBtnGroup = productCard.querySelector('.card-body .cart_btn_group');
+                                                  if (cartBtnGroup) {
+                                                    cartBtnGroup.classList.add('top'); // Add the "top" class
+                                                  }
+                                                }
+                                              });
+                                            });
+                                        </script>
+
+
+
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                            <?php else: ?>
+                                <div class="col-12">
+                                    <div class="alert alert-info">No products available yet.</div>
+                                </div>
+                                <?php endif; ?>
+            </div>
+
+            <?php if ($delivery_active || $dining_active): ?>
+                <div class="cart-button-container" style="display: none;">
+                    <button class="btn btn-primary cart-button" onclick="toggleCart()">
+                        <span class="cart-count">0 item added</span>
+                        <span class="small discount-message" style="display: none;"></span>
+                    </button>
+                </div>
+                <?php endif; ?>
+</div>
+
+<script>
+    
+
+
+
+
+
+
+
+
+    
+    
+    function formatNumber(num) {
+        // Convert to number if it's a string
+        num = typeof num === 'string' ? parseFloat(num) : num;
+        // Handle NaN cases
+        if (isNaN(num)) num = 0;
+        return num % 1 === 0 ? num.toString() : num.toFixed(2).replace(/\.?0+$/, '');
+    }
+    
+    function validatePhoneNumber(input) {
+        // Remove any non-digit characters
+        input.value = input.value.replace(/\D/g, '');
+        
+        // Trim to 10 digits if longer
+        if (input.value.length > 10) {
+            input.value = input.value.substring(0, 10);
+        }
+        
+        // Check validity and show error if needed
+        if (input.value.length !== 10 && input.value.length > 0) {
+            input.setCustomValidity('Phone number must be exactly 10 digits');
+        } else {
+            input.setCustomValidity('');
+        }
+    }
+    
+    
+    // Add to cart button click handler
+    document.querySelectorAll('.add-to-cart').forEach(button => {
+        button.addEventListener('click', function() {
+            const product = {
+                id: this.dataset.id,
+                name: this.dataset.name,
+                price: parseFloat(this.dataset.price),
+                max: parseInt(this.dataset.max),
+                quantity: 1,
+                image_path: this.dataset.image
+            };
+    
+            const existingItem = cart.find(item => item.id === product.id);
+    
+            if (existingItem) {
+                if (existingItem.quantity < existingItem.max) {
+                    existingItem.quantity++;
+                    // showToast(`${product.name} quantity increased to ${existingItem.quantity}`);
+                } else {
+                    // showToast(`Maximum quantity reached for ${product.name}`, true);
+                    return;
+                }
+            } else {
+                cart.push(product);
+                // showToast(`${product.name} added to cart`);
+                // Add pulse animation to cart button
+                document.querySelector('.cart-button').classList.add('cart-item-added');
+                setTimeout(() => {
+                    document.querySelector('.cart-button').classList.remove('cart-item-added');
+                }, 500);
+            }
+    
+            saveCart();
+            updateCartUI();
+            
+            // Show cart button container if it's hidden
+            const cartButtonContainer = document.querySelector('.cart-button-container');
+            if (cartButtonContainer && cartButtonContainer.style.display === 'none') {
+                cartButtonContainer.style.display = 'block';
+            }
+            
+        });
+    });
+    
+    
+    
+    
+    
+    // Function to show toast notification
+    function showToast(message, isError = false) {
+        const toastElement = document.getElementById('cartToast');
+        const toastMessage = document.getElementById('toastMessage');
+        
+        toastMessage.textContent = message;
+        
+        // Change style if it's an error message
+        if (isError) {
+            toastElement.querySelector('.toast-header').classList.remove('bg-primary');
+            toastElement.querySelector('.toast-header').classList.add('bg-danger');
+        } else {
+            toastElement.querySelector('.toast-header').classList.remove('bg-danger');
+            toastElement.querySelector('.toast-header').classList.add('bg-primary');
+        }
+        
+        // Initialize and show the toast
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+        
+        // Auto-hide after 2 seconds
+        setTimeout(() => {
+            toast.hide();
+        }, 2000);
+    }
+    
+    
+
+
+
+
+
 function saveCart() {
-    localStorage.setItem(cartKey, JSON.stringify(cart));
+    localStorage.setItem(cartKey, JSON.stringify({
+        items: cart.filter(item => item.id), // Only save actual cart items
+        coupon: cart.coupon || null // Save coupon if it exists
+    }));
 }
+    
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+    
 function updateCartUI() {
     const cartItemsContainer = document.getElementById('cartItems');
     const cartTotalDetails = document.querySelector('.cart-total-details');
@@ -370,6 +688,7 @@ function updateCartUI() {
     const emptyCartMsg = document.createElement('div');
     const discountMessageElement = document.querySelector('.cart-button .discount-message');
     const discountSection = document.getElementById('discountSection');
+    const removeCouponBtn = document.getElementById('removeCouponBtn');
 
     // Clear existing empty message if any
     const existingEmptyMsg = cartItemsContainer.querySelector('.empty-cart-message');
@@ -379,8 +698,36 @@ function updateCartUI() {
 
     cartItemsContainer.innerHTML = '';
 
+
+
+
+
+
+
+
+    // Clear discount section if no coupon or discount
+    if (!cart.coupon && discountSection) {
+        discountSection.style.display = 'none';
+    }
+    
+    // Clear discount message in cart button
+    if (discountMessageElement) {
+        discountMessageElement.style.display = 'none';
+    }
+
+
+
+
+    
+
     // Handle empty cart case
     if (cart.length === 0) {
+        // Clear any existing coupon
+        if (cart.coupon) {
+            delete cart.coupon;
+            if (removeCouponBtn) removeCouponBtn.style.display = 'none';
+        }
+
         // Create and show empty cart message
         emptyCartMsg.className = 'empty-cart-message text-center py-4';
         emptyCartMsg.innerHTML = `
@@ -422,6 +769,8 @@ function updateCartUI() {
 
     // Calculate subtotal and populate cart items
     cart.forEach((item, index) => {
+        if (!item.id) return; // Skip coupon object if present
+        
         subtotal += item.price * item.quantity;
         const productImage = item.image_path ? item.image_path : 'images/no-image.jpg';
 
@@ -429,6 +778,7 @@ function updateCartUI() {
         itemElement.className = 'cart-item';
         itemElement.innerHTML = `
             <div class="cart-item-info d-flex">
+                <!-- ${productImage ? `<img src="${productImage}" class="cart-item-img" alt="${item.name}" onerror="this.style.display='none'">` : ''}-->
                 <div class="ms-1">
                     <h6>${item.name}</h6>
                     <div>₹${formatNumber(item.price)} x ${item.quantity}</div>
@@ -455,11 +805,43 @@ function updateCartUI() {
     if (cartTotalDetails) cartTotalDetails.style.display = 'block';
 
     // Calculate discount
-    discountAmount = 0;
-    discountType = '';
-    
-    <?php if (!empty($discounts)): ?>
-        // Check each discount condition in order
+    // In updateCartUI function
+    // Replace the discount calculation section with this:
+    let discountAmount = 0;
+    let discountType = '';
+
+    // 1. Check for coupon discount first
+    // In the updateCartUI function, replace the coupon display section with:
+    if (cart.coupon) {
+        const couponCode = cart.coupon.code || 'COUPON'; // Fallback if code is null
+        if (cart.coupon.type === 'percentage') {
+            discountAmount = Number((subtotal * Number(cart.coupon.value)) / 100);
+            discountType = cart.coupon.value + '% coupon (' + couponCode + ')';
+        } else {
+            discountAmount = Number(cart.coupon.value);
+            discountType = 'Flat ₹' + formatNumber(cart.coupon.value) + ' OFF (' + couponCode + ')';
+        }
+        
+        // Show discount section
+        if (discountSection) {
+            discountSection.style.display = 'block';
+            document.getElementById('discountAmount').textContent = formatNumber(discountAmount);
+            document.getElementById('discountType').textContent = discountType;
+        }
+        
+        // Show discount applied message in cart button
+        if (discountMessageElement) {
+            discountMessageElement.innerHTML = `<i class="bi bi-tag-fill"></i> ${discountType} applied!`;
+            discountMessageElement.style.display = 'block';
+        }
+    }
+
+
+
+
+
+    // 2. Check for automatic discounts if no coupon applied
+    else if (<?php if (!empty($discounts)): ?>true<?php else: ?>false<?php endif; ?>) {
         const discounts = <?= json_encode($discounts) ?>;
         let applicableDiscount = null;
         let nextDiscount = null;
@@ -471,12 +853,10 @@ function updateCartUI() {
         for (let i = 0; i < discounts.length; i++) {
             const discount = discounts[i];
             
-            // Check if this discount is applicable
             if (subtotal >= discount.min_cart_value) {
                 applicableDiscount = discount;
             }
             
-            // Find the next discount that's not yet applicable
             if (!nextDiscount && subtotal < discount.min_cart_value) {
                 nextDiscount = discount;
             }
@@ -560,14 +940,7 @@ function updateCartUI() {
             // Hide if no next discount available
             document.getElementById('nextDiscountInfo').style.display = 'none';
         }
-    <?php else: ?>
-        // Hide discount section if no discounts exist at all
-        if (discountSection) discountSection.style.display = 'none';
-        if (discountMessageElement) discountMessageElement.style.display = 'none';
-        if (document.getElementById('nextDiscountInfo')) {
-            document.getElementById('nextDiscountInfo').style.display = 'none';
-        }
-    <?php endif; ?>
+    }
 
     // Update subtotal and total
     document.getElementById('cartSubtotal').textContent = formatNumber(subtotal);
@@ -615,7 +988,7 @@ function updateCartUI() {
     }
 
     document.getElementById('cartTotal').textContent = formatNumber(total);
-    const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const itemCount = cart.filter(item => item.id).reduce((sum, item) => sum + item.quantity, 0);
     document.querySelector('.cart-count').textContent = itemCount + (itemCount === 1 ? ' item added' : ' items added');
 
     // Handle delivery/dining button visibility
@@ -635,107 +1008,170 @@ function updateCartUI() {
         if (deliveryDetails) deliveryDetails.style.display = 'block';
     <?php endif; ?>
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Update quantity with buttons
-function updateQuantity(index, change) {
-    const item = cart[index];
-    const newQuantity = item.quantity + change;
-
-    if (newQuantity < 1) {
-        removeFromCart(index);
-        return;
-    }
-
-    if (newQuantity > item.max) {
-        alert('Maximum quantity reached for this product');
-        return;
-    }
-
-    item.quantity = newQuantity;
-    saveCart();
-    updateCartUI();
-}
-
-// Update quantity via input field
-function updateQuantityInput(index, value) {
-    const item = cart[index];
-    const newQuantity = parseInt(value);
-
-    if (isNaN(newQuantity) || newQuantity < 1) {
-        item.quantity = 1;
-    } else if (newQuantity > item.max) {
-        alert('Maximum quantity reached for this product');
-        item.quantity = item.max;
-    } else {
-        item.quantity = newQuantity;
-    }
-
-    saveCart();
-    updateCartUI();
-}
-
-// Remove item from cart
-function removeFromCart(index) {
-    cart.splice(index, 1);
-    saveCart();
-    updateCartUI();
     
-    // Hide cart button container if no items left
-    if (cart.length === 0) {
-        const cartButtonContainer = document.querySelector('.cart-button-container');
-        if (cartButtonContainer) {
-            cartButtonContainer.style.display = 'none';
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    // Update quantity with buttons
+    function updateQuantity(index, change) {
+        const item = cart[index];
+        const newQuantity = item.quantity + change;
+    
+        if (newQuantity < 1) {
+            removeFromCart(index);
+            return;
+        }
+    
+        if (newQuantity > item.max) {
+            alert('Maximum quantity reached for this product');
+            return;
+        }
+    
+        item.quantity = newQuantity;
+        saveCart();
+        updateCartUI();
+    }
+    
+    // Update quantity via input field
+    function updateQuantityInput(index, value) {
+        const item = cart[index];
+        const newQuantity = parseInt(value);
+    
+        if (isNaN(newQuantity) || newQuantity < 1) {
+            item.quantity = 1;
+        } else if (newQuantity > item.max) {
+            alert('Maximum quantity reached for this product');
+            item.quantity = item.max;
+        } else {
+            item.quantity = newQuantity;
+        }
+    
+        saveCart();
+        updateCartUI();
+    }
+    
+    // Remove item from cart
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        saveCart();
+        updateCartUI();
+        
+        // Hide cart button container if no items left
+        if (cart.length === 0) {
+            const cartButtonContainer = document.querySelector('.cart-button-container');
+            if (cartButtonContainer) {
+                cartButtonContainer.style.display = 'none';
+            }
         }
     }
+    
+    // Cart toggle controls
+    function toggleCart() {
+        document.querySelector('.cart-sidebar').classList.toggle('open');
+    }
+    
+    function showCart() {
+        document.querySelector('.cart-sidebar').classList.add('open');
+    }
+    
+    function closeCart() {
+        document.querySelector('.cart-sidebar').classList.remove('open');
+    }
+    
+    // Order type toggle functionality
+    <?php if ($delivery_active && $dining_active): ?>
+    document.getElementById('deliveryBtn').addEventListener('click', function() {
+        this.classList.add('active');
+        document.getElementById('dinningBtn').classList.remove('active');
+        document.querySelector('.delivery-details').style.display = 'block';
+        document.querySelector('.dinning-details').style.display = 'none';
+        updateCartUI();
+    });
+    
+    document.getElementById('dinningBtn').addEventListener('click', function() {
+        this.classList.add('active');
+        document.getElementById('deliveryBtn').classList.remove('active');
+        document.querySelector('.dinning-details').style.display = 'block';
+        document.querySelector('.delivery-details').style.display = 'none';
+        updateCartUI();
+    });
+    <?php endif; ?>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Show order success popup
+function showOrderSuccessPopup() {
+    const popup = document.getElementById('orderSuccessPopup');
+    popup.classList.add('active');
 }
 
-// Cart toggle controls
-function toggleCart() {
-    document.querySelector('.cart-sidebar').classList.toggle('open');
+// Close order success popup
+function closeOrderSuccessPopup() {
+    const popup = document.getElementById('orderSuccessPopup');
+    popup.classList.remove('active');
 }
 
-function showCart() {
-    document.querySelector('.cart-sidebar').classList.add('open');
-}
-
-function closeCart() {
-    document.querySelector('.cart-sidebar').classList.remove('open');
-}
-
-// Order type toggle functionality
-<?php if ($delivery_active && $dining_active): ?>
-document.getElementById('deliveryBtn').addEventListener('click', function() {
-    this.classList.add('active');
-    document.getElementById('dinningBtn').classList.remove('active');
-    document.querySelector('.delivery-details').style.display = 'block';
-    document.querySelector('.dinning-details').style.display = 'none';
-    updateCartUI();
-});
-
-document.getElementById('dinningBtn').addEventListener('click', function() {
-    this.classList.add('active');
-    document.getElementById('deliveryBtn').classList.remove('active');
-    document.querySelector('.dinning-details').style.display = 'block';
-    document.querySelector('.delivery-details').style.display = 'none';
-    updateCartUI();
-});
-<?php endif; ?>
 
 
 
 
+
+
+
+
+
+
+
+
+
+    
+    
 function placeOrder() {
     if (cart.length === 0) {
         alert('Your cart is empty');
@@ -789,7 +1225,7 @@ function placeOrder() {
         delivery_address: isDelivery ? deliveryAddress : null,
         table_number: !isDelivery ? tableNumber : null,
         order_notes: orderNotes || null,
-        items: cart.map(item => ({
+        items: cart.filter(item => item.id).map(item => ({
             name: item.name,
             price: item.price,
             quantity: item.quantity
@@ -798,13 +1234,13 @@ function placeOrder() {
         discount_type: discountType,
         gst_percent: gstPercent,
         delivery_charge: deliveryCharge,
-        free_delivery_min: freeDeliveryMin
+        free_delivery_min: freeDeliveryMin,
+        coupon_data: cart.coupon || null
     };
     
     // Show loading state
     const placeOrderBtn = document.getElementById('placeOrderBtn');
     const originalBtnText = placeOrderBtn.innerHTML;
-    placeOrderBtn.innerHTML = 'Place Order';
     placeOrderBtn.disabled = false;
     
     // Send order data to server
@@ -823,30 +1259,29 @@ function placeOrder() {
     })
     .then(data => {
         if (data.success) {
-            // Only show toast if it's a dining order that will trigger WhatsApp
-            if (!isDelivery && data.trigger_whatsapp) {
-                showToast('Order placed successfully!', 'success');
+            // Reset coupon fields
+            if (cart.coupon) {
+                delete cart.coupon;
+                document.getElementById('couponCode').value = '';
+                document.getElementById('couponMessage').textContent = '';
+                document.getElementById('couponMessage').className = 'text-success';
             }
+            
+            // Show success popup
+            showOrderSuccessPopup();
 
             closeCart();
             
-            // If the response indicates to trigger WhatsApp
             if (data.trigger_whatsapp) {
-                // Wait 1 second then trigger WhatsApp function
-                setTimeout(placeOrderOnWhatsApp, 1000);
+                placeOrderOnWhatsApp(); // No delay needed
             } else {
-                // For orders that don't trigger WhatsApp, reset the button immediately
                 placeOrderBtn.innerHTML = originalBtnText;
                 placeOrderBtn.disabled = false;
                 
-                // Clear cart if order was successful
                 cart = [];
                 saveCart();
                 updateCartUI();
                 closeCart();
-                
-                // Show success message
-                showToast('Order placed successfully!', 'success');
             }
         } else {
             throw new Error(data.message || 'Failed to place order');
@@ -864,33 +1299,6 @@ function placeOrder() {
 
 
 
-// Toast notification function (add this to your code if you don't have it already)
-function showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `toast-notification ${type}`;
-    toast.innerHTML = `
-        <div class="toast-icon">
-            ${type === 'success' ? '<i class="bi bi-check-circle-fill"></i>' : '<i class="bi bi-exclamation-circle-fill"></i>'}
-        </div>
-        <div class="toast-message">${message}</div>
-        <div class="toast-close" onclick="this.parentElement.remove()">
-            <i class="bi bi-x"></i>
-        </div>
-    `;
-    
-    document.body.appendChild(toast);
-    
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-        toast.remove();
-    }, 5000);
-}
-
-
-
-
-// Add click handler to the Place Order button
-document.querySelector('.cart-footer button').addEventListener('click', placeOrder);
 
 
 
@@ -901,7 +1309,7 @@ document.querySelector('.cart-footer button').addEventListener('click', placeOrd
 
 
 
-// Place order on WhatsApp
+
 function placeOrderOnWhatsApp() {
     if (cart.length === 0) {
         showToast('Your cart is empty', 'error');
@@ -1063,16 +1471,330 @@ function placeOrderOnWhatsApp() {
         document.body.removeChild(link);
     }, 1000);
 
+    // Reset coupon fields
+    if (cart.coupon) {
+        delete cart.coupon;
+        document.getElementById('couponCode').value = '';
+        document.getElementById('couponMessage').textContent = '';
+        document.getElementById('couponMessage').className = 'text-success';
+    }
+
     // Reset cart
     cart = [];
     saveCart();
     updateCartUI();
     closeCart();
     
-    // Delay toast to ensure WhatsApp opens first
-    setTimeout(() => {
-        showToast('Order sent via WhatsApp!', 'success');
-    }, 500);
+    // Success popup
+    showOrderSuccessPopup();
 }
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+    
+    // Toast notification function (add this to your code if you don't have it already)
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast-notification ${type}`;
+        toast.innerHTML = `
+            <div class="toast-icon">
+                ${type === 'success' ? '<i class="bi bi-check-circle-fill"></i>' : '<i class="bi bi-exclamation-circle-fill"></i>'}
+            </div>
+            <div class="toast-message">${message}</div>
+            <div class="toast-close" onclick="this.parentElement.remove()">
+                <i class="bi bi-x"></i>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            toast.remove();
+        }, 5000);
+    }
+    
+    
+    
+    
+    // Add click handler to the Place Order button
+    document.querySelector('.cart-footer button').addEventListener('click', placeOrder);
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    // Place order on WhatsApp
+    function placeOrderOnWhatsApp() {
+        if (cart.length === 0) {
+            showToast('Your cart is empty', 'error');
+            return;
+        }
+    
+        <?php if ($delivery_active || $dining_active): ?>
+        const isDelivery = <?= $delivery_active ? 'document.getElementById("deliveryBtn").classList.contains("active")' : 'false' ?>;
+        const deliveryCharge = Number(<?= json_encode($delivery_charges['delivery_charge'] ?? 0) ?>);
+        const freeDeliveryMin = Number(<?= json_encode($delivery_charges['free_delivery_minimum'] ?? 0) ?>);
+        const gstPercent = Number(<?= json_encode($gst_percent ?? 0) ?>);
+        
+        // Validate required fields
+        const phoneInput = isDelivery ? document.getElementById('customerPhone') : document.getElementById('dinningPhone');
+        if (!phoneInput.value || phoneInput.value.length !== 10) {
+            showToast('Please enter a valid 10-digit phone number', 'error');
+            phoneInput.focus();
+            return;
+        }
+    
+        let customerName, orderDetails;
+        
+        if (isDelivery) {
+            customerName = document.getElementById('customerName').value;
+            const customerPhone = phoneInput.value;
+            const customerAddress = document.getElementById('customerAddress').value;
+            const customerNotes = document.getElementById('customerNotes').value;
+            
+            if (!customerName || !customerAddress) {
+                showToast('Please provide your name and address', 'error');
+                return;
+            }
+            
+            orderDetails = `*Delivery Order*\nName: ${customerName}\nPhone: ${customerPhone}\nAddress: ${customerAddress}`;
+            if (customerNotes) orderDetails += `\nNotes: ${customerNotes}`;
+        } else {
+            customerName = document.getElementById('dinningName').value;
+            const customerPhone = phoneInput.value;
+            const tableNumber = document.getElementById('tableNumber').value;
+            const dinningNotes = document.getElementById('dinningNotes').value;
+            
+            if (!customerName || !tableNumber) {
+                showToast('Please provide your name and table number', 'error');
+                return;
+            }
+            
+            orderDetails = `*Dining Order*\nName: ${customerName}\nPhone: ${customerPhone}\nTable No.: ${tableNumber}`;
+            if (dinningNotes) orderDetails += `\nNotes: ${dinningNotes}`;
+        }
+        <?php else: ?>
+        let customerName = 'Guest';
+        let orderDetails = `*Quick Order*`;
+        <?php endif; ?>
+    
+        // Get WhatsApp number safely
+        const whatsappLink = <?= json_encode($social_link['whatsapp'] ?? '') ?>;
+        let phoneNumber = whatsappLink.match(/wa\.me\/(\d+)/)?.[1] || <?= json_encode($user['phone'] ?? '') ?>;
+    
+        if (!phoneNumber) {
+            showToast('WhatsApp number not available for this business', 'error');
+            return;
+        }
+    
+        // Format order date
+        const orderDate = new Date().toLocaleString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    
+        // Calculate order totals
+        let subtotal = 0;
+        cart.forEach(item => {
+            subtotal += item.price * item.quantity;
+        });
+    
+        // Business details
+        const businessName = <?= json_encode(htmlspecialchars($business_info['business_name'] ?? '')) ?>;
+        const businessAddress = <?= json_encode(htmlspecialchars($business_info['business_address'] ?? '')) ?>;
+        const businessPhone = <?= json_encode($user['phone'] ?? '') ?>;
+    
+        // Build WhatsApp message
+        let message = `*${businessName.toUpperCase()}*\n` +
+                      `${businessAddress}\n` +
+                      `Phone: ${businessPhone}\n\n` +
+                      `Date: ${orderDate}\n` +
+                      `Order Type: ${isDelivery ? 'DELIVERY' : 'DINING'}\n` +
+                      `--------------------------\n` +
+                      `*ITEMS ORDERED*\n` +
+                      `--------------------------\n`;
+    
+        // Add cart items
+        cart.forEach(item => {
+            const itemTotal = (item.price * item.quantity).toFixed(2);
+            message += `${item.name} x ${item.quantity}\n` +
+                      `₹${item.price.toFixed(2)} x ${item.quantity} = ₹${itemTotal}\n\n`;
+        });
+    
+        // Add pricing summary
+        message += `--------------------------\n` +
+                   `Subtotal:        ₹${subtotal.toFixed(2)}\n`;
+        
+        if (discountAmount > 0) {
+            message += `Discount:       -₹${discountAmount.toFixed(2)}\n` +
+                       `(Applied ${discountType})\n`;
+        }
+        
+        if (gstPercent > 0) {
+            const gstAmount = ((subtotal - discountAmount) * gstPercent / 100).toFixed(2);
+            message += `GST (${gstPercent}%):    ₹${gstAmount}\n`;
+        }
+        
+        if (isDelivery) {
+            if (freeDeliveryMin > 0 && (subtotal - discountAmount) >= freeDeliveryMin) {
+                message += `Delivery:       FREE\n` +
+                           `(Order above ₹${freeDeliveryMin.toFixed(2)})\n`;
+            } else {
+                message += `Delivery:       ₹${Number(deliveryCharge).toFixed(2)}\n`;
+                if (freeDeliveryMin > 0) {
+                    const neededForFree = freeDeliveryMin - (subtotal - discountAmount);
+                    message += `(Add ₹${neededForFree.toFixed(2)} more for FREE delivery)\n`;
+                }
+            }
+        }
+    
+        // Calculate total
+        let total = (subtotal - discountAmount) + (gstPercent > 0 ? ((subtotal - discountAmount) * gstPercent / 100) : 0);
+        if (isDelivery && !isNaN(deliveryCharge)) total += Number(deliveryCharge);
+        
+        message += `--------------------------\n` +
+                   `*TOTAL:          ₹${total.toFixed(2)}*\n\n` +
+                   `*CUSTOMER DETAILS*\n` +
+                   `--------------------------\n` +
+                   `${orderDetails}\n\n` +
+                   `Please confirm this order.`;
+    
+        // Safari-compatible WhatsApp opening
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        
+        // Solution 1: Create and click a hidden link (most reliable for Safari)
+        const link = document.createElement('a');
+        link.href = whatsappUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        
+        try {
+            link.click();
+        } catch (e) {
+            // Fallback if click fails
+            window.location.href = whatsappUrl;
+        }
+        
+        // Clean up
+        setTimeout(() => {
+            document.body.removeChild(link);
+        }, 1000);
+    
+        // Reset cart
+        cart = [];
+        saveCart();
+        updateCartUI();
+        closeCart();
+        
+        // Not Required now! Delay toast to ensure WhatsApp opens first
+        // setTimeout(() => {
+        //     showToast('Order sent via WhatsApp!', 'success');
+        // }, 500);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Add this to your existing JavaScript code
+document.getElementById('viewCartBtn').addEventListener('click', function() {
+    // Clear coupon from cart
+    if (cart.coupon) {
+        delete cart.coupon;
+        saveCart();
+    }
+    
+    // Clear coupon input field and message
+    const couponCodeInput = document.getElementById('couponCode');
+    if (couponCodeInput) {
+        couponCodeInput.value = '';
+    }
+    
+    const couponMessage = document.getElementById('couponMessage');
+    if (couponMessage) {
+        couponMessage.textContent = '';
+        couponMessage.className = 'text-success';
+    }
+    
+    // Update cart UI to reflect changes
+    updateCartUI();
+    
+    // Continue with existing view cart functionality
+    fadeOut(customerDetailsSection, function() {
+        fadeIn(cartItems);
+    });
+    
+    // Hide the View Cart button when viewing cart
+    fadeOut(this);
+});
+
+
 
 </script>
+
+
+
+<!-- Order Success Popup -->
+<div class="order-success-popup" id="orderSuccessPopup">
+    <div class="order-success-content">
+        <div class="order-success-icon">
+            <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <h3 class="order-success-title">Order Placed Successfully!</h3>
+        <p class="order-success-message">
+            Thank you for your order. We'll process it shortly. <br>
+        </p>
+        <h4 class="mb-3">Also share your order with us  <br>
+            on WhatsApp — just hit 'Send'.</h4>
+        <button class="order-success-btn" onclick="closeOrderSuccessPopup()">OK</button>
+    </div>
+</div>
+
+

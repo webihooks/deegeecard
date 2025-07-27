@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 // Trial has ended, redirect to subscription page
                 $_OUTPUT['message'] = "Trial has ended";
                 $_OUTPUT['page'] = "subscription.php";
-                $_OUTPUT['status'] = "Fail";
+                $_OUTPUT['status'] = "Success";
             }
             
             // Redirect based on user role
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $_OUTPUT['message'] = "Login Successful!";
                 header("Location: sales-dashboard.php");
             } else {
-                $_OUTPUT['Status'] = "Fail";
+                $_OUTPUT['Status'] = "Success";
                 $_OUTPUT['page'] = "subscription.php";
                 $_OUTPUT['message'] = "Please Subscribe!";
             }
