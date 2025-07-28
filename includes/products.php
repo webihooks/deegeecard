@@ -1446,7 +1446,7 @@ function placeOrderOnWhatsApp() {
                `*CUSTOMER DETAILS*\n` +
                `--------------------------\n` +
                `${orderDetails}\n\n` +
-               `Please confirm this order.`;
+               `Thank you for your order. We'll process it shortly.`;
 
     // Safari-compatible WhatsApp opening
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
@@ -1694,7 +1694,7 @@ function placeOrderOnWhatsApp() {
                    `*CUSTOMER DETAILS*\n` +
                    `--------------------------\n` +
                    `${orderDetails}\n\n` +
-                   `Please confirm this order.`;
+                   `Thank you for your order. We'll process it shortly.`;
     
         // Safari-compatible WhatsApp opening
         const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
