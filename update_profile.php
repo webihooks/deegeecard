@@ -15,33 +15,43 @@ $user_id = $_SESSION['user_id'];
 
 // Check if the form was submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get form data
-    $name = trim($_POST['name']);
-    $email = trim($_POST['email']);
-    $phone = trim($_POST['phone']);
-    $address = trim($_POST['address']);
+    // Sanitize and trim form data
+    $name = trim(htmlspecialchars($_POST['name']));
+    $email = trim(htmlspecialchars($_POST['email']));
+    $phone = trim(htmlspecialchars($_POST['phone']));
+    $address = trim(htmlspecialchars($_POST['address']));
 
     // Validate inputs
     $errors = [];
 
+    // Name validation
     if (empty($name)) {
         $errors[] = "Name is required.";
+    } elseif (strlen($name) < 3) {
+        $errors[] = "Name must be at least 3 characters.";
     }
 
+    // Email validation
     if (empty($email)) {
         $errors[] = "Email is required.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors[] = "Invalid email format.";
     }
 
+    // Phone validation (exactly 10 digits)
     if (empty($phone)) {
         $errors[] = "Phone number is required.";
-    } elseif (!preg_match('/^[0-9]{10,15}$/', $phone)) {
-        $errors[] = "Phone number must be 10-15 digits.";
+    } elseif (!preg_match('/^[0-9]{10}$/', $phone)) {
+        $errors[] = "Phone number must be exactly 10 digits.";
     }
 
+    // Address validation (no line breaks)
     if (empty($address)) {
         $errors[] = "Address is required.";
+    } elseif (preg_match('/[\r\n]/', $address)) {
+        $errors[] = "Line breaks are not allowed in the address.";
+    } elseif (strlen($address) < 5) {
+        $errors[] = "Address must be at least 5 characters.";
     }
 
     // Check if email already exists for another user
@@ -58,6 +68,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // If no errors, update the profile
     if (empty($errors)) {
+        // Remove any remaining line breaks from address (just in case)
+        $address = str_replace(["\r", "\n"], ' ', $address);
+        
         $sql = "UPDATE users SET name = ?, email = ?, phone = ?, address = ? WHERE id = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("ssssi", $name, $email, $phone, $address, $user_id);
@@ -65,7 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($stmt->execute()) {
             $_SESSION['success_msg'] = "Profile updated successfully!";
         } else {
-            $_SESSION['error_msg'] = "Error updating profile: " . $stmt->error;
+            $_SESSION['error_msg'] = "Error updating profile. Please try again.";
+            // Log the error instead of showing it to users
+            error_log("Profile update error: " . $stmt->error);
         }
         $stmt->close();
     } else {

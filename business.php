@@ -28,7 +28,7 @@ $stmt->close();
 
 // Check if we're editing an existing business
 if (isset($_GET['edit'])) {
-    $business_id = $_GET['edit'];
+    $business_id = (int)$_GET['edit'];
     
     // Verify the business belongs to the current user
     $sql = "SELECT * FROM business_info WHERE id = ? AND user_id = ?";
@@ -48,17 +48,43 @@ if (isset($_GET['edit'])) {
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $business_name = $_POST['business_name'] ?? '';
-    $business_description = $_POST['business_description'] ?? '';
-    $business_address = $_POST['business_address'] ?? '';
-    $google_direction = $_POST['google_direction'] ?? '';
-    $designation = $_POST['designation'] ?? '';
-    $business_id = $_POST['business_id'] ?? null;
+    // Sanitize and trim all inputs
+    $business_name = trim(htmlspecialchars($_POST['business_name'] ?? ''));
+    $business_description = trim(htmlspecialchars($_POST['business_description'] ?? ''));
+    $business_address = trim(htmlspecialchars($_POST['business_address'] ?? ''));
+    $google_direction = trim(htmlspecialchars($_POST['google_direction'] ?? ''));
+    $designation = trim(htmlspecialchars($_POST['designation'] ?? ''));
+    $business_id = isset($_POST['business_id']) ? (int)$_POST['business_id'] : null;
 
-    // Validate required fields
-    if (empty($business_name) || empty($business_address)) {
-        $error_message = "Business Name and Address are required fields.";
-    } else {
+    // Validate inputs
+    $errors = [];
+
+    // Business name validation
+    if (empty($business_name)) {
+        $errors[] = "Business Name is required.";
+    } elseif (strlen($business_name) < 3) {
+        $errors[] = "Business Name must be at least 3 characters.";
+    }
+
+    // Business address validation (no line breaks)
+    if (empty($business_address)) {
+        $errors[] = "Business Address is required.";
+    } elseif (preg_match('/[\r\n]/', $business_address)) {
+        $errors[] = "Line breaks are not allowed in the address.";
+    } elseif (strlen($business_address) < 5) {
+        $errors[] = "Address must be at least 5 characters.";
+    }
+
+    // Google direction URL validation
+    if (!empty($google_direction) && !filter_var($google_direction, FILTER_VALIDATE_URL)) {
+        $errors[] = "Please enter a valid Google Maps URL.";
+    }
+
+    // If no errors, proceed with database operation
+    if (empty($errors)) {
+        // Remove any remaining line breaks from address
+        $business_address = str_replace(["\r", "\n"], ' ', $business_address);
+        
         if ($is_edit_mode && $business_id) {
             // Update existing business
             $sql = "UPDATE business_info SET 
@@ -84,7 +110,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'id' => $business_id
                 ];
             } else {
-                $error_message = "Error updating business information: " . $conn->error;
+                $error_message = "Error updating business information.";
+                error_log("Business update error: " . $stmt->error);
             }
         } else {
             // Insert new business
@@ -100,15 +127,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $business_data = null;
                 $is_edit_mode = false;
             } else {
-                $error_message = "Error adding business information: " . $conn->error;
+                $error_message = "Error adding business information.";
+                error_log("Business insert error: " . $stmt->error);
             }
         }
         
         $stmt->close();
+    } else {
+        $error_message = implode("<br>", $errors);
     }
 }
 
-// Fetch all businesses for the current user to display in a list
+// Fetch all businesses for the current user
 $businesses = [];
 $sql = "SELECT id, business_name, business_address, designation FROM business_info WHERE user_id = ? ORDER BY created_at DESC";
 $stmt = $conn->prepare($sql);
@@ -184,12 +214,14 @@ $conn->close();
                                     <div class="mb-3">
                                         <label for="business_description" class="form-label">Business Description</label>
                                         <textarea class="form-control" id="business_description" name="business_description" 
+onkeydown="if(event.keyCode === 13) { return false; }"
                                                   rows="3"><?php echo htmlspecialchars($business_data['business_description'] ?? $_POST['business_description'] ?? ''); ?></textarea>
                                     </div>
                                     
                                     <div class="mb-3">
                                         <label for="business_address" class="form-label">Business Address *</label>
                                         <textarea class="form-control" id="business_address" name="business_address" 
+onkeydown="if(event.keyCode === 13) { return false; }"
                                                   rows="3" required><?php echo htmlspecialchars($business_data['business_address'] ?? $_POST['business_address'] ?? ''); ?></textarea>
                                     </div>
                                     
@@ -252,16 +284,35 @@ $conn->close();
     <script src="assets/js/app.js"></script>
     
     <script>
-        // Basic form validation
         $(document).ready(function() {
             $('form').validate({
                 rules: {
-                    business_name: "required",
-                    business_address: "required"
+                    business_name: {
+                        required: true,
+                        minlength: 3
+                    },
+                    business_address: {
+                        required: true,
+                        minlength: 5,
+                        noLineBreaks: true
+                    },
+                    google_direction: {
+                        url: true
+                    }
                 },
                 messages: {
-                    business_name: "Please enter your business name",
-                    business_address: "Please enter your business address"
+                    business_name: {
+                        required: "Please enter your business name",
+                        minlength: "Business name must be at least 3 characters"
+                    },
+                    business_address: {
+                        required: "Please enter your business address",
+                        minlength: "Address must be at least 5 characters",
+                        noLineBreaks: "Line breaks are not allowed in the address"
+                    },
+                    google_direction: {
+                        url: "Please enter a valid URL"
+                    }
                 },
                 errorElement: "div",
                 errorPlacement: function(error, element) {
@@ -273,6 +324,18 @@ $conn->close();
                 },
                 unhighlight: function(element, errorClass, validClass) {
                     $(element).addClass("is-valid").removeClass("is-invalid");
+                }
+            });
+
+            // Custom validation method to block line breaks
+            $.validator.addMethod("noLineBreaks", function(value, element) {
+                return !/[\r\n]/.test(value);
+            });
+
+            // Prevent Enter key in address textarea
+            $('#business_address').on('keydown', function(e) {
+                if (e.keyCode === 13) {
+                    return false;
                 }
             });
         });

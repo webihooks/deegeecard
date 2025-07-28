@@ -240,7 +240,7 @@ $conn->close();
                                         No orders found for <?php echo date('F j, Y', strtotime($selected_date)); ?>.
                                     </div>
                                 <?php else: ?>
-                                    <div class="table-responsive">
+                                    <div class="table-responsive mobile_table">
                                         <table class="table table-hover mb-0">
                                             <thead>
                                                 <tr>
@@ -258,11 +258,11 @@ $conn->close();
                                             <tbody>
                                                 <?php foreach ($orders as $index => $order): ?>
                                                     <tr>
-                                                        <td><?php echo $index + 1 + $offset; ?></td>
-                                                        <td>#<?php echo htmlspecialchars($order['order_id']); ?></td>
-                                                        <td><?php echo date('h:i A', strtotime($order['created_at'])); ?></td>
-                                                        <td><?php echo htmlspecialchars($order['customer_name']); ?></td>
-                                                        <td>
+                                                        <td data-label="Sr. No."><?php echo $index + 1 + $offset; ?></td>
+                                                        <td data-label="Order ID">#<?php echo htmlspecialchars($order['order_id']); ?></td>
+                                                        <td data-label="Time"><?php echo date('h:i A', strtotime($order['created_at'])); ?></td>
+                                                        <td data-label="Customer"><?php echo htmlspecialchars($order['customer_name']); ?></td>
+                                                        <td data-label="Type">
                                                             <?php 
                                                             if ($order['order_type'] === 'dining') {
                                                                 echo 'Dining - Table ' . htmlspecialchars($order['table_number']);
@@ -271,14 +271,14 @@ $conn->close();
                                                             }
                                                             ?>
                                                         </td>
-                                                        <td><?php echo htmlspecialchars($order['item_count']); ?></td>
-                                                        <td>₹<?php echo number_format($order['total_amount'], 2); ?></td>
-                                                        <td>
+                                                        <td data-label="Items"><?php echo htmlspecialchars($order['item_count']); ?></td>
+                                                        <td data-label="Total">₹<?php echo number_format($order['total_amount'], 2); ?></td>
+                                                        <td data-label="Status">
                                                             <span class="status-badge status-<?php echo strtolower(str_replace(' ', '_', $order['status'])); ?>">
                                                                 <?php echo ucfirst(str_replace('_', ' ', $order['status'])); ?>
                                                             </span>
                                                         </td>
-                                                        <td>
+                                                        <td data-label="Actions">
                                                             <button class="btn btn-sm btn-primary view-order" 
                                                                     data-order-id="<?php echo $order['order_id']; ?>"
                                                                     data-bs-toggle="modal" 

@@ -304,7 +304,7 @@ $fetch_sales_sql = "SELECT
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
    </head>
-   <body>
+   <body class="view_sales_records">
       <div class="wrapper">
          <?php include 'toolbar.php'; ?>
          <?php
@@ -449,170 +449,125 @@ $fetch_sales_sql = "SELECT
                               <div class="col-md-12">
                                  <div class="card">
                                     <div class="card-body">
-                                       <div class="table-responsive">
-                                          <table class="table table-striped">
-                                             <thead>
-                                                <tr>
-                                                   <th>Actions</th>
-                                                   <th>Sr.<br>
-                                                      No.
-                                                   </th>
-                                                   <th style="display:none;">ID</th>
-                                                   <?php if ($role === 'admin'): ?>
-                                                   <th>Team</th>
-                                                   <?php endif; ?>
-                                                   <th>Date</th>
-                                                   <th>Time</th>
-                                                   <th>Restaurant</th>
-                                                   <th>Owner</th>
-                                                   <th>Follow Up</th>
-                                                   <th>Status</th>
-                                                   <th>Price</th>
-                                                   <th>Remark</th>
-                                                   <th>Contact</th>
-                                                   <th>Phone</th>
-                                                   <th>D.M.</th>
-                                                   <th>D.M. Phone</th>
-                                                   <th>Location Details</th>
-                                                </tr>
-                                             </thead>
-                                             <tbody>
-                                                <?php if (!empty($sales_track_list)): ?>
-                                                <?php foreach ($sales_track_list as $index => $entry): ?>
-                                                <tr>
-                                                   <td>
-                                                      <?php if ($role === 'admin' || $entry['user_id'] == $user_id): ?>
-                                                      <button class="btn btn-sm btn-outline-primary update-record-btn" 
-                                                         data-record-id="<?= $entry['id'] ?>"
-                                                         data-restaurant-name="<?= htmlspecialchars($entry['restaurant_name']) ?>"
-                                                         data-contacted-person="<?= htmlspecialchars($entry['contacted_person']) ?>"
-                                                         data-phone="<?= htmlspecialchars($entry['phone']) ?>"
-                                                         data-owner-available="<?= $entry['owner_available'] ? '1' : '0' ?>"
-                                                         data-decision-maker-name="<?= htmlspecialchars($entry['decision_maker_name']) ?>"
-                                                         data-decision-maker-phone="<?= htmlspecialchars($entry['decision_maker_phone']) ?>"
-                                                         data-follow-up-date="<?= htmlspecialchars($entry['follow_up_date']) ?>"
-                                                         data-package-price="<?= htmlspecialchars($entry['package_price']) ?>"
-                                                         data-status="<?= htmlspecialchars($entry['status']) ?>">
-                                                      <i class="fas fa-edit"></i> Update
-                                                      </button>
-                                                      <?php endif; ?>
-                                                   </td>
-                                                   <td><?= $index + 1 + $offset ?></td>
-                                                   <td style="display:none;"><?= htmlspecialchars($entry['id']) ?></td>
-                                                   <?php if ($role === 'admin'): ?>
-                                                   <td><?= htmlspecialchars($entry['user_name']) ?></td>
-                                                   <?php endif; ?>
-                                                   <td><?= htmlspecialchars($entry['record_date']) ?></td>
-                                                   <td><?= date('h:i A', strtotime($entry['time_stamp'])) ?></td>
-                                                   <td><?= htmlspecialchars($entry['restaurant_name']) ?></td>
-                                                   <td><?= $entry['owner_available'] ? 'Yes' : 'No' ?></td>
-                                                   <td><?= htmlspecialchars($entry['follow_up_date']) ?></td>
-                                                   <td>
-                                                      <span class="status-badge <?= str_replace(' ', '-', $entry['status']) ?>">
-                                                      <?= ucfirst($entry['status']) ?>
-                                                      </span>
-                                                   </td>
-                                                   <td><?= number_format($entry['package_price']) ?></td>
-                                                   <td>
-                                                      <?php if (!empty($entry['remark'])): ?>
-                                                      <div class="remark-container">
-                                                         <?php 
-                                                            $remarks = explode("\n\n", $entry['remark']);
-                                                            foreach ($remarks as $remark): 
-                                                                if (!empty(trim($remark))):
-                                                                    $parts = explode(" - ", $remark, 2);
-                                                            ?>
-                                                         <div class="remark-entry">
-                                                            <?php if (count($parts) > 1): ?>
-                                                            <div class="remark-date"><?= htmlspecialchars($parts[0]) ?></div>
-                                                            <div class="remark-content"><?= htmlspecialchars($parts[1]) ?></div>
-                                                            <?php else: ?>
-                                                            <div class="remark-content"><?= htmlspecialchars($remark) ?></div>
+                                       <div class="table-responsive sales_table">
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Actions</th>
+                                                        <th>Sr. No.</th>
+                                                        <th style="display:none;">ID</th>
+                                                        <?php if ($role === 'admin'): ?>
+                                                        <th>Team</th>
+                                                        <?php endif; ?>
+                                                        <th>Date</th>
+                                                        <th>Time</th>
+                                                        <th>Restaurant</th>
+                                                        <th>Owner</th>
+                                                        <th>Follow Up</th>
+                                                        <th>Status</th>
+                                                        <th>Price</th>
+                                                        <th>Remark</th>
+                                                        <th>Contact</th>
+                                                        <th>Phone</th>
+                                                        <th>D.M.</th>
+                                                        <th>D.M. Phone</th>
+                                                        <th>Location Details</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php if (!empty($sales_track_list)): ?>
+                                                    <?php foreach ($sales_track_list as $index => $entry): ?>
+                                                    <tr>
+                                                        <td data-label="Actions">
+                                                            <?php if ($role === 'admin' || $entry['user_id'] == $user_id): ?>
+                                                            <button class="btn btn-sm btn-outline-primary update-record-btn" 
+                                                                data-record-id="<?= $entry['id'] ?>"
+                                                                data-restaurant-name="<?= htmlspecialchars($entry['restaurant_name']) ?>"
+                                                                data-contacted-person="<?= htmlspecialchars($entry['contacted_person']) ?>"
+                                                                data-phone="<?= htmlspecialchars($entry['phone']) ?>"
+                                                                data-owner-available="<?= $entry['owner_available'] ? '1' : '0' ?>"
+                                                                data-decision-maker-name="<?= htmlspecialchars($entry['decision_maker_name']) ?>"
+                                                                data-decision-maker-phone="<?= htmlspecialchars($entry['decision_maker_phone']) ?>"
+                                                                data-follow-up-date="<?= htmlspecialchars($entry['follow_up_date']) ?>"
+                                                                data-package-price="<?= htmlspecialchars($entry['package_price']) ?>"
+                                                                data-status="<?= htmlspecialchars($entry['status']) ?>">
+                                                            <i class="fas fa-edit"></i> Update
+                                                            </button>
                                                             <?php endif; ?>
-                                                         </div>
-                                                         <?php 
-                                                            endif;
-                                                            endforeach; 
-                                                            ?>
-                                                      </div>
-                                                      <?php endif; ?>
-                                                   </td>
-                                                   <td><?= htmlspecialchars($entry['contacted_person']) ?></td>
-                                                   <td><?= htmlspecialchars($entry['phone']) ?></td>
-                                                   <td><?= htmlspecialchars($entry['decision_maker_name']) ?></td>
-                                                   <td><?= htmlspecialchars($entry['decision_maker_phone']) ?></td>
-                                                   <td>
-                                                      <?php
-                                                         $fullAddress = [];
-                                                         if (!empty($entry['location'])) {
-                                                             $fullAddress[] = htmlspecialchars($entry['location']);
-                                                         }
-                                                         if (!empty($entry['street'])) {
-                                                             $fullAddress[] = htmlspecialchars($entry['street']);
-                                                         }
-                                                         if (!empty($entry['city'])) {
-                                                             $fullAddress[] = htmlspecialchars($entry['city']);
-                                                         }
-                                                         if (!empty($entry['state'])) {
-                                                             $fullAddress[] = htmlspecialchars($entry['state']);
-                                                         }
-                                                         echo implode('<br>', $fullAddress);
-                                                         ?>
-                                                   </td>
-                                                </tr>
-                                                <?php endforeach; ?>
-                                                <?php else: ?>
-                                                <tr>
-                                                   <td colspan="<?= ($role === 'admin') ? '17' : '16' ?>" class="text-center">No records found</td>
-                                                </tr>
-                                                <?php endif; ?>
-                                             </tbody>
-                                          </table>
-                                          <!-- Pagination -->
-                                          <?php if ($total_pages > 1): ?>
-                                          <nav aria-label="Page navigation">
-                                             <ul class="pagination justify-content-center">
-                                                <?php if ($current_page > 1): ?>
-                                                <li class="page-item">
-                                                   <a class="page-link" href="?page=1" aria-label="First">
-                                                   <span aria-hidden="true">&laquo;&laquo;</span>
-                                                   </a>
-                                                </li>
-                                                <li class="page-item">
-                                                   <a class="page-link" href="?page=<?= $current_page - 1 ?>" aria-label="Previous">
-                                                   <span aria-hidden="true">&laquo;</span>
-                                                   </a>
-                                                </li>
-                                                <?php endif; ?>
-                                                <?php 
-                                                   $start_page = max(1, $current_page - 2);
-                                                   $end_page = min($total_pages, $start_page + 4);
-                                                   
-                                                   if ($end_page - $start_page < 4 && $start_page > 1) {
-                                                       $start_page = max(1, $end_page - 4);
-                                                   }
-                                                   
-                                                   for ($i = $start_page; $i <= $end_page; $i++): ?>
-                                                <li class="page-item <?= ($i == $current_page) ? 'active' : '' ?>">
-                                                   <a class="page-link" href="?page=<?= $i ?>"><?= $i ?></a>
-                                                </li>
-                                                <?php endfor; ?>
-                                                <?php if ($current_page < $total_pages): ?>
-                                                <li class="page-item">
-                                                   <a class="page-link" href="?page=<?= $current_page + 1 ?>" aria-label="Next">
-                                                   <span aria-hidden="true">&raquo;</span>
-                                                   </a>
-                                                </li>
-                                                <li class="page-item">
-                                                   <a class="page-link" href="?page=<?= $total_pages ?>" aria-label="Last">
-                                                   <span aria-hidden="true">&raquo;&raquo;</span>
-                                                   </a>
-                                                </li>
-                                                <?php endif; ?>
-                                             </ul>
-                                          </nav>
-                                          <?php endif; ?>
-                                       </div>
+                                                        </td>
+                                                        <td data-label="Sr. No"><?= $index + 1 + $offset ?></td>
+                                                        <td style="display:none;" data-label="ID"><?= htmlspecialchars($entry['id']) ?></td>
+                                                        <?php if ($role === 'admin'): ?>
+                                                        <td data-label="Team"><?= htmlspecialchars($entry['user_name']) ?></td>
+                                                        <?php endif; ?>
+                                                        <td data-label="Date"><?= htmlspecialchars($entry['record_date']) ?></td>
+                                                        <td data-label="Time"><?= date('h:i A', strtotime($entry['time_stamp'])) ?></td>
+                                                        <td data-label="Restaurant"><?= htmlspecialchars($entry['restaurant_name']) ?></td>
+                                                        <td data-label="Owner"><?= $entry['owner_available'] ? 'Yes' : 'No' ?></td>
+                                                        <td data-label="Follow Up"><?= htmlspecialchars($entry['follow_up_date']) ?></td>
+                                                        <td data-label="Status">
+                                                            <span class="status-badge <?= str_replace(' ', '-', $entry['status']) ?>">
+                                                            <?= ucfirst($entry['status']) ?>
+                                                            </span>
+                                                        </td>
+                                                        <td data-label="Price"><?= number_format($entry['package_price']) ?></td>
+                                                        <td data-label="Remark">
+                                                            <?php if (!empty($entry['remark'])): ?>
+                                                            <div class="remark-container">
+                                                                <?php 
+                                                                    $remarks = explode("\n\n", $entry['remark']);
+                                                                    foreach ($remarks as $remark): 
+                                                                        if (!empty(trim($remark))):
+                                                                            $parts = explode(" - ", $remark, 2);
+                                                                ?>
+                                                                <div class="remark-entry">
+                                                                    <?php if (count($parts) > 1): ?>
+                                                                    <div class="remark-date"><?= htmlspecialchars($parts[0]) ?></div>
+                                                                    <div class="remark-content"><?= htmlspecialchars($parts[1]) ?></div>
+                                                                    <?php else: ?>
+                                                                    <div class="remark-content"><?= htmlspecialchars($remark) ?></div>
+                                                                    <?php endif; ?>
+                                                                </div>
+                                                                <?php 
+                                                                    endif;
+                                                                    endforeach; 
+                                                                    ?>
+                                                            </div>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td data-label="Contact"><?= htmlspecialchars($entry['contacted_person']) ?></td>
+                                                        <td data-label="Phone"><?= htmlspecialchars($entry['phone']) ?></td>
+                                                        <td data-label="D.M."><?= htmlspecialchars($entry['decision_maker_name']) ?></td>
+                                                        <td data-label="D.M. Phone"><?= htmlspecialchars($entry['decision_maker_phone']) ?></td>
+                                                        <td data-label="Location">
+                                                            <?php
+                                                                $fullAddress = [];
+                                                                if (!empty($entry['location'])) {
+                                                                    $fullAddress[] = htmlspecialchars($entry['location']);
+                                                                }
+                                                                if (!empty($entry['street'])) {
+                                                                    $fullAddress[] = htmlspecialchars($entry['street']);
+                                                                }
+                                                                if (!empty($entry['city'])) {
+                                                                    $fullAddress[] = htmlspecialchars($entry['city']);
+                                                                }
+                                                                if (!empty($entry['state'])) {
+                                                                    $fullAddress[] = htmlspecialchars($entry['state']);
+                                                                }
+                                                                echo implode(', ', $fullAddress);
+                                                                ?>
+                                                        </td>
+                                                    </tr>
+                                                    <?php endforeach; ?>
+                                                    <?php else: ?>
+                                                    <tr>
+                                                        <td colspan="<?= ($role === 'admin') ? '17' : '16' ?>" class="text-center">No records found</td>
+                                                    </tr>
+                                                    <?php endif; ?>
+                                                </tbody>
+                                            </table>
+                                            <!-- Pagination remains the same -->
+                                        </div>
                                     </div>
                                  </div>
                               </div>

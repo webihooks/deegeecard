@@ -131,11 +131,11 @@ $conn->close();
                                     </div>
                                     <div class="mb-3">
                                         <label for="phone" class="form-label">Phone</label>
-                                        <input type="text" class="form-control" id="phone" name="phone" value="<?php echo htmlspecialchars($phone); ?>" required>
+                                        <input  type="text"  class="form-control"  id="phone"  name="phone"  value="<?php echo htmlspecialchars($phone); ?>"  maxlength="10"  pattern="\d{10}"  title="Please enter exactly 10 digits" required>
                                     </div>
                                     <div class="mb-3">
                                         <label for="address" class="form-label">Address</label>
-                                        <textarea class="form-control" id="address" name="address" required><?php echo htmlspecialchars($address); ?></textarea>
+                                        <textarea  class="form-control"  id="address"  name="address"  required onkeydown="if(event.keyCode === 13) { return false; }"><?php echo htmlspecialchars($address); ?></textarea>
                                     </div>
                                     <button type="submit" class="btn btn-success">Update Profile</button>
                                 </form>
@@ -182,11 +182,12 @@ $conn->close();
                         required: true,
                         digits: true,
                         minlength: 10,
-                        maxlength: 15
-                    },
+                        maxlength: 10
+                    }
                     address: {
                         required: true,
-                        minlength: 5
+                        minlength: 5,
+                        noLineBreaks: true  // Custom rule to block line breaks
                     }
                 },
                 messages: {
@@ -200,16 +201,27 @@ $conn->close();
                     },
                     phone: {
                         required: "Please enter your phone number.",
-                        digits: "Please enter only numbers.",
-                        minlength: "Phone number must be at least 10 digits.",
-                        maxlength: "Phone number must not exceed 15 digits."
+                        digits: "Phone number must contain only digits.",
+                        minlength: "Phone number must be exactly 10 digits.",
+                        maxlength: "Phone number must be exactly 10 digits."
                     },
                     address: {
                         required: "Please enter your address.",
-                        minlength: "Address must be at least 5 characters long."
+                        minlength: "Address must be at least 5 characters long.",
+                        noLineBreaks: "Line breaks are not allowed in the address."
                     }
                 }
             });
+
+            // Add custom method for exact length validation
+            $.validator.addMethod("exactlength", function(value, element, param) {
+                return this.optional(element) || value.length == param;
+            }, $.validator.format("Please enter exactly {0} characters."));
+
+            // Custom validation method to block line breaks
+            $.validator.addMethod("noLineBreaks", function(value, element) {
+            return !/[\\n\\r]/.test(value); // Returns false if line breaks exist
+            });                
             
             $("#passwordForm").validate({
                 rules: {
