@@ -86,6 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
      <!-- Theme Config js (Require in all Page) -->
      <script src="assets/js/config.js"></script>
+     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 
 
 <!-- Google tag (gtag.js) -->
@@ -97,6 +98,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   gtag('config', 'G-81W5S4MMGY');
 </script>
+
+<style>
+.bi-android2 {
+     font-size: 25px; margin-right: 10px;
+}
+.download_btn {
+     line-height: 22px;
+}
+</style>
      
 </head>
 
@@ -120,20 +130,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                                         <h2 class="fw-bold fs-24">Sign In</h2>
 
-                                        <p class="text-muted mt-1 mb-4">Enter your email address and password to access admin panel.</p>
+                                        <p class="text-muted mt-1 mb-2">Enter your email address and password to access admin panel.</p>
 
-                                        <div class="mb-5">
+                                        <div class="mb-2">
                                              <form action="" method="POST" class="authentication-form">
-                                                  <div class="mb-3">
+                                                  <div class="mb-2">
                                                        <label class="form-label" for="example-email">Email</label>
                                                        <input type="email" id="example-email" name="email" class="form-control" placeholder="Enter your email" required>
                                                   </div>
-                                                  <div class="mb-3">
+                                                  <div class="mb-2">
                                                        <a href="forgot-password.php" class="float-end text-muted text-unline-dashed ms-1">Reset password</a>
                                                        <label class="form-label" for="example-password">Password</label>
                                                        <input type="password" id="example-password" name="password" class="form-control" placeholder="Enter your password" required>
                                                   </div>
-                                                  <div class="mb-3">
+                                                  <div class="mb-2">
                                                        <div class="form-check">
                                                             <input type="checkbox" class="form-check-input" id="checkbox-signin">
                                                             <label class="form-check-label" for="checkbox-signin">Remember me</label>
@@ -147,6 +157,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         </div>
 
                                         <p class="text-danger text-center">Don't have an account? <a href="register.php" class="text-dark fw-bold ms-1">Sign Up</a></p>
+
+
+                                        <!-- Download Our Partner Android App Section -->
+                                        <div class="mt-1 border-top pt-4 mb-5">
+                                            <h5 class="text-center mb-3">Download Our Partner App</h5>
+                                            <div class="row g-2">
+
+                                               <div class="col-6">
+                                                    <a href="downloads/Deegeecard-Partner-App.apk" class="download_btn btn btn-outline-success w-100" download>
+                                                        <i class="bi bi-android2"></i> DeeGeeCard Partner App
+                                                    </a>
+                                                </div>
+
+                                                <div class="col-6">
+                                                    <a href="downloads/Deegeecard-Partner-Dining-App.apk" class="download_btn btn btn-outline-primary w-100" download>
+                                                        <i class="bi bi-android2"></i> DeeGeeCard Partner App - Dining
+                                                    </a>
+                                                </div>
+                                                
+                                            </div>
+                                        </div>
+                                        <!-- Download Our Partner Android App Section -->
+
                                    </div>
                               </div>
                          </div>

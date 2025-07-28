@@ -1,5 +1,6 @@
 <?php
-// Start the session
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 session_start();
 date_default_timezone_set('Asia/Kolkata'); // for Indian Standard Time
 
@@ -149,6 +150,7 @@ $orders_sql = "SELECT
     o.delivery_charge, 
     o.total_amount, 
     o.created_at,
+    o.order_notes,
     COUNT(oi.item_id) as item_count
 FROM orders o
 LEFT JOIN order_items oi ON o.order_id = oi.order_id
@@ -352,6 +354,10 @@ $conn->close();
                             <p><strong>Phone:</strong> <span id="modalCustomerPhone"></span></p>
                             <p id="modalDeliveryAddress"><strong>Address:</strong> <span id="modalAddressText"></span></p>
                             <p id="modalTableNumber"><strong>Table Number:</strong> <span id="modalTableText"></span></p>
+                            <div id="modalOrderNotesContainer">
+                                <h6>Order Notes</h6>
+                                <p id="modalOrderNotes"></p>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <h6>Order Summary</h6>
@@ -420,9 +426,9 @@ $conn->close();
                         </div>
                     </form>
 
-                    <button type="button" class="btn btn-success" id="downloadBillBtn">
+                    <!-- <button type="button" class="btn btn-success" id="downloadBillBtn">
                         <i class="bi bi-file-earmark-pdf"></i> Download Bill
-                    </button>
+                    </button> -->
                     
                     <form method="POST" action="orders.php" class="d-inline ms-2" id="cancelOrderForm">
                         <input type="hidden" name="order_id" id="modalCancelOrderId">
@@ -506,6 +512,17 @@ $conn->close();
             
             // Items
             renderOrderItems(order.items || []);
+
+            // Order notes
+            const $notesContainer = $('#modalOrderNotesContainer');
+            const $notesText = $('#modalOrderNotes');
+            
+            if (order.order_notes) {
+                $notesContainer.show();
+                $notesText.text(order.order_notes);
+            } else {
+                $notesContainer.hide();
+            }
             
             // Financials
             updateFinancials(order);
@@ -598,8 +615,8 @@ $conn->close();
         });
 
         function processOrderAction({action, order_id, new_status, button, success}) {
-            const originalText = button.html();
-            button.html('<i class="bi bi-arrow-repeat spin"></i> Processing...').prop('disabled', true);
+            // const originalText = button.html();
+            // button.html('<i class="bi bi-arrow-repeat spin"></i> Processing...').prop('disabled', true);
             
             $.ajax({
                 url: 'orders.php',

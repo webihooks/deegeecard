@@ -298,7 +298,19 @@ background-color: #5a6268;
 #downloadBillBtn {
     margin-right: auto;
 }
-
+#modalOrderNotes {
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px dotted red;
+    font-style: italic;
+    white-space: pre-wrap; /* Preserve line breaks */
+}
+#modalOrderNotesContainer h6 {
+    color: red;
+    font-weight: bold;
+    margin-top: 15px;
+}
 
 
 
