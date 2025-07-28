@@ -792,7 +792,7 @@ h6 {
 }
 
 .cart-total-details div {
-    padding: 3px 0;
+    padding: 1px 0;
 }
 
 .cart-total-details div:last-child {
@@ -1180,55 +1180,30 @@ h6 {
 
 
 
-/* Coupon section styles */
-/*#couponSection {
-    margin-bottom: 1rem;
-}
 
-#couponSection .input-group {
-    display: flex;
-    width: 100%;
-}
-
-#couponCode {
-    flex-grow: 1;
-}
-
-#applyCouponBtn {
-    white-space: nowrap;
-    font-size: 14px;
-}
-
-.cart-coupon {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1px 1px 1px 10px !important;
-  border-radius: 0.25rem;
-  margin: 0.5rem 0;
-  border: 1px dotted green;
-}*/
-
-
-
-.cart-coupon {
-    padding: 8px 0;
-    border-top: 1px dashed #eee;
-    border-bottom: 1px dashed #eee;
-    margin: 8px 0;
-}
-
-.cart-coupon .btn {
-    padding: 0.15rem 0.5rem;
+/* Add to your CSS */
+#couponMessage {
+    display: block;
+    margin-top: 5px;
     font-size: 0.8rem;
 }
 
-.coupon-form {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 5px;
-    margin-top: 15px;
+#applyCouponBtn {
+    min-width: 80px;
 }
+/* Add to your CSS */
+#couponMessage, #discountSection {
+    transition: all 0.3s ease;
+}
+
+.cart-button .discount-message {
+    transition: opacity 0.3s ease;
+}
+
+
+
+
+
 
 
 
@@ -1299,6 +1274,100 @@ h6 {
       -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
     }
 }
+
+
+
+
+
+
+
+
+
+/* Order Success Popup */
+.order-success-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.order-success-popup.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.order-success-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.order-success-popup.active .order-success-content {
+    transform: translateY(0);
+}
+
+.order-success-icon {
+    font-size: 50px;
+    color: #28a745;
+    margin-bottom: 20px;
+}
+
+.order-success-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.order-success-message {
+    margin-bottom: 20px;
+    color: #555;
+}
+
+.order-success-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.order-success-btn:hover {
+    background-color: #218838;
+}
+.order-success-content h4 {
+  font-size: 15px;
+  font-style: italic;
+  line-height: 24px;
+  color: #333;
+}
+
+
+
+
+
+
+
+
+
+
 
 
 

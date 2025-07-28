@@ -41,12 +41,15 @@
                               <!-- <a class="dropdown-item" href="profile.php">
                                    <i class="bx bx-user-circle text-muted fs-18 align-middle me-1"></i><span class="align-middle">Profile</span>
                               </a> -->
-
+                                
                               <div class="dropdown-divider my-1"></div>
-
-                              <a class="dropdown-item text-danger" href="logout.php">
+                                <?php
+                                if (!isset($_SESSION['android_logout_button'])) {
+                                    echo '<a class="dropdown-item text-danger" href="logout.php">
                                    <i class="bx bx-log-out fs-18 align-middle me-1"></i><span class="align-middle">Logout</span>
-                              </a>
+                              </a>';
+                                } ?>
+                              
                          </div>
                     </div>
 

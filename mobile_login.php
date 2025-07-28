@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Store user data in the session
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['role'] = $user['role']; // Assuming you have a 'role' column in your users table
-            
+            $_SESSION['android_logout_button'] = '1';
             // Check if trial has ended
             if (isset($user['trial_end']) && strtotime($user['trial_end']) < time()) {
                 // Trial has ended, redirect to subscription page

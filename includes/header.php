@@ -171,11 +171,6 @@
         .offer_popup .btn-close-black {
             background: var(--secondary-color);
         }
-        #applyCouponBtn {
-            background: var(--primary-color) !important;
-            border-color: var(--primary-color) !important;
-            color: #fff;
-        }
         .btn:hover, .btn-check:checked + .btn, .btn.active, .btn.show, .btn:first-child:active, :not(.btn-check) + .btn:active {
             background: var(--primary-color);
             border-color: var(--primary-color);
