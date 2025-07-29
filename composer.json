@@ -1,8 +1,8 @@
 {
     "require": {
         "razorpay/razorpay": "^2.9",
-        "endroid/qr-code": "^6.0",
         "thiagoalessio/tesseract_ocr": "^2.13",
-        "phpoffice/phpspreadsheet": "^4.4"
+        "phpoffice/phpspreadsheet": "^1.26",
+        "endroid/qr-code": "^5.0"
     }
 }

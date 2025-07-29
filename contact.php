@@ -123,16 +123,6 @@
 
                     <li>
                       <div class="img">
-                        <img src="images/call_icon.webp" alt="image">
-                      </div>
-                      <div class="text">
-                        <span>Sajeed Shaikh (BDM)</span>
-                        <a href="tel:918369105106"> +91 83691 05106 </a>
-                      </div>
-                    </li>
-
-                    <li>
-                      <div class="img">
                         <img src="images/mail_icon.webp" alt="image">
                       </div>
                       <div class="text">
