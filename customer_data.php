@@ -35,7 +35,7 @@ if (!empty($search)) {
 }
 
 // Pagination setup
-$limit = 10; // records per page
+$limit = 100; // records per page
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $page = max($page, 1);
 $offset = ($page - 1) * $limit;

@@ -17,12 +17,21 @@ $user_id = $_SESSION['user_id'];
 $message = '';
 $message_type = 'success';
 
-// Get selected date from request or default to today
-$selected_date = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
+// Get date range from request or default to today
+$from_date = isset($_GET['from_date']) ? $_GET['from_date'] : date('Y-m-d');
+$to_date = isset($_GET['to_date']) ? $_GET['to_date'] : date('Y-m-d');
 
-// Validate date format
-if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $selected_date)) {
-    $selected_date = date('Y-m-d');
+// Validate date formats
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $from_date)) {
+    $from_date = date('Y-m-d');
+}
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $to_date)) {
+    $to_date = date('Y-m-d');
+}
+
+// Ensure to_date is not before from_date
+if ($to_date < $from_date) {
+    $to_date = $from_date;
 }
 
 // Fetch user details
@@ -120,13 +129,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
 
 // Fetch all orders for this user with pagination
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$per_page = 50;
+$per_page = 200;
 $offset = ($page - 1) * $per_page;
 
-// Get total count of orders for selected date
-$count_sql = "SELECT COUNT(*) FROM orders WHERE user_id = ? AND DATE(created_at) = ?";
+// Get total count of orders for selected date range
+$count_sql = "SELECT COUNT(*) FROM orders WHERE user_id = ? AND DATE(created_at) BETWEEN ? AND ?";
 $count_stmt = $conn->prepare($count_sql);
-$count_stmt->bind_param("is", $user_id, $selected_date);
+$count_stmt->bind_param("iss", $user_id, $from_date, $to_date);
 $count_stmt->execute();
 $count_stmt->bind_result($total_orders);
 $count_stmt->fetch();
@@ -134,7 +143,7 @@ $count_stmt->close();
 
 $total_pages = ceil($total_orders / $per_page);
 
-// Fetch orders with items for selected date
+// Fetch orders with items for selected date range
 $orders_sql = "SELECT 
     o.order_id, 
     o.customer_name, 
@@ -154,13 +163,13 @@ $orders_sql = "SELECT
     COUNT(oi.item_id) as item_count
 FROM orders o
 LEFT JOIN order_items oi ON o.order_id = oi.order_id
-WHERE o.user_id = ? AND DATE(o.created_at) = ?
+WHERE o.user_id = ? AND DATE(o.created_at) BETWEEN ? AND ?
 GROUP BY o.order_id
 ORDER BY o.created_at DESC
 LIMIT ? OFFSET ?";
 
 $orders_stmt = $conn->prepare($orders_sql);
-$orders_stmt->bind_param("isii", $user_id, $selected_date, $per_page, $offset);
+$orders_stmt->bind_param("issii", $user_id, $from_date, $to_date, $per_page, $offset);
 $orders_stmt->execute();
 $result = $orders_stmt->get_result();
 $orders = [];
@@ -217,12 +226,27 @@ $conn->close();
                         <div class="card">
                             <div class="card-header">
                                 <h4 class="card-title">Order Management
-                                    <div class="float-end">
-                                        <form method="GET" class="d-inline-flex">
-                                            <input type="date" name="date" class="form-control me-2" 
-                                                   value="<?php echo htmlspecialchars($selected_date); ?>" 
-                                                   max="<?php echo date('Y-m-d'); ?>">
-                                            <button type="submit" class="btn btn-primary">View Orders</button>
+                                    <div class="float-end order_section">
+                                        <form method="GET" class="d-inline-flex align-items-center">
+                                            
+
+                                                <div class="me-2">
+                                                    <label class="form-label small mb-0">From</label>
+                                                    <input type="date" name="from_date" class="form-control" 
+                                                           value="<?php echo htmlspecialchars($from_date); ?>" 
+                                                           max="<?php echo date('Y-m-d'); ?>">
+                                                </div>
+                                                <div class="me-2">
+                                                    <label class="form-label small mb-0">To</label>
+                                                    <input type="date" name="to_date" class="form-control" 
+                                                           value="<?php echo htmlspecialchars($to_date); ?>" 
+                                                           max="<?php echo date('Y-m-d'); ?>">
+                                                </div>
+
+
+                                            
+                                                    <button type="submit" class="btn btn-primary align-self-end">View Orders</button>  
+                                                
                                         </form>
                                         <button type="button" id="fullscreenToggle" class="btn btn-primary ms-2">Fullscreen</button>
                                     </div>
@@ -235,11 +259,26 @@ $conn->close();
                                     </div>
                                 <?php endif; ?>
 
-                                <h5 class="mb-3">Orders for <?php echo date('F j, Y', strtotime($selected_date)); ?></h5>
+                                <h5 class="mb-3">
+                                    <?php 
+                                    $today = date('Y-m-d');
+                                    if ($from_date == $today && $to_date == $today) {
+                                        echo "Today's Orders (" . date('F j, Y', strtotime($from_date)) . ")";
+                                    } else {
+                                        echo "Orders from " . date('F j, Y', strtotime($from_date)) . " to " . date('F j, Y', strtotime($to_date));
+                                    }
+                                    ?>
+                                </h5>
 
                                 <?php if (empty($orders)): ?>
                                     <div class="alert alert-info">
-                                        No orders found for <?php echo date('F j, Y', strtotime($selected_date)); ?>.
+                                        <?php 
+                                        if ($from_date == $today && $to_date == $today) {
+                                            echo "No orders found for today (" . date('F j, Y', strtotime($from_date)) . ")";
+                                        } else {
+                                            echo "No orders found from " . date('F j, Y', strtotime($from_date)) . " to " . date('F j, Y', strtotime($to_date));
+                                        }
+                                        ?>
                                     </div>
                                 <?php else: ?>
                                     <div class="table-responsive mobile_table">
@@ -248,7 +287,7 @@ $conn->close();
                                                 <tr>
                                                     <th>Sr. No.</th>
                                                     <th>Order ID</th>
-                                                    <th>Time</th>
+                                                    <th>Date & Time</th>
                                                     <th>Customer</th>
                                                     <th>Type</th>
                                                     <th>Items</th>
@@ -257,46 +296,51 @@ $conn->close();
                                                     <th>Actions</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
-                                                <?php foreach ($orders as $index => $order): ?>
-                                                    <tr>
-                                                        <td data-label="Sr. No."><?php echo $index + 1 + $offset; ?></td>
-                                                        <td data-label="Order ID">#<?php echo htmlspecialchars($order['order_id']); ?></td>
-                                                        <td data-label="Time"><?php echo date('h:i A', strtotime($order['created_at'])); ?></td>
-                                                        <td data-label="Customer"><?php echo htmlspecialchars($order['customer_name']); ?></td>
-                                                        <td data-label="Type">
-                                                            <?php 
-                                                            if ($order['order_type'] === 'dining') {
-                                                                echo 'Dining - Table ' . htmlspecialchars($order['table_number']);
-                                                            } else {
-                                                                echo ucfirst(htmlspecialchars($order['order_type']));
-                                                            }
-                                                            ?>
-                                                        </td>
-                                                        <td data-label="Items"><?php echo htmlspecialchars($order['item_count']); ?></td>
-                                                        <td data-label="Total">₹<?php echo number_format($order['total_amount'], 2); ?></td>
-                                                        <td data-label="Status">
-                                                            <span class="status-badge status-<?php echo strtolower(str_replace(' ', '_', $order['status'])); ?>">
-                                                                <?php echo ucfirst(str_replace('_', ' ', $order['status'])); ?>
-                                                            </span>
-                                                        </td>
-                                                        <td data-label="Actions">
-                                                            <button class="btn btn-sm btn-primary view-order" 
-                                                                    data-order-id="<?php echo $order['order_id']; ?>"
-                                                                    data-bs-toggle="modal" 
-                                                                    data-bs-target="#orderModal">
-                                                                <i class="bi bi-eye"></i> View
-                                                            </button>
-                                                            <?php if (in_array($order['status'], ['pending', 'confirmed', 'preparing'])): ?>
-                                                                <button class="btn btn-sm btn-danger cancel-order" 
-                                                                        data-order-id="<?php echo $order['order_id']; ?>">
-                                                                    <i class="bi bi-x-circle"></i> Cancel
-                                                                </button>
-                                                            <?php endif; ?>
-                                                        </td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
+                                            
+
+<tbody>
+    <?php foreach ($orders as $index => $order): ?>
+        <tr>
+            <td data-label="Sr. No."><?php echo $index + 1 + $offset; ?></td>
+            <td data-label="Order ID">#<?php echo htmlspecialchars($order['order_id']); ?></td>
+            <td data-label="Date & Time">
+                <?php echo date('d/m/Y h:i A', strtotime($order['created_at'])); ?>
+            </td>
+            <td data-label="Customer"><?php echo htmlspecialchars($order['customer_name']); ?></td>
+            <td data-label="Type">
+                <?php 
+                if ($order['order_type'] === 'dining') {
+                    echo 'Dining - Table ' . htmlspecialchars($order['table_number']);
+                } else {
+                    echo ucfirst(htmlspecialchars($order['order_type']));
+                }
+                ?>
+            </td>
+            <td data-label="Items"><?php echo htmlspecialchars($order['item_count']); ?></td>
+            <td data-label="Total">₹<?php echo number_format($order['total_amount'], 2); ?></td>
+            <td data-label="Status">
+                <span class="status-badge status-<?php echo strtolower(str_replace(' ', '_', $order['status'])); ?>">
+                    <?php echo ucfirst(str_replace('_', ' ', $order['status'])); ?>
+                </span>
+            </td>
+            <td data-label="Actions">
+                <button class="btn btn-sm btn-primary view-order" 
+                        data-order-id="<?php echo $order['order_id']; ?>"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#orderModal">
+                    <i class="bi bi-eye"></i> View
+                </button>
+                <?php if (in_array($order['status'], ['pending', 'confirmed', 'preparing'])): ?>
+                    <button class="btn btn-sm btn-danger cancel-order" 
+                            data-order-id="<?php echo $order['order_id']; ?>">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                <?php endif; ?>
+            </td>
+        </tr>
+    <?php endforeach; ?>
+</tbody>
+
                                         </table>
                                     </div>
 
@@ -306,7 +350,7 @@ $conn->close();
                                             <ul class="pagination justify-content-center mt-3">
                                                 <?php if ($page > 1): ?>
                                                     <li class="page-item">
-                                                        <a class="page-link" href="?date=<?php echo $selected_date; ?>&page=<?php echo $page - 1; ?>" aria-label="Previous">
+                                                        <a class="page-link" href="?from_date=<?php echo $from_date; ?>&to_date=<?php echo $to_date; ?>&page=<?php echo $page - 1; ?>" aria-label="Previous">
                                                             <span aria-hidden="true">&laquo;</span>
                                                         </a>
                                                     </li>
@@ -314,13 +358,13 @@ $conn->close();
                                                 
                                                 <?php for ($i = 1; $i <= $total_pages; $i++): ?>
                                                     <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
-                                                        <a class="page-link" href="?date=<?php echo $selected_date; ?>&page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                                                        <a class="page-link" href="?from_date=<?php echo $from_date; ?>&to_date=<?php echo $to_date; ?>&page=<?php echo $i; ?>"><?php echo $i; ?></a>
                                                     </li>
                                                 <?php endfor; ?>
                                                 
                                                 <?php if ($page < $total_pages): ?>
                                                     <li class="page-item">
-                                                        <a class="page-link" href="?date=<?php echo $selected_date; ?>&page=<?php echo $page + 1; ?>" aria-label="Next">
+                                                        <a class="page-link" href="?from_date=<?php echo $from_date; ?>&to_date=<?php echo $to_date; ?>&page=<?php echo $page + 1; ?>" aria-label="Next">
                                                             <span aria-hidden="true">&raquo;</span>
                                                         </a>
                                                     </li>
@@ -482,7 +526,7 @@ $conn->close();
             
             setTimeout(() => {
                 alert.alert('close');
-                window.location.href = 'orders.php?date=<?php echo $selected_date; ?>';
+                window.location.href = 'orders.php?from_date=<?php echo $from_date; ?>&to_date=<?php echo $to_date; ?>';
             }, 2000);
         }
 
@@ -637,7 +681,7 @@ $conn->close();
                 complete: function() {
                     if (!window.POLLING_CONFIG.isReloading) {
                         button.html(originalText).prop('disabled', false);
-                    window.location.href = 'orders.php?date=<?php echo $selected_date; ?>';
+                    window.location.href = 'orders.php?from_date=<?php echo $from_date; ?>&to_date=<?php echo $to_date; ?>';
                     }
                 }
             });

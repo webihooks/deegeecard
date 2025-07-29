@@ -360,10 +360,28 @@ background-color: #5a6268;
     .card-summary {
       min-height: inherit;
     }
+    .order_section input.form-control {
+        width: 120px;
+    }
 }
 
 
-
+/* Extra small devices (phones, 360px and below) */
+@media (max-width: 380px) {
+    .order_section input.form-control {
+        width: 90px; /* Even smaller width for very small screens */
+        font-size: 14px; /* Slightly smaller font for better fit */
+        padding: 0.25rem 0.5rem; /* Adjust padding to save space */
+    }
+    
+    .order_section .me-2 {
+        flex: 1 1 100%; /* Stack inputs vertically on very small screens */
+    }
+    
+    .order_section button.btn {
+        font-size: 14px; /* Smaller font for button */
+    }
+}
 
 .status-badge {
 padding: 3px 8px;
@@ -520,7 +538,6 @@ box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         content: attr(data-label);
     }
 }
-
 
 
 

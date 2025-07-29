@@ -300,7 +300,7 @@ $fetch_sales_sql = "SELECT
       </style>
       <script src="assets/js/config.js"></script>
       <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/jquery.validation/1.19.3/jquery.validate.min.js"></script>
+      <script src="assets/js/jquery.validate.min.js"></script>
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
    </head>
@@ -389,15 +389,19 @@ $fetch_sales_sql = "SELECT
                                        </div>
                                     </div>
                                     <div class="row mt-2">
-                                       <div class="col-md-12">
-                                          <button type="submit" class="btn btn-primary btn-block">Apply</button>
-                                       </div>
+                                        <div class="col-md-12">
+                                            <button type="submit" class="btn btn-primary btn-block">Apply</button>
+
+                                            <button type="button" id="downloadCsv" class="btn btn-success btn-block">
+                                                <i class="fas fa-download"></i> Download CSV
+                                            </button>
+                                        </div>
                                     </div>
                                  </div>
                               </form>
                               <?php if (!empty($search_query) || !empty($date_filter) || !empty($follow_up_filter) || $owner_filter >= 0 || ($role === 'admin' && $sales_person_filter > 0) || !empty($status_filter)): ?>
                               <div class="row">
-                                 <div class="col-md-12">
+                                 <div class="col-md-12 mt-2">
                                     <div class="filter-results">
                                        <small class="text-muted">
                                        Filtered results: 
@@ -516,7 +520,9 @@ $fetch_sales_sql = "SELECT
                                                             <div class="remark-container">
                                                                 <?php 
                                                                     $remarks = explode("\n\n", $entry['remark']);
-                                                                    foreach ($remarks as $remark): 
+                                                                    // Reverse the array to show latest first
+                                                                    $reversed_remarks = array_reverse($remarks);
+                                                                    foreach ($reversed_remarks as $remark): 
                                                                         if (!empty(trim($remark))):
                                                                             $parts = explode(" - ", $remark, 2);
                                                                 ?>
@@ -529,7 +535,7 @@ $fetch_sales_sql = "SELECT
                                                                     <?php endif; ?>
                                                                 </div>
                                                                 <?php 
-                                                                    endif;
+                                                                        endif;
                                                                     endforeach; 
                                                                     ?>
                                                             </div>
@@ -857,6 +863,15 @@ $fetch_sales_sql = "SELECT
          function updateButtonLabel() {
            toggleBtn.textContent = isFullscreen() ? 'Exit Fullscreen' : 'Enter Fullscreen';
          }
+
+         // CSV Download functionality
+        $('#downloadCsv').click(function() {
+            // Get current filter parameters
+            var filters = $('#filterForm').serialize();
+            
+            // Open download in new window
+            window.open('download_csv.php?' + filters, '_blank');
+        });
       </script>
       <!-- Then your other scripts -->
       <script src="assets/js/vendor.js"></script>

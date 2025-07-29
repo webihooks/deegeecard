@@ -328,7 +328,7 @@ window.addEventListener('beforeunload', () => {
                <span class="nav-text">Customer Reviews</span>
             </a>
          </li>
-         <li class="menu-title">Services</li>
+         <!-- <li class="menu-title">Services</li>
          <li class="nav-item">
             <a class="nav-link" href="services.php">
                <span class="nav-icon">
@@ -336,7 +336,7 @@ window.addEventListener('beforeunload', () => {
                </span>
                <span class="nav-text">Services</span>
             </a>
-         </li>
+         </li> -->
          <li class="nav-item">
             <a class="nav-link" href="subscription.php">
                <span class="nav-icon">
