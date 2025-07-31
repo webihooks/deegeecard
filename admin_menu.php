@@ -62,7 +62,7 @@
 
                <li class="menu-title">User</li>
 
-               <li class="nav-item">
+               <!-- <li class="nav-item">
                     <a class="nav-link" href="list-of-users.php">
                          <span class="nav-icon">
                               <iconify-icon icon="mdi:users"></iconify-icon>
@@ -78,7 +78,7 @@
                          </span>
                          <span class="nav-text"> Trial Users </span>
                     </a>
-               </li>
+               </li> -->
 
                <li class="nav-item">
                     <a class="nav-link" href="list-of-subscribers.php">
@@ -86,6 +86,15 @@
                               <iconify-icon icon="mdi:subscriber-identification-module-outline"></iconify-icon>
                          </span>
                          <span class="nav-text"> Subscribers </span>
+                    </a>
+               </li>
+
+               <li class="nav-item">
+                    <a class="nav-link" href="subscription_payments.php">
+                         <span class="nav-icon">
+                              <iconify-icon icon="majesticons:rupee-circle-line"></iconify-icon>
+                         </span>
+                         <span class="nav-text"> Subscription </span>
                     </a>
                </li>
 
