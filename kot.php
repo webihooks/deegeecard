@@ -1,11 +1,10 @@
 <?php
-// Start the session
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 session_start();
 
-// Include the database connection file
 require 'db_connection.php';
 
-// Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
@@ -13,160 +12,139 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 $message = '';
-$message_type = 'success';
+$message_type = '';
+$grouped_orders = [];
 
 // Fetch user details
 $sql = "SELECT name, email, phone, address, role FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$stmt->bind_result($user_name, $email, $phone, $address, $role);
-$stmt->fetch();
-$stmt->close();
-
-// Fetch business information
-$business_sql = "SELECT business_name, business_address FROM business_info WHERE user_id = ?";
-$business_stmt = $conn->prepare($business_sql);
-$business_stmt->bind_param("i", $user_id);
-$business_stmt->execute();
-$business_stmt->bind_result($business_name, $business_address);
-$business_stmt->fetch();
-$business_stmt->close();
-
-// If no business info found, set defaults
-if (empty($business_name)) {
-    $business_name = "Your Restaurant";
-    $business_address = "123 Restaurant Street, City";
+if ($stmt) {
+    $stmt->bind_param("i", $user_id);
+    if ($stmt->execute()) {
+        $stmt->bind_result($user_name, $email, $phone, $address, $role);
+        $stmt->fetch();
+    }
+    $stmt->close();
 }
 
-// Handle order status update
+// Handle status update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $order_id = $_POST['order_id'];
     $new_status = $_POST['new_status'];
     
-    // Validate the user owns this order
-    $check_sql = "SELECT user_id FROM orders WHERE order_id = ?";
-    $check_stmt = $conn->prepare($check_sql);
-    $check_stmt->bind_param("i", $order_id);
-    $check_stmt->execute();
-    $check_stmt->bind_result($order_user_id);
-    $check_stmt->fetch();
-    $check_stmt->close();
-    
-    if ($order_user_id == $user_id) {
-        $update_sql = "UPDATE orders SET status = ? WHERE order_id = ?";
-        $update_stmt = $conn->prepare($update_sql);
-        $update_stmt->bind_param("si", $new_status, $order_id);
-        
-        if ($update_stmt->execute()) {
+    $sql = "UPDATE orders SET status = ? WHERE order_id = ?";
+    $stmt = $conn->prepare($sql);
+    if ($stmt) {
+        $stmt->bind_param("si", $new_status, $order_id);
+        if ($stmt->execute()) {
             $message = "Order status updated successfully!";
+            $message_type = "success";
         } else {
-            $message = "Error updating order status: " . $conn->error;
+            $message = "Error updating order status: " . $stmt->error;
             $message_type = "danger";
         }
-        $update_stmt->close();
-    } else {
-        $message = "You don't have permission to update this order.";
-        $message_type = "danger";
+        $stmt->close();
     }
 }
 
-// Handle order cancellation
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
-    $order_id = $_POST['order_id'];
-    
-    // Validate the user owns this order
-    $check_sql = "SELECT user_id, status FROM orders WHERE order_id = ?";
-    $check_stmt = $conn->prepare($check_sql);
-    $check_stmt->bind_param("i", $order_id);
-    $check_stmt->execute();
-    $check_stmt->bind_result($order_user_id, $current_status);
-    $check_stmt->fetch();
-    $check_stmt->close();
-    
-    if ($order_user_id == $user_id) {
-        // Only allow cancellation if order is not already completed/delivered/cancelled
-        if (in_array($current_status, ['pending', 'confirmed', 'preparing'])) {
-            $update_sql = "UPDATE orders SET status = 'cancelled' WHERE order_id = ?";
-            $update_stmt = $conn->prepare($update_sql);
-            $update_stmt->bind_param("i", $order_id);
+// Set filter to today's date only
+$filter_date = date('Y-m-d');
+
+// Determine status filter
+$status_filter = isset($_GET['status']) ? $_GET['status'] : 'active';
+$status_condition = "";
+if ($status_filter === 'active') {
+    $status_condition = "AND (o.status = 'Confirmed' OR o.status = 'Preparing')";
+} elseif ($status_filter === 'confirmed') {
+    $status_condition = "AND o.status = 'Confirmed'";
+} elseif ($status_filter === 'preparing') {
+    $status_condition = "AND o.status = 'Preparing'";
+} elseif ($status_filter === 'ready') {
+    $status_condition = "AND o.status = 'Ready'";
+} elseif ($status_filter === 'all') {
+    $status_condition = "";
+}
+
+// Fetch orders based on filter
+$sql = "SELECT o.order_id, o.customer_name, o.order_notes, o.created_at, 
+               o.order_type, o.table_number, o.status,
+               GROUP_CONCAT(oi.product_name SEPARATOR '|') AS products,
+               GROUP_CONCAT(oi.quantity SEPARATOR '|') AS quantities,
+               GROUP_CONCAT(oi.price SEPARATOR '|') AS prices,
+               SUM(oi.price * oi.quantity) AS total_amount
+        FROM order_items oi
+        JOIN orders o ON oi.order_id = o.order_id
+        WHERE oi.user_id = ? 
+          AND DATE(o.created_at) = ?
+          $status_condition
+        GROUP BY o.order_id
+        ORDER BY 
+            CASE 
+                WHEN o.status = 'Confirmed' THEN 1
+                WHEN o.status = 'Preparing' THEN 2
+                WHEN o.status = 'Ready' THEN 3
+                ELSE 4
+            END,
+            o.created_at DESC";
+
+$stmt = $conn->prepare($sql);
+if ($stmt) {
+    $stmt->bind_param("is", $user_id, $filter_date);
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        $grouped_orders = $result->fetch_all(MYSQLI_ASSOC) ?: [];
+        
+        foreach ($grouped_orders as &$order) {
+            $products = explode('|', $order['products']);
+            $quantities = explode('|', $order['quantities']);
+            $prices = explode('|', $order['prices']);
             
-            if ($update_stmt->execute()) {
-                $message = "Order cancelled successfully!";
-            } else {
-                $message = "Error cancelling order: " . $conn->error;
-                $message_type = "danger";
+            $order['items'] = [];
+            for ($i = 0; $i < count($products); $i++) {
+                $order['items'][] = [
+                    'product_name' => $products[$i],
+                    'quantity' => $quantities[$i],
+                    'price' => $prices[$i]
+                ];
             }
-            $update_stmt->close();
-        } else {
-            $message = "Order cannot be cancelled at this stage.";
-            $message_type = "danger";
+            
+            $order['additional_notes'] = [];
         }
-    } else {
-        $message = "You don't have permission to cancel this order.";
-        $message_type = "danger";
+        unset($order);
+        
+        $order_ids = array_column($grouped_orders, 'order_id');
+        if (!empty($order_ids)) {
+            $table_check = $conn->query("SHOW TABLES LIKE 'order_notes'");
+            if ($table_check && $table_check->num_rows > 0) {
+                $placeholders = implode(',', array_fill(0, count($order_ids), '?'));
+                $sql = "SELECT order_id, note, created_at FROM order_notes WHERE order_id IN ($placeholders) ORDER BY created_at DESC";
+                $stmt = $conn->prepare($sql);
+                if ($stmt) {
+                    $types = str_repeat('i', count($order_ids));
+                    $stmt->bind_param($types, ...$order_ids);
+                    if ($stmt->execute()) {
+                        $result = $stmt->get_result();
+                        $all_notes = $result->fetch_all(MYSQLI_ASSOC);
+                        
+                        $notes_by_order = [];
+                        foreach ($all_notes as $note) {
+                            $notes_by_order[$note['order_id']][] = $note;
+                        }
+                        
+                        foreach ($grouped_orders as &$order) {
+                            if (isset($notes_by_order[$order['order_id']])) {
+                                $order['additional_notes'] = $notes_by_order[$order['order_id']];
+                            }
+                        }
+                        unset($order);
+                    }
+                    $stmt->close();
+                }
+            }
+        }
     }
+    $stmt->close();
 }
-
-// Fetch all orders for this user with pagination
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$per_page = 10;
-$offset = ($page - 1) * $per_page;
-
-// Get total count of orders
-$count_sql = "SELECT COUNT(*) FROM orders WHERE user_id = ?";
-$count_stmt = $conn->prepare($count_sql);
-$count_stmt->bind_param("i", $user_id);
-$count_stmt->execute();
-$count_stmt->bind_result($total_orders);
-$count_stmt->fetch();
-$count_stmt->close();
-
-$total_pages = ceil($total_orders / $per_page);
-
-// Fetch orders with items
-$orders = [];
-$orders_sql = "SELECT 
-    o.order_id, 
-    o.customer_name, 
-    o.customer_phone, 
-    o.order_type, 
-    o.delivery_address, 
-    o.table_number, 
-    o.status, 
-    o.subtotal, 
-    o.discount_amount, 
-    o.discount_type, 
-    o.gst_amount, 
-    o.delivery_charge, 
-    o.total_amount, 
-    o.created_at,
-    COUNT(oi.item_id) as item_count
-FROM orders o
-LEFT JOIN order_items oi ON o.order_id = oi.order_id
-WHERE o.user_id = ?
-GROUP BY o.order_id
-ORDER BY o.created_at DESC
-LIMIT ? OFFSET ?";
-
-$orders_stmt = $conn->prepare($orders_sql);
-$orders_stmt->bind_param("iii", $user_id, $per_page, $offset);
-$orders_stmt->execute();
-$result = $orders_stmt->get_result();
-
-while ($order = $result->fetch_assoc()) {
-    // Get order items
-    $items_sql = "SELECT product_name, price, quantity FROM order_items WHERE order_id = ?";
-    $items_stmt = $conn->prepare($items_sql);
-    $items_stmt->bind_param("i", $order['order_id']);
-    $items_stmt->execute();
-    $items_result = $items_stmt->get_result();
-    $order['items'] = $items_result->fetch_all(MYSQLI_ASSOC);
-    $items_stmt->close();
-    
-    $orders[] = $order;
-}
-$orders_stmt->close();
 
 $conn->close();
 ?>
@@ -175,7 +153,7 @@ $conn->close();
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>Order Management</title>
+    <title>Kitchen Orders (KOT)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="assets/css/vendor.min.css" rel="stylesheet" />
     <link href="assets/css/icons.min.css" rel="stylesheet" />
@@ -183,130 +161,333 @@ $conn->close();
     <link href="assets/css/style.css" rel="stylesheet" />
     <script src="assets/js/config.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        .status-Confirmed { background-color: #17a2b8; color: #fff; }
+        .status-Preparing { background-color: #fd7e14; color: #fff; }
+        .status-Ready { background-color: #28a745; color: #fff; }
+        .status-Pending { background-color: #ffc107; color: #000; }
+        .kot_qty { color: #6c757d; font-size: 0.9em; }
+        .order-details { padding: 0; margin: 0; }
+        .order-details li { list-style-type: none; padding: 5px 0; border-bottom: 1px solid #eee; }
+        .order-details li:last-child { border-bottom: none; }
+        .status-badge { padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 0.8em; }
+        .status-filter { margin-bottom: 20px; }
+        .action-buttons .btn { margin-right: 5px; margin-bottom: 5px; }
+        .dropdown-item.active { background-color: #e9ecef; color: #495057; font-weight: bold; }
+        
+        /* Responsive table styles */
+        @media (max-width: 992px) {
+            .table-responsive table {
+                width: 100%;
+            }
+            
+            .table-responsive thead {
+                display: none;
+            }
+            
+            .table-responsive tr {
+                display: block;
+                margin-bottom: 1rem;
+                border: 1px solid #dee2e6;
+                border-radius: 0.25rem;
+            }
+            
+            .table-responsive td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.75rem;
+                border-bottom: 1px solid #dee2e6;
+                position: relative;
+                padding-left: 50%;
+            }
+            
+            .table-responsive td:before {
+                content: attr(data-label);
+                position: absolute;
+                left: 0.75rem;
+                width: 45%;
+                padding-right: 1rem;
+                font-weight: bold;
+                text-align: left;
+            }
+            
+            .table-responsive td:last-child {
+                border-bottom: 0;
+            }
+            
+            .action-buttons {
+                justify-content: flex-end !important;
+            }
+            
+            /* Adjust order details for mobile */
+            .order-details li {
+                padding: 3px 0;
+            }
+            
+            .kot_qty {
+                display: block;
+                margin-left: 0;
+                margin-top: 2px;
+            }
+        }
+        
+        /* Mobile card view styles */
+        @media (max-width: 768px) {
+            .order-card {
+                border: 1px solid #dee2e6;
+                border-radius: 0.25rem;
+                margin-bottom: 1rem;
+                padding: 1rem;
+            }
+            
+            .order-header {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 0.5rem;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 0.5rem;
+            }
+            
+            .order-body {
+                margin-bottom: 0.5rem;
+            }
+            
+            .order-footer {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .mobile-order-item {
+                display: flex;
+                justify-content: space-between;
+                padding: 0.25rem 0;
+            }
+            
+            .mobile-order-notes {
+                font-size: 0.9em;
+                color: #6c757d;
+            }
+        }
+    </style>
 </head>
 
 <body>
     <div class="wrapper">
         <?php include 'toolbar.php'; ?>
-        <?php
-        if ($role === 'admin') {
-            include 'admin_menu.php';
-        } else {
-            include 'menu.php';
-        }
-        ?>
+        <?php include ($role === 'admin') ? 'admin_menu.php' : 'menu.php'; ?>
 
         <div class="page-content">
-            <div class="container">
+            <div class="container-fluid">
                 <div class="row">
-                    <div class="col-12">
+                    <div class="col-xl-12">
                         <div class="card">
                             <div class="card-header">
-                                <h4 class="card-title">Order Management
-                                        <button id="fullscreenToggle" class="btn btn-primary btn-block fr">Enter Fullscreen</button>
-                                </h4>
+                                <h4 class="card-title">Kitchen Orders (KOT) - <?php echo date('F j, Y'); ?></h4>
+                                <div class="float-end">
+                                    <span class="badge bg-primary">Total: <?php echo count($grouped_orders); ?></span>
+                                </div>
                             </div>
                             <div class="card-body">
                                 <?php if (!empty($message)): ?>
-                                    <div class="alert alert-<?php echo $message_type; ?>">
-                                        <?php echo htmlspecialchars($message); ?>
-                                    </div>
+                                    <div class="alert alert-<?php echo $message_type; ?>"><?php echo $message; ?></div>
                                 <?php endif; ?>
-
-                                <?php if (empty($orders)): ?>
-                                    <div class="alert alert-info">
-                                        You haven't placed any orders yet.
+                                
+                                <div class="status-filter mb-3">
+                                    <div class="dropdown">
+                                        <button class="btn btn-secondary dropdown-toggle" type="button" id="statusFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <?php 
+                                            $filter_labels = [
+                                                'active' => 'Active Orders',
+                                                'confirmed' => 'Confirmed',
+                                                'preparing' => 'Preparing',
+                                                'ready' => 'Ready',
+                                                'all' => 'All Orders'
+                                            ];
+                                            echo $filter_labels[$status_filter] ?? 'Filter Orders';
+                                            ?>
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="statusFilterDropdown">
+                                            <li><a class="dropdown-item <?php echo $status_filter === 'active' ? 'active' : ''; ?>" href="?status=active">Active Orders</a></li>
+                                            <li><a class="dropdown-item <?php echo $status_filter === 'confirmed' ? 'active' : ''; ?>" href="?status=confirmed">Confirmed</a></li>
+                                            <li><a class="dropdown-item <?php echo $status_filter === 'preparing' ? 'active' : ''; ?>" href="?status=preparing">Preparing</a></li>
+                                            <li><a class="dropdown-item <?php echo $status_filter === 'ready' ? 'active' : ''; ?>" href="?status=ready">Ready</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item <?php echo $status_filter === 'all' ? 'active' : ''; ?>" href="?status=all">All Orders</a></li>
+                                        </ul>
                                     </div>
+                                </div>
+                                
+                                <?php if (empty($grouped_orders)): ?>
+                                    <div class="alert alert-info">No orders found for the selected filter.</div>
                                 <?php else: ?>
-                                    <div class="table-responsive">
-                                        <table class="table table-hover mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th>Sr. No.</th>
-                                                    <th>Order ID</th>
-                                                    <th>Date</th>
-                                                    <th>Customer</th>
-                                                    <th>Type</th>
-                                                    <th>Items</th>
-                                                    <th>Total</th>
-                                                    <th>Status</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php foreach ($orders as $index => $order): ?>
+                                    <!-- Desktop View -->
+                                    <div class="d-none d-lg-block">
+                                        <div class="table-responsive">
+                                            <table class="table table-striped">
+                                                <thead>
                                                     <tr>
-                                                        <td><?php echo $index + 1; ?></td>
-                                                        <td>#<?php echo htmlspecialchars($order['order_id']); ?></td>
-                                                        <td><?php echo date('M d, Y h:i A', strtotime($order['created_at'])); ?></td>
-                                                        <td><?php echo htmlspecialchars($order['customer_name']); ?></td>
-                                                        <td>
-                                                            <?php 
-                                                            if ($order['order_type'] === 'dining') {
-                                                                echo 'Dining - Table ' . htmlspecialchars($order['table_number']);
-                                                            } else {
-                                                                echo ucfirst(htmlspecialchars($order['order_type']));
-                                                            }
-                                                            ?>
-                                                        </td>
-                                                        <td><?php echo htmlspecialchars($order['item_count']); ?></td>
-                                                        <td>₹<?php echo number_format($order['total_amount'], 2); ?></td>
-                                                        <td>
-                                                            <span class="status-badge status-<?php echo strtolower(str_replace(' ', '_', $order['status'])); ?>">
-                                                                <?php echo ucfirst(str_replace('_', ' ', $order['status'])); ?>
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <button class="btn btn-sm btn-primary view-order" 
-                                                                    data-order-id="<?php echo $order['order_id']; ?>"
-                                                                    data-bs-toggle="modal" 
-                                                                    data-bs-target="#orderModal">
-                                                                <i class="bi bi-eye"></i> View
-                                                            </button>
-                                                            <?php if (in_array($order['status'], ['pending', 'confirmed', 'preparing'])): ?>
-                                                                <button class="btn btn-sm btn-danger cancel-order" 
-                                                                        data-order-id="<?php echo $order['order_id']; ?>">
-                                                                    <i class="bi bi-x-circle"></i> Cancel
-                                                                </button>
-                                                            <?php endif; ?>
-                                                        </td>
+                                                        <th width="30">Order ID</th>
+                                                        <th width="30">Customer</th>
+                                                        <th width="30">Type/Table</th>
+                                                        <th width="30">Status</th>
+                                                        <th>Items</th>
+                                                        <th>Notes</th>
+                                                        <th width="30">Time</th>
+                                                        <th width="30">Actions</th>
                                                     </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody>
+                                                    <?php foreach ($grouped_orders as $order): ?>
+                                                        <tr>
+                                                            <td data-label="Order ID"><?php echo htmlspecialchars($order['order_id']); ?></td>
+                                                            <td data-label="Customer"><?php echo htmlspecialchars($order['customer_name']); ?></td>
+                                                            <td data-label="Type/Table">
+                                                                <?php if ($order['order_type'] === 'dining' && !empty($order['table_number'])): ?>
+                                                                    Table <?php echo htmlspecialchars($order['table_number']); ?>
+                                                                <?php else: ?>
+                                                                    <?php echo ucfirst($order['order_type']); ?>
+                                                                <?php endif; ?>
+                                                            </td>
+                                                            <td data-label="Status">
+                                                                <span class="status-badge status-<?php echo htmlspecialchars($order['status']); ?>">
+                                                                    <?php echo htmlspecialchars($order['status']); ?>
+                                                                </span>
+                                                            </td>
+                                                            <td data-label="Items">
+                                                                <ul class="order-details">
+                                                                    <?php foreach ($order['items'] as $item): ?>
+                                                                        <li>
+                                                                            <?php echo htmlspecialchars($item['product_name']); ?> 
+                                                                            - ₹<?php echo number_format($item['price']); ?>
+                                                                            <span class="kot_qty">(Qty: <?php echo htmlspecialchars($item['quantity']); ?>)</span>
+                                                                        </li>
+                                                                    <?php endforeach; ?>
+                                                                </ul>
+                                                            </td>
+                                                            <td data-label="Notes">
+                                                                <?php if (!empty($order['order_notes'])): ?>
+                                                                    <div><?php echo htmlspecialchars($order['order_notes']); ?></div>
+                                                                <?php endif; ?>
+                                                                <?php if (!empty($order['additional_notes'])): ?>
+                                                                    <div><small>Additional Notes:</small>
+                                                                        <ul>
+                                                                            <?php foreach ($order['additional_notes'] as $note): ?>
+                                                                                <li><small><?php echo htmlspecialchars($note['note']); ?> (<?php echo date('h:i A', strtotime($note['created_at'])); ?>)</small></li>
+                                                                            <?php endforeach; ?>
+                                                                        </ul>
+                                                                    </div>
+                                                                <?php endif; ?>
+                                                            </td>
+                                                            <td data-label="Time"><?php echo date('h:i A', strtotime($order['created_at'])); ?></td>
+                                                            <td data-label="Actions" class="action-buttons">
+                                                                <?php if ($order['status'] === 'Confirmed'): ?>
+                                                                    <form method="post" style="display: inline;">
+                                                                        <input type="hidden" name="order_id" value="<?php echo $order['order_id']; ?>">
+                                                                        <input type="hidden" name="new_status" value="Preparing">
+                                                                        <button type="submit" name="update_status" class="btn btn-sm btn-warning">Preparing</button>
+                                                                    </form>
+                                                                <?php elseif ($order['status'] === 'Preparing'): ?>
+                                                                    <form method="post" style="display: inline;">
+                                                                        <input type="hidden" name="order_id" value="<?php echo $order['order_id']; ?>">
+                                                                        <input type="hidden" name="new_status" value="Ready">
+                                                                        <button type="submit" name="update_status" class="btn btn-sm btn-success">Ready</button>
+                                                                    </form>
+                                                                <?php elseif ($order['status'] === 'Ready'): ?>
+                                                                    <span class="text-success">Completed</span>
+                                                                <?php endif; ?>
+                                                            </td>
+                                                        </tr>
+                                                    <?php endforeach; ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
-
-                                    <!-- Pagination -->
-                                    <?php if ($total_pages > 1): ?>
-                                        <nav aria-label="Page navigation">
-                                            <ul class="pagination justify-content-center mt-3">
-                                                <?php if ($page > 1): ?>
-                                                    <li class="page-item">
-                                                        <a class="page-link" href="?page=<?php echo $page - 1; ?>" aria-label="Previous">
-                                                            <span aria-hidden="true">&laquo;</span>
-                                                        </a>
-                                                    </li>
-                                                <?php endif; ?>
+                                    
+                                    <!-- Mobile View -->
+                                    <div class="d-lg-none">
+                                        <?php foreach ($grouped_orders as $order): ?>
+                                            <div class="order-card mb-3">
+                                                <div class="order-header">
+                                                    <div>
+                                                        <strong>Order #<?php echo $order['order_id']; ?></strong>
+                                                        <div class="text-muted small"><?php echo date('h:i A', strtotime($order['created_at'])); ?></div>
+                                                    </div>
+                                                    <div>
+                                                        <span class="status-badge status-<?php echo $order['status']; ?>">
+                                                            <?php echo $order['status']; ?>
+                                                        </span>
+                                                    </div>
+                                                </div>
                                                 
-                                                <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                                                    <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
-                                                        <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
-                                                    </li>
-                                                <?php endfor; ?>
+                                                <div class="order-body">
+                                                    <div class="mb-2">
+                                                        <strong>Customer:</strong> <?php echo $order['customer_name']; ?>
+                                                        <?php if ($order['order_type'] === 'dining' && !empty($order['table_number'])): ?>
+                                                            <span class="text-muted">(Table <?php echo $order['table_number']; ?>)</span>
+                                                        <?php else: ?>
+                                                            <span class="text-muted">(<?php echo ucfirst($order['order_type']); ?>)</span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    
+                                                    <div class="mb-2">
+                                                        <strong>Items:</strong>
+                                                        <ul class="list-unstyled">
+                                                            <?php foreach ($order['items'] as $item): ?>
+                                                                <li class="mobile-order-item">
+                                                                    <span>
+                                                                        <?php echo $item['product_name']; ?> 
+                                                                        <span class="text-muted">x<?php echo $item['quantity']; ?></span>
+                                                                    </span>
+                                                                    <span>₹<?php echo number_format($item['price']); ?></span>
+                                                                </li>
+                                                            <?php endforeach; ?>
+                                                        </ul>
+                                                    </div>
+                                                    
+                                                    <?php if (!empty($order['order_notes']) || !empty($order['additional_notes'])): ?>
+                                                        <div class="mb-2">
+                                                            <strong>Notes:</strong>
+                                                            <?php if (!empty($order['order_notes'])): ?>
+                                                                <div class="mobile-order-notes"><?php echo $order['order_notes']; ?></div>
+                                                            <?php endif; ?>
+                                                            <?php if (!empty($order['additional_notes'])): ?>
+                                                                <div class="small text-muted">
+                                                                    Additional Notes:
+                                                                    <ul>
+                                                                        <?php foreach ($order['additional_notes'] as $note): ?>
+                                                                            <li><?php echo $note['note']; ?> (<?php echo date('h:i A', strtotime($note['created_at'])); ?>)</li>
+                                                                        <?php endforeach; ?>
+                                                                    </ul>
+                                                                </div>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
                                                 
-                                                <?php if ($page < $total_pages): ?>
-                                                    <li class="page-item">
-                                                        <a class="page-link" href="?page=<?php echo $page + 1; ?>" aria-label="Next">
-                                                            <span aria-hidden="true">&raquo;</span>
-                                                        </a>
-                                                    </li>
-                                                <?php endif; ?>
-                                            </ul>
-                                        </nav>
-                                    <?php endif; ?>
+                                                <div class="order-footer">
+                                                    <div class="action-buttons">
+                                                        <?php if ($order['status'] === 'Confirmed'): ?>
+                                                            <form method="post" class="d-inline">
+                                                                <input type="hidden" name="order_id" value="<?php echo $order['order_id']; ?>">
+                                                                <input type="hidden" name="new_status" value="Preparing">
+                                                                <button type="submit" name="update_status" class="btn btn-sm btn-warning">Preparing</button>
+                                                            </form>
+                                                        <?php elseif ($order['status'] === 'Preparing'): ?>
+                                                            <form method="post" class="d-inline">
+                                                                <input type="hidden" name="order_id" value="<?php echo $order['order_id']; ?>">
+                                                                <input type="hidden" name="new_status" value="Ready">
+                                                                <button type="submit" name="update_status" class="btn btn-sm btn-success">Ready</button>
+                                                            </form>
+                                                        <?php elseif ($order['status'] === 'Ready'): ?>
+                                                            <span class="text-success">Completed</span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -317,592 +498,19 @@ $conn->close();
         </div>
     </div>
 
-    <!-- Order Details Modal -->
-    <div class="modal fade order-modal" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="orderModalLabel">Order Details #<span id="modalOrderId"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h6>Customer Information</h6>
-                            <p><strong>Name:</strong> <span id="modalCustomerName"></span></p>
-                            <p><strong>Phone:</strong> <span id="modalCustomerPhone"></span></p>
-                            <p id="modalDeliveryAddress"><strong>Address:</strong> <span id="modalAddressText"></span></p>
-                            <p id="modalTableNumber"><strong>Table Number:</strong> <span id="modalTableText"></span></p>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Order Summary</h6>
-                            <p><strong>Order Type:</strong> <span id="modalOrderType"></span></p>
-                            <p><strong>Order Date:</strong> <span id="modalOrderDate"></span></p>
-                            <p><strong>Status:</strong> <span id="modalOrderStatus" class="status-badge"></span></p>
-                        </div>
-                    </div>
-                    
-                    <h6>Order Items</h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm order-items-table">
-                            <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <th>Price</th>
-                                    <th>Qty</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody id="modalOrderItems">
-                                <!-- Items will be inserted here by JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="row mt-3">
-                        <div class="col-md-6 offset-md-6">
-                            <table class="table table-sm">
-                                <tr>
-                                    <td><strong>Subtotal:</strong></td>
-                                    <td>₹<span id="modalSubtotal"></span></td>
-                                </tr>
-                                <tr id="modalDiscountRow">
-                                    <td><strong>Discount:</strong></td>
-                                    <td>-₹<span id="modalDiscountAmount"></span> (<span id="modalDiscountType"></span>)</td>
-                                </tr>
-                                <tr id="modalGstRow">
-                                    <td><strong>GST:</strong></td>
-                                    <td>₹<span id="modalGstAmount"></span></td>
-                                </tr>
-                                <tr id="modalDeliveryRow">
-                                    <td><strong>Delivery Charge:</strong></td>
-                                    <td>₹<span id="modalDeliveryCharge"></span></td>
-                                </tr>
-                                <tr class="table-active">
-                                    <td><strong>Total Amount:</strong></td>
-                                    <td><strong>₹<span id="modalTotalAmount"></span></strong></td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <form method="POST" action="orders.php" class="d-inline" id="statusUpdateForm">
-                        <input type="hidden" name="order_id" id="modalFormOrderId">
-                        <div class="input-group">
-                            <select class="form-select" name="new_status" id="modalStatusSelect">
-                                <option value="confirmed">Confirmed</option>
-                                <!-- Dont remove comment <option value="preparing">Preparing</option>
-                                <option value="out_for_delivery">Out for Delivery</option>
-                                <option value="delivered">Delivered</option> -->
-                                <option value="completed">Completed</option>
-                            </select>
-                            <button type="submit" name="update_status" class="btn btn-primary">Update Status</button>
-                        </div>
-                    </form>
-
-                    <button type="button" class="btn btn-success" id="downloadBillBtn">
-                        <i class="bi bi-file-earmark-pdf"></i> Download Bill
-                    </button>
-                    
-                    <form method="POST" action="orders.php" class="d-inline ms-2" id="cancelOrderForm">
-                        <input type="hidden" name="order_id" id="modalCancelOrderId">
-                        <button type="submit" name="cancel_order" class="btn btn-danger" style="display:none;">
-                            <i class="bi bi-x-circle"></i> Cancel Order
-                        </button>
-                    </form>
-                    
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script src="assets/js/vendor.js"></script>
     <script src="assets/js/app.js"></script>
-    
-
-<script>
-$(document).ready(function() {
-    // ============== Initialize Data ==============
-    let ordersData = <?php echo json_encode($orders); ?>;
-    const POLL_INTERVAL = 10000; // 10 seconds
-    let lastOrderId = <?php echo !empty($orders) ? max(array_column($orders, 'order_id')) : 0; ?>;
-    let pollingActive = true;
-    let isReloading = false;
-
-    // ============== Audio Notification ==============
-    let notificationAudio = null;
-    
-    try {
-        notificationAudio = new Audio('assets/sounds/new_notification.mp3?v=' + Date.now());
-        notificationAudio.volume = 1; // Set moderate volume
-        notificationAudio.load(); // Preload audio
-    } catch (e) {
-        console.error('Audio initialization failed:', e);
-    }
-
-    function playNotification() {
-        if (!notificationAudio) return;
+    <script>
+        // Auto-refresh every 30 seconds
+        setTimeout(() => location.reload(), 30000);
         
-        try {
-            notificationAudio.currentTime = 0; // Reset playback
-            notificationAudio.play().catch(e => {
-                console.log('Audio play blocked:', e);
-                // Some browsers require user interaction first
-                $(document).one('click', function() {
-                    notificationAudio.play().catch(console.error);
-                });
+        // Make status badges clickable to filter
+        document.querySelectorAll('.status-badge').forEach(badge => {
+            badge.addEventListener('click', function() {
+                const status = this.textContent.trim().toLowerCase();
+                window.location.href = `?status=${status}`;
             });
-        } catch (e) {
-            console.error('Audio playback error:', e);
-        }
-    }
-
-    // ============== Polling Functions ==============
-    function checkForNewOrders() {
-    if (!pollingActive || isReloading) return;
-    
-    console.log('[Poll] Checking for orders > ID:', lastOrderId);
-    
-    $.ajax({
-        url: 'check_new_orders.php',
-        type: 'GET',
-        data: { 
-            last_order_id: lastOrderId,
-            current_page: <?php echo $page; ?> // Add current page to the request
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.error) {
-                console.error('Poll error:', response.error);
-                return;
-            }
-            
-            if (response.new_orders?.length > 0) {
-                console.log('[Poll] New orders:', response.new_orders);
-                lastOrderId = Math.max(lastOrderId, ...response.new_orders.map(o => o.order_id));
-                
-                // Only show notification if we're on the first page
-                if (<?php echo $page; ?> === 1) {
-                    playNotification();
-                    showToast(`New ${response.new_orders.length > 1 ? 'orders' : 'order'} received! Redirecting...`, 'success');
-                    
-                    setTimeout(() => {
-                        window.location.href = 'orders.php';
-                    }, 5000);
-                } else {
-                    // Just update the lastOrderId silently if we're not on page 1
-                    console.log('[Poll] New orders detected but we\'re not on page 1');
-                }
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('Poll failed:', status, error);
-        },
-        complete: function() {
-            if (pollingActive && !isReloading) {
-                setTimeout(checkForNewOrders, POLL_INTERVAL);
-            }
-        }
-    });
-}
-
-    function refreshOrders() {
-        if (isReloading) return;
-        
-        $.ajax({
-            url: window.location.href,
-            type: 'GET',
-            data: { refresh: true },
-            success: function(response) {
-                // Update table
-                $('.table-responsive').html($(response).find('.table-responsive').html());
-                
-                // Update ordersData
-                const scriptContent = $(response).filter('script').html();
-                const match = scriptContent.match(/ordersData\s*=\s*(\[.*?\])/);
-                
-                if (match?.[1]) {
-                    try {
-                        const newData = JSON.parse(match[1]);
-                        ordersData.splice(0, ordersData.length, ...newData);
-                        console.log('[Refresh] Orders data updated');
-                    } catch(e) {
-                        console.error('Data parse error:', e);
-                    }
-                }
-                
-                bindOrderHandlers();
-            },
-            error: function() {
-                console.error('Refresh failed');
-            }
         });
-    }
-
-    // ============== Order Management ==============
-    function bindOrderHandlers() {
-        $('.view-order').off('click').on('click', viewOrderHandler);
-        $('.cancel-order').off('click').on('click', cancelOrderHandler);
-    }
-
-    function viewOrderHandler() {
-        const orderId = $(this).data('order-id');
-        const order = ordersData.find(o => o.order_id == orderId);
-        
-        if (!order) {
-            console.error('Order not found:', orderId, 'in:', ordersData);
-            showErrorAndReload('Order not loaded. Reloading...');
-            return;
-        }
-        
-        updateOrderModal(order);
-    }
-
-    function showErrorAndReload(message) {
-        if (isReloading) return;
-        isReloading = true;
-        
-        const alert = $(`
-            <div class="alert alert-danger alert-dismissible fade show alert-fixed" role="alert">
-                <strong>Error:</strong> ${message}
-            </div>
-        `).appendTo('body');
-        
-        setTimeout(() => {
-            alert.alert('close');
-            window.location.href = 'orders.php';
-        }, 2000);
-    }
-
-    function updateOrderModal(order) {
-        // Basic info
-        $('#modalOrderId').text(order.order_id);
-        $('#modalCustomerName').text(order.customer_name || 'Not specified');
-        $('#modalCustomerPhone').text(order.customer_phone || 'Not specified');
-        
-        // Order type specifics
-        if (order.order_type === 'delivery') {
-            $('#modalDeliveryAddress').show().find('#modalAddressText').text(order.delivery_address || 'Not specified');
-            $('#modalTableNumber').hide();
-        } else {
-            $('#modalDeliveryAddress').hide();
-            $('#modalTableNumber').show().find('#modalTableText').text(order.table_number || 'Not specified');
-        }
-        
-        // Order summary
-        $('#modalOrderType').text(formatOrderType(order));
-        $('#modalOrderDate').text(new Date(order.created_at).toLocaleString());
-        
-        // Status
-        const statusBadge = $('#modalOrderStatus');
-        statusBadge.text(formatStatus(order.status))
-            .removeClass().addClass('status-badge status-' + order.status.toLowerCase());
-        
-        // Items
-        renderOrderItems(order.items || []);
-        
-        // Financials
-        updateFinancials(order);
-        
-        // Form fields
-        $('#modalFormOrderId').val(order.order_id);
-        $('#modalCancelOrderId').val(order.order_id);
-        $('#modalStatusSelect').val(order.status);
-        
-        // Action buttons
-        const showActions = ['pending', 'confirmed', 'preparing'].includes(order.status);
-        $('#statusUpdateForm, #cancelOrderForm').toggle(showActions);
-    }
-
-    function renderOrderItems(items) {
-        const $container = $('#modalOrderItems').empty();
-        
-        if (items.length === 0) {
-            $container.append('<tr><td colspan="4" class="text-center">No items found</td></tr>');
-            return;
-        }
-        
-        items.forEach(item => {
-            const total = (parseFloat(item.price || 0) * parseInt(item.quantity || 0)).toFixed(2);
-            $container.append(`
-                <tr>
-                    <td>${item.product_name || 'Unnamed'}</td>
-                    <td>₹${parseFloat(item.price || 0).toFixed(2)}</td>
-                    <td>${item.quantity}</td>
-                    <td>₹${total}</td>
-                </tr>
-            `);
-        });
-    }
-
-    function updateFinancials(order) {
-        $('#modalSubtotal').text(parseFloat(order.subtotal || 0).toFixed(2));
-        
-        // Toggle and set discount
-        const discountAmount = parseFloat(order.discount_amount || 0);
-        $('#modalDiscountRow').toggle(discountAmount > 0);
-        if (discountAmount > 0) {
-            $('#modalDiscountAmount').text(discountAmount.toFixed(2));
-            $('#modalDiscountType').text(order.discount_type || 'Discount');
-        }
-        
-        // Toggle and set GST
-        const gstAmount = parseFloat(order.gst_amount || 0);
-        $('#modalGstRow').toggle(gstAmount > 0);
-        if (gstAmount > 0) $('#modalGstAmount').text(gstAmount.toFixed(2));
-        
-        // Toggle and set delivery
-        const deliveryCharge = parseFloat(order.delivery_charge || 0);
-        $('#modalDeliveryRow').toggle(deliveryCharge > 0);
-        if (deliveryCharge > 0) $('#modalDeliveryCharge').text(deliveryCharge.toFixed(2));
-        
-        // Total
-        $('#modalTotalAmount').text(parseFloat(order.total_amount || 0).toFixed(2));
-    }
-
-    // ============== Order Actions ==============
-    function cancelOrderHandler(e) {
-        e.preventDefault();
-        const orderId = $(this).data('order-id');
-        
-        if (confirm('Are you sure you want to cancel this order?')) {
-            processOrderAction({
-                action: 'cancel_order',
-                order_id: orderId,
-                button: $(this),
-                success: () => updateOrderStatusUI(orderId, 'cancelled')
-            });
-        }
-    }
-
-    $('#cancelOrderForm').submit(function(e) {
-        e.preventDefault();
-        cancelOrderHandler(e);
-    });
-
-    $('#statusUpdateForm').submit(function(e) {
-        e.preventDefault();
-        processOrderAction({
-            action: 'update_status',
-            order_id: $('#modalFormOrderId').val(),
-            new_status: $('#modalStatusSelect').val(),
-            button: $(this).find('button[type="submit"]'),
-            success: () => updateOrderStatusUI($('#modalFormOrderId').val(), $('#modalStatusSelect').val())
-        });
-    });
-
-    function processOrderAction({action, order_id, new_status, button, success}) {
-        const originalText = button.html();
-        button.html('<i class="bi bi-arrow-repeat spin"></i> Processing...').prop('disabled', true);
-        
-        $.ajax({
-            url: 'orders.php',
-            type: 'POST',
-            data: { 
-                [action]: true,
-                order_id,
-                ...(new_status && {new_status})
-            },
-            success: function() {
-                success();
-                $('#orderModal').modal('hide');
-                showToast(`Order ${action.replace('_', ' ')} successful!`, 'success');
-            },
-            error: function(xhr) {
-                showErrorAndReload(`Action failed: ${xhr.responseText || 'Unknown error'}`);
-            },
-            complete: function() {
-                if (!isReloading) {
-                    button.html(originalText).prop('disabled', false);
-                }
-            }
-        });
-    }
-
-    function updateOrderStatusUI(orderId, newStatus) {
-        const statusText = formatStatus(newStatus);
-        const $badge = $(`tr:has(button[data-order-id="${orderId}"]) .status-badge`);
-        
-        $badge.text(statusText)
-            .removeClass()
-            .addClass(`status-badge status-${newStatus.toLowerCase()}`);
-        
-        $(`.cancel-order[data-order-id="${orderId}"]`)
-            .toggle(['pending', 'confirmed', 'preparing'].includes(newStatus));
-    }
-
-    // ============== UI Helpers ==============
-    function showToast(message, type = 'success') {
-        // Remove existing toasts
-        $('.toast-container').remove();
-        
-        // Create toast container if it doesn't exist
-        if ($('.toast-container').length === 0) {
-            $('body').append('<div class="toast-container position-fixed top-0 end-0 p-3"></div>');
-        }
-        
-        // Create toast
-        const toast = $(`
-            <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        ${message}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            </div>
-        `).appendTo('.toast-container');
-        
-        // Show toast
-        const toastInstance = new bootstrap.Toast(toast[0], {
-            autohide: true,
-            delay: 3000
-        });
-        toastInstance.show();
-    }
-
-    function formatOrderType(order) {
-        if (!order.order_type) return 'Unknown type';
-        return order.order_type === 'dining' 
-            ? `Dining (Table ${order.table_number || 'N/A'})` 
-            : order.order_type.charAt(0).toUpperCase() + order.order_type.slice(1);
-    }
-
-    function formatStatus(status) {
-        return status ? status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' ') : 'Unknown';
-    }
-
-    // ============== PDF Generation ==============
-    $('#downloadBillBtn').click(function() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        // Header
-        doc.setFont('helvetica', 'bold');
-        doc.text('<?php echo addslashes($business_name); ?>', 105, 10, { align: 'center' });
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        doc.text('<?php echo addslashes($business_address); ?>', 105, 15, { align: 'center' });
-        
-        // Order info
-        doc.text(`Order #${$('#modalOrderId').text()}`, 14, 25);
-        doc.text(`Date: ${$('#modalOrderDate').text()}`, 14, 30);
-        
-        // Items table
-        const items = [];
-        $('#modalOrderItems tr').each(function() {
-            const cols = $(this).find('td');
-            if (cols.length === 4) {
-                items.push([cols.eq(0).text(), cols.eq(1).text(), cols.eq(2).text(), cols.eq(3).text()]);
-            }
-        });
-        
-        doc.autoTable({
-            startY: 40,
-            head: [['Item', 'Price', 'Qty', 'Total']],
-            body: items,
-            margin: { left: 14 },
-            styles: { fontSize: 9 }
-        });
-        
-        // Save PDF
-        doc.save(`Order_${$('#modalOrderId').text()}.pdf`);
-    });
-
-    // ============== Initialize ==============
-    checkForNewOrders();
-    bindOrderHandlers();
-
-    // Tab visibility handling
-    $(window).on('blur', () => pollingActive = false)
-             .on('focus', () => { pollingActive = true; checkForNewOrders(); });
-
-    // Add CSS for animations and alerts
-    $('head').append(`
-        <style>
-            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-            .bi-arrow-repeat.spin { animation: spin 1s linear infinite; }
-            
-            .alert-fixed {
-                position: fixed;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                z-index: 9999;
-                min-width: 300px;
-                text-align: center;
-            }
-            
-            .toast-container {
-                z-index: 9999;
-            }
-            
-            .status-badge {
-                padding: 3px 8px;
-                border-radius: 12px;
-                font-size: 0.8em;
-                font-weight: 500;
-                display: inline-block;
-            }
-            .status-pending { background-color: #ffc107; color: #000; }
-            .status-confirmed { background-color: #17a2b8; color: #fff; }
-            .status-preparing { background-color: #fd7e14; color: #fff; }
-            .status-completed { background-color: #28a745; color: #fff; }
-            .status-cancelled { background-color: #dc3545; color: #fff; }
-            .status-delivered { background-color: #6f42c1; color: #fff; }
-        </style>
-    `);
-});
-
-const toggleBtn = document.getElementById('fullscreenToggle');
-
-        function isFullscreen() {
-          return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
-        }
-
-        function enterFullscreen() {
-          const elem = document.documentElement;
-          if (elem.requestFullscreen) {
-            elem.requestFullscreen();
-          } else if (elem.webkitRequestFullscreen) {
-            elem.webkitRequestFullscreen();
-          } else if (elem.msRequestFullscreen) {
-            elem.msRequestFullscreen();
-          }
-        }
-
-        function exitFullscreen() {
-          if (document.exitFullscreen) {
-            document.exitFullscreen();
-          } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-          } else if (document.msExitFullscreen) {
-            document.msExitFullscreen();
-          }
-        }
-
-        toggleBtn.addEventListener('click', () => {
-          if (isFullscreen()) {
-            exitFullscreen();
-          } else {
-            enterFullscreen();
-          }
-        });
-
-        // Update button label based on fullscreen change
-        document.addEventListener('fullscreenchange', updateButtonLabel);
-        document.addEventListener('webkitfullscreenchange', updateButtonLabel);
-        document.addEventListener('msfullscreenchange', updateButtonLabel);
-
-        function updateButtonLabel() {
-          toggleBtn.textContent = isFullscreen() ? 'Exit Fullscreen' : 'Enter Fullscreen';
-        }
-</script>
-
-
-
+    </script>
 </body>
 </html>

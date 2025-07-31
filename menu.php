@@ -217,6 +217,14 @@ window.addEventListener('beforeunload', () => {
             </a>
          </li>
          <li class="nav-item">
+            <a class="nav-link" href="kot.php">
+               <span class="nav-icon">
+                  <iconify-icon icon="streamline-ultimate:seasoning-food"></iconify-icon>
+               </span>
+               <span class="nav-text">KOT</span>
+            </a>
+         </li>
+         <li class="nav-item">
             <a class="nav-link" href="sales_report.php">
                <span class="nav-icon">
                   <iconify-icon icon="carbon:sales-ops"></iconify-icon>

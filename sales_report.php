@@ -41,8 +41,12 @@ if (empty($business_name)) {
 }
 
 // Date range for reports (default to current month)
-$start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01');
-$end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-t');
+// For start date, we want to include everything from 00:00:00 on that day
+$start_date = isset($_GET['start_date']) ? $_GET['start_date'] . ' 00:00:00' : date('Y-m-01') . ' 00:00:00';
+
+// For end date, we want to include everything up to 23:59:59 on that day
+$end_date = isset($_GET['end_date']) ? $_GET['end_date'] . ' 23:59:59' : date('Y-m-t') . ' 23:59:59';
+
 $report_type = isset($_GET['report_type']) ? $_GET['report_type'] : 'daily';
 
 // Define status types for the new reports
@@ -295,11 +299,11 @@ $conn->close();
                                             </div>
                                             <div class="col-md-3">
                                                 <label for="start_date" class="form-label">Start Date</label>
-                                                <input type="date" class="form-control" id="start_date" name="start_date" value="<?php echo $start_date; ?>">
+                                                <input type="date" class="form-control" id="start_date" name="start_date" value="<?php echo isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01'); ?>">
                                             </div>
                                             <div class="col-md-3">
                                                 <label for="end_date" class="form-label">End Date</label>
-                                                <input type="date" class="form-control" id="end_date" name="end_date" value="<?php echo $end_date; ?>">
+                                                <input type="date" class="form-control" id="end_date" name="end_date" value="<?php echo isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-t'); ?>">
                                             </div>
                                             <div class="col-md-3 d-flex align-items-end">
                                                 <button type="submit" class="btn btn-primary">Generate Report</button>

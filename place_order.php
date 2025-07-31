@@ -57,12 +57,13 @@ try {
     $orderId = $conn->lastInsertId();
     
     // 2. Insert order items
-    $itemSql = "INSERT INTO order_items (order_id, product_name, price, quantity) VALUES (?, ?, ?, ?)";
+    $itemSql = "INSERT INTO order_items (order_id, user_id, product_name, price, quantity) VALUES (?, ?, ?, ?, ?)";
     $itemStmt = $conn->prepare($itemSql);
-    
+
     foreach ($input['items'] as $item) {
         $itemStmt->execute([
             $orderId,
+            $input['user_id'],
             $item['name'],
             $item['price'],
             $item['quantity']

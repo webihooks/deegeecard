@@ -2,12 +2,10 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 session_start();
-date_default_timezone_set('Asia/Kolkata'); // for Indian Standard Time
+date_default_timezone_set('Asia/Kolkata');
 
-// Include the database connection file
 require 'db_connection.php';
 
-// Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
@@ -17,19 +15,16 @@ $user_id = $_SESSION['user_id'];
 $message = '';
 $message_type = 'success';
 
-// Get date range from request or default to today
+// Date range handling
 $from_date = isset($_GET['from_date']) ? $_GET['from_date'] : date('Y-m-d');
 $to_date = isset($_GET['to_date']) ? $_GET['to_date'] : date('Y-m-d');
 
-// Validate date formats
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $from_date)) {
     $from_date = date('Y-m-d');
 }
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $to_date)) {
     $to_date = date('Y-m-d');
 }
-
-// Ensure to_date is not before from_date
 if ($to_date < $from_date) {
     $to_date = $from_date;
 }
@@ -52,7 +47,6 @@ $business_stmt->bind_result($business_name, $business_address);
 $business_stmt->fetch();
 $business_stmt->close();
 
-// If no business info found, set defaults
 if (empty($business_name)) {
     $business_name = "Your Restaurant";
     $business_address = "123 Restaurant Street, City";
@@ -63,30 +57,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $order_id = $_POST['order_id'];
     $new_status = $_POST['new_status'];
     
-    // Validate the user owns this order
-    $check_sql = "SELECT user_id FROM orders WHERE order_id = ?";
-    $check_stmt = $conn->prepare($check_sql);
-    $check_stmt->bind_param("i", $order_id);
-    $check_stmt->execute();
-    $check_stmt->bind_result($order_user_id);
-    $check_stmt->fetch();
-    $check_stmt->close();
-    
-    if ($order_user_id == $user_id) {
-        $update_sql = "UPDATE orders SET status = ? WHERE order_id = ?";
-        $update_stmt = $conn->prepare($update_sql);
-        $update_stmt->bind_param("si", $new_status, $order_id);
+    $allowed_statuses = ['Pending', 'Confirmed', 'Preparing', 'Ready', 'Completed', 'Cancelled'];
+    if (!in_array($new_status, $allowed_statuses)) {
+        $message = "Invalid status selected";
+        $message_type = "danger";
+    } else {
+        $check_sql = "SELECT user_id FROM orders WHERE order_id = ?";
+        $check_stmt = $conn->prepare($check_sql);
+        $check_stmt->bind_param("i", $order_id);
+        $check_stmt->execute();
+        $check_stmt->bind_result($order_user_id);
+        $check_stmt->fetch();
+        $check_stmt->close();
         
-        if ($update_stmt->execute()) {
-            $message = "Order status updated successfully!";
+        if ($order_user_id == $user_id) {
+            $update_sql = "UPDATE orders SET status = ? WHERE order_id = ?";
+            $update_stmt = $conn->prepare($update_sql);
+            $update_stmt->bind_param("si", $new_status, $order_id);
+            
+            if ($update_stmt->execute()) {
+                $message = "Order status updated successfully!";
+            } else {
+                $message = "Error updating order status: " . $conn->error;
+                $message_type = "danger";
+            }
+            $update_stmt->close();
         } else {
-            $message = "Error updating order status: " . $conn->error;
+            $message = "You don't have permission to update this order.";
             $message_type = "danger";
         }
-        $update_stmt->close();
-    } else {
-        $message = "You don't have permission to update this order.";
-        $message_type = "danger";
     }
 }
 
@@ -94,7 +93,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
     $order_id = $_POST['order_id'];
     
-    // Validate the user owns this order
     $check_sql = "SELECT user_id, status FROM orders WHERE order_id = ?";
     $check_stmt = $conn->prepare($check_sql);
     $check_stmt->bind_param("i", $order_id);
@@ -104,9 +102,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
     $check_stmt->close();
     
     if ($order_user_id == $user_id) {
-        // Only allow cancellation if order is not already completed/delivered/cancelled
-        if (in_array($current_status, ['pending', 'confirmed', 'preparing'])) {
-            $update_sql = "UPDATE orders SET status = 'cancelled' WHERE order_id = ?";
+        if (in_array($current_status, ['Pending', 'Confirmed', 'Preparing'])) {
+            $update_sql = "UPDATE orders SET status = 'Cancelled' WHERE order_id = ?";
             $update_stmt = $conn->prepare($update_sql);
             $update_stmt->bind_param("i", $order_id);
             
@@ -127,12 +124,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
     }
 }
 
-// Fetch all orders for this user with pagination
+// Pagination setup
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $per_page = 200;
 $offset = ($page - 1) * $per_page;
 
-// Get total count of orders for selected date range
+// Get total count of orders
 $count_sql = "SELECT COUNT(*) FROM orders WHERE user_id = ? AND DATE(created_at) BETWEEN ? AND ?";
 $count_stmt = $conn->prepare($count_sql);
 $count_stmt->bind_param("iss", $user_id, $from_date, $to_date);
@@ -143,7 +140,7 @@ $count_stmt->close();
 
 $total_pages = ceil($total_orders / $per_page);
 
-// Fetch orders with items for selected date range
+// Fetch orders with items
 $orders_sql = "SELECT 
     o.order_id, 
     o.customer_name, 
@@ -175,7 +172,6 @@ $result = $orders_stmt->get_result();
 $orders = [];
 
 while ($order = $result->fetch_assoc()) {
-    // Get order items
     $items_sql = "SELECT product_name, price, quantity FROM order_items WHERE order_id = ?";
     $items_stmt = $conn->prepare($items_sql);
     $items_stmt->bind_param("i", $order['order_id']);
@@ -204,20 +200,44 @@ $conn->close();
     <script src="assets/js/config.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.8em;
+        }
+        .status-Pending {
+            background-color: #ffc107;
+            color: #000;
+        }
+        .status-Confirmed {
+            background-color: #17a2b8;
+            color: #fff;
+        }
+        .status-Preparing {
+            background-color: #fd7e14;
+            color: #fff;
+        }
+        .status-Ready {
+            background-color: #28a745;
+            color: #fff;
+        }
+        .status-Completed {
+            background-color: #6c757d;
+            color: #fff;
+        }
+        .status-Cancelled {
+            background-color: #dc3545;
+            color: #fff;
+        }
+    </style>
 </head>
 
 <body>
     <div class="wrapper">
         <?php include 'toolbar.php'; ?>
-        <?php
-        if ($role === 'admin') {
-            include 'admin_menu.php';
-        } else {
-            include 'menu.php';
-        }
-        ?>
+        <?php include ($role === 'admin') ? 'admin_menu.php' : 'menu.php'; ?>
 
         <div class="page-content">
             <div class="container">
@@ -228,27 +248,20 @@ $conn->close();
                                 <h4 class="card-title">Order Management
                                     <div class="float-end order_section">
                                         <form method="GET" class="d-inline-flex align-items-center">
-                                            
-
-                                                <div class="me-2">
-                                                    <label class="form-label small mb-0">From</label>
-                                                    <input type="date" name="from_date" class="form-control" 
-                                                           value="<?php echo htmlspecialchars($from_date); ?>" 
-                                                           max="<?php echo date('Y-m-d'); ?>">
-                                                </div>
-                                                <div class="me-2">
-                                                    <label class="form-label small mb-0">To</label>
-                                                    <input type="date" name="to_date" class="form-control" 
-                                                           value="<?php echo htmlspecialchars($to_date); ?>" 
-                                                           max="<?php echo date('Y-m-d'); ?>">
-                                                </div>
-
-
-                                            
-                                                    <button type="submit" class="btn btn-primary align-self-end">View Orders</button>  
-                                                
+                                            <div class="me-2">
+                                                <label class="form-label small mb-0">From</label>
+                                                <input type="date" name="from_date" class="form-control" 
+                                                       value="<?php echo htmlspecialchars($from_date); ?>" 
+                                                       max="<?php echo date('Y-m-d'); ?>">
+                                            </div>
+                                            <div class="me-2">
+                                                <label class="form-label small mb-0">To</label>
+                                                <input type="date" name="to_date" class="form-control" 
+                                                       value="<?php echo htmlspecialchars($to_date); ?>" 
+                                                       max="<?php echo date('Y-m-d'); ?>">
+                                            </div>
+                                            <button type="submit" class="btn btn-primary align-self-end">View Orders</button>  
                                         </form>
-                                        <button type="button" id="fullscreenToggle" class="btn btn-primary ms-2">Fullscreen</button>
                                     </div>
                                 </h4>
                             </div>
@@ -296,55 +309,51 @@ $conn->close();
                                                     <th>Actions</th>
                                                 </tr>
                                             </thead>
-                                            
-
-<tbody>
-    <?php foreach ($orders as $index => $order): ?>
-        <tr>
-            <td data-label="Sr. No."><?php echo $index + 1 + $offset; ?></td>
-            <td data-label="Order ID">#<?php echo htmlspecialchars($order['order_id']); ?></td>
-            <td data-label="Date & Time">
-                <?php echo date('d/m/Y h:i A', strtotime($order['created_at'])); ?>
-            </td>
-            <td data-label="Customer"><?php echo htmlspecialchars($order['customer_name']); ?></td>
-            <td data-label="Type">
-                <?php 
-                if ($order['order_type'] === 'dining') {
-                    echo 'Dining - Table ' . htmlspecialchars($order['table_number']);
-                } else {
-                    echo ucfirst(htmlspecialchars($order['order_type']));
-                }
-                ?>
-            </td>
-            <td data-label="Items"><?php echo htmlspecialchars($order['item_count']); ?></td>
-            <td data-label="Total">₹<?php echo number_format($order['total_amount'], 2); ?></td>
-            <td data-label="Status">
-                <span class="status-badge status-<?php echo strtolower(str_replace(' ', '_', $order['status'])); ?>">
-                    <?php echo ucfirst(str_replace('_', ' ', $order['status'])); ?>
-                </span>
-            </td>
-            <td data-label="Actions">
-                <button class="btn btn-sm btn-primary view-order" 
-                        data-order-id="<?php echo $order['order_id']; ?>"
-                        data-bs-toggle="modal" 
-                        data-bs-target="#orderModal">
-                    <i class="bi bi-eye"></i> View
-                </button>
-                <?php if (in_array($order['status'], ['pending', 'confirmed', 'preparing'])): ?>
-                    <button class="btn btn-sm btn-danger cancel-order" 
-                            data-order-id="<?php echo $order['order_id']; ?>">
-                        <i class="bi bi-x-circle"></i> Cancel
-                    </button>
-                <?php endif; ?>
-            </td>
-        </tr>
-    <?php endforeach; ?>
-</tbody>
-
+                                            <tbody>
+                                                <?php foreach ($orders as $index => $order): ?>
+                                                    <tr>
+                                                        <td data-label="Sr. No."><?php echo $index + 1 + $offset; ?></td>
+                                                        <td data-label="Order ID">#<?php echo htmlspecialchars($order['order_id']); ?></td>
+                                                        <td data-label="Date & Time">
+                                                            <?php echo date('d/m/Y h:i A', strtotime($order['created_at'])); ?>
+                                                        </td>
+                                                        <td data-label="Customer"><?php echo htmlspecialchars($order['customer_name']); ?></td>
+                                                        <td data-label="Type">
+                                                            <?php 
+                                                            if ($order['order_type'] === 'dining') {
+                                                                echo 'Dining - Table ' . htmlspecialchars($order['table_number']);
+                                                            } else {
+                                                                echo ucfirst(htmlspecialchars($order['order_type']));
+                                                            }
+                                                            ?>
+                                                        </td>
+                                                        <td data-label="Items"><?php echo htmlspecialchars($order['item_count']); ?></td>
+                                                        <td data-label="Total">₹<?php echo number_format($order['total_amount'], 2); ?></td>
+                                                        <td data-label="Status">
+                                                            <span class="status-badge status-<?php echo htmlspecialchars($order['status']); ?>">
+                                                                <?php echo htmlspecialchars($order['status']); ?>
+                                                            </span>
+                                                        </td>
+                                                        <td data-label="Actions">
+                                                            <button class="btn btn-sm btn-primary view-order" 
+                                                                    data-order-id="<?php echo $order['order_id']; ?>"
+                                                                    data-bs-toggle="modal" 
+                                                                    data-bs-target="#orderModal">
+                                                                <i class="bi bi-eye"></i> View
+                                                            </button>
+                                                            <?php if (in_array($order['status'], ['Pending', 'Confirmed', 'Preparing'])): ?>
+                                                                <button class="btn btn-sm btn-danger cancel-order" 
+                                                                        data-order-id="<?php echo $order['order_id']; ?>">
+                                                                    <i class="bi bi-x-circle"></i> Cancel
+                                                                </button>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
                                         </table>
                                     </div>
 
-                                    <!-- Pagination -->
                                     <?php if ($total_pages > 1): ?>
                                         <nav aria-label="Page navigation">
                                             <ul class="pagination justify-content-center mt-3">
@@ -460,20 +469,16 @@ $conn->close();
                         <input type="hidden" name="order_id" id="modalFormOrderId">
                         <div class="input-group">
                             <select class="form-select" name="new_status" id="modalStatusSelect">
-                                <option value="confirmed">Confirmed</option>
-                                <option value="preparing">Preparing</option>
-                                <option value="out_for_delivery">Out for Delivery</option>
-                                <option value="delivered">Delivered</option>
-                                <option value="completed">Completed</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Confirmed">Confirmed</option>
+                                <option value="Ready">Ready</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
                             </select>
                             <button type="submit" name="update_status" class="btn btn-primary">Update Status</button>
                         </div>
                     </form>
 
-                    <!-- <button type="button" class="btn btn-success" id="downloadBillBtn">
-                        <i class="bi bi-file-earmark-pdf"></i> Download Bill
-                    </button> -->
-                    
                     <form method="POST" action="orders.php" class="d-inline ms-2" id="cancelOrderForm">
                         <input type="hidden" name="order_id" id="modalCancelOrderId">
                         <button type="submit" name="cancel_order" class="btn btn-danger" style="display:none;">
@@ -492,10 +497,10 @@ $conn->close();
     
     <script>
     $(document).ready(function() {
-        // ============== Initialize Data ==============
+        // Initialize Data
         let ordersData = <?php echo json_encode($orders); ?>;
 
-        // ============== Order Management ==============
+        // Order Management Functions
         function bindOrderHandlers() {
             $('.view-order').off('click').on('click', viewOrderHandler);
             $('.cancel-order').off('click').on('click', cancelOrderHandler);
@@ -506,28 +511,12 @@ $conn->close();
             const order = ordersData.find(o => o.order_id == orderId);
             
             if (!order) {
-                console.error('Order not found:', orderId, 'in:', ordersData);
-                showErrorAndReload('Order not loaded. Reloading...');
+                console.error('Order not found:', orderId);
+                alert('Order not loaded. Please refresh the page.');
                 return;
             }
             
             updateOrderModal(order);
-        }
-
-        function showErrorAndReload(message) {
-            if (window.POLLING_CONFIG.isReloading) return;
-            window.POLLING_CONFIG.isReloading = true;
-            
-            const alert = $(`
-                <div class="alert alert-danger alert-dismissible fade show alert-fixed" role="alert">
-                    <strong>Error:</strong> ${message}
-                </div>
-            `).appendTo('body');
-            
-            setTimeout(() => {
-                alert.alert('close');
-                window.location.href = 'orders.php?from_date=<?php echo $from_date; ?>&to_date=<?php echo $to_date; ?>';
-            }, 2000);
         }
 
         function updateOrderModal(order) {
@@ -551,8 +540,8 @@ $conn->close();
             
             // Status
             const statusBadge = $('#modalOrderStatus');
-            statusBadge.text(formatStatus(order.status))
-                .removeClass().addClass('status-badge status-' + order.status.toLowerCase());
+            statusBadge.text(order.status)
+                .removeClass().addClass('status-badge status-' + order.status);
             
             // Items
             renderOrderItems(order.items || []);
@@ -577,7 +566,7 @@ $conn->close();
             $('#modalStatusSelect').val(order.status);
             
             // Action buttons
-            const showActions = ['pending', 'confirmed', 'preparing'].includes(order.status);
+            const showActions = ['Pending', 'Confirmed', 'Preparing'].includes(order.status);
             $('#statusUpdateForm, #cancelOrderForm').toggle(showActions);
         }
 
@@ -627,7 +616,7 @@ $conn->close();
             $('#modalTotalAmount').text(parseFloat(order.total_amount || 0).toFixed(2));
         }
 
-        // ============== Order Actions ==============
+        // Order Actions
         function cancelOrderHandler(e) {
             e.preventDefault();
             const orderId = $(this).data('order-id');
@@ -637,7 +626,7 @@ $conn->close();
                     action: 'cancel_order',
                     order_id: orderId,
                     button: $(this),
-                    success: () => updateOrderStatusUI(orderId, 'cancelled')
+                    success: () => updateOrderStatusUI(orderId, 'Cancelled')
                 });
             }
         }
@@ -659,8 +648,8 @@ $conn->close();
         });
 
         function processOrderAction({action, order_id, new_status, button, success}) {
-            // const originalText = button.html();
-            // button.html('<i class="bi bi-arrow-repeat spin"></i> Processing...').prop('disabled', true);
+            const originalText = button.html();
+            button.html('<i class="bi bi-arrow-repeat spin"></i> Processing...').prop('disabled', true);
             
             $.ajax({
                 url: 'orders.php',
@@ -673,33 +662,28 @@ $conn->close();
                 success: function() {
                     success();
                     $('#orderModal').modal('hide');
-                    window.showToast(`Order ${action.replace('_', ' ')} successful!`, 'success');
+                    showToast(`Order ${action.replace('_', ' ')} successful!`, 'success');
+                    setTimeout(() => location.reload(), 1000);
                 },
                 error: function(xhr) {
-                    showErrorAndReload(`Action failed: ${xhr.responseText || 'Unknown error'}`);
-                },
-                complete: function() {
-                    if (!window.POLLING_CONFIG.isReloading) {
-                        button.html(originalText).prop('disabled', false);
-                    window.location.href = 'orders.php?from_date=<?php echo $from_date; ?>&to_date=<?php echo $to_date; ?>';
-                    }
+                    alert(`Action failed: ${xhr.responseText || 'Unknown error'}`);
+                    button.html(originalText).prop('disabled', false);
                 }
             });
         }
 
         function updateOrderStatusUI(orderId, newStatus) {
-            const statusText = formatStatus(newStatus);
             const $badge = $(`tr:has(button[data-order-id="${orderId}"]) .status-badge`);
             
-            $badge.text(statusText)
+            $badge.text(newStatus)
                 .removeClass()
-                .addClass(`status-badge status-${newStatus.toLowerCase()}`);
+                .addClass(`status-badge status-${newStatus}`);
             
             $(`.cancel-order[data-order-id="${orderId}"]`)
-                .toggle(['pending', 'confirmed', 'preparing'].includes(newStatus));
+                .toggle(['Pending', 'Confirmed', 'Preparing'].includes(newStatus));
         }
 
-        // ============== UI Helpers ==============
+        // UI Helpers
         function formatOrderType(order) {
             if (!order.order_type) return 'Unknown type';
             return order.order_type === 'dining' 
@@ -707,97 +691,12 @@ $conn->close();
                 : order.order_type.charAt(0).toUpperCase() + order.order_type.slice(1);
         }
 
-        function formatStatus(status) {
-            return status ? status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' ') : 'Unknown';
+        function showToast(message, type) {
+            // Implement your toast notification system here
+            alert(`${type.toUpperCase()}: ${message}`);
         }
 
-        // ============== PDF Generation ==============
-        $('#downloadBillBtn').click(function() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Header
-            doc.setFont('helvetica', 'bold');
-            doc.text('<?php echo addslashes($business_name); ?>', 105, 10, { align: 'center' });
-            
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(10);
-            doc.text('<?php echo addslashes($business_address); ?>', 105, 15, { align: 'center' });
-            
-            // Order info
-            doc.text(`Order #${$('#modalOrderId').text()}`, 14, 25);
-            doc.text(`Date: ${$('#modalOrderDate').text()}`, 14, 30);
-            
-            // Items table
-            const items = [];
-            $('#modalOrderItems tr').each(function() {
-                const cols = $(this).find('td');
-                if (cols.length === 4) {
-                    items.push([cols.eq(0).text(), cols.eq(1).text(), cols.eq(2).text(), cols.eq(3).text()]);
-                }
-            });
-            
-            doc.autoTable({
-                startY: 40,
-                head: [['Item', 'Price', 'Qty', 'Total']],
-                body: items,
-                margin: { left: 14 },
-                styles: { fontSize: 9 }
-            });
-            
-            // Save PDF
-            doc.save(`Order_${$('#modalOrderId').text()}.pdf`);
-        });
-
-        // ============== Fullscreen Toggle ==============
-        const toggleBtn = document.getElementById('fullscreenToggle');
-
-        function isFullscreen() {
-            return document.fullscreenElement || 
-                   document.webkitFullscreenElement || 
-                   document.msFullscreenElement;
-        }
-
-        function enterFullscreen() {
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen();
-            } else if (elem.webkitRequestFullscreen) {
-                elem.webkitRequestFullscreen();
-            } else if (elem.msRequestFullscreen) {
-                elem.msRequestFullscreen();
-            }
-        }
-
-        function exitFullscreen() {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
-            } else if (document.msExitFullscreen) {
-                document.msExitFullscreen();
-            }
-        }
-
-        toggleBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (isFullscreen()) {
-                exitFullscreen();
-            } else {
-                enterFullscreen();
-            }
-        });
-
-        // Update button label based on fullscreen change
-        document.addEventListener('fullscreenchange', updateButtonLabel);
-        document.addEventListener('webkitfullscreenchange', updateButtonLabel);
-        document.addEventListener('msfullscreenchange', updateButtonLabel);
-
-        function updateButtonLabel() {
-            toggleBtn.textContent = isFullscreen() ? 'Exit Fullscreen' : 'Fullscreen';
-        }
-
-        // ============== Initialize ==============
+        // Initialize
         bindOrderHandlers();
     });
     </script>
