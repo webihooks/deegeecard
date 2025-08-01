@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     
                     // Validate file size (max 5MB)
-                    if ($fileSize > 5242880) {
+                    if ($fileSize > 10485760) {
                         throw new Exception("File too large: $fileName. Maximum size is 5MB.");
                     }
                     
@@ -216,7 +216,7 @@ $conn->close();
                                         <label for="attachments" class="form-label">Attachments</label>
                                         <input type="file" class="form-control" id="attachments" name="attachments[]" multiple
                                                accept=".jpg,.jpeg,.png,.pdf,.xls,.csv,.xlsx">
-                                        <div class="form-text">Maximum 5MB per file. Allowed types: JPG, JPEG, PNG, PDF, XLS, CSV</div>
+                                        <div class="form-text">Maximum 10MB per file. Allowed types: JPG, JPEG, PNG, PDF, XLS, CSV</div>
                                         <div id="filePreview" class="mt-2"></div>
                                     </div>
                                     
@@ -333,7 +333,7 @@ $conn->close();
                     message: "required",
                     "attachments[]": {
                         accept: "image/jpeg,image/jpg,image/png,application/pdf,application/vnd.ms-excel,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        filesize: 5242880 // 5MB in bytes
+                        filesize: 10485760 // 5MB in bytes
                     }
                 },
                 messages: {
@@ -343,7 +343,7 @@ $conn->close();
                     message: "Please enter your message",
                     "attachments[]": {
                         accept: "Only JPG, JPEG, PNG, PDF, XLS, CSV files are allowed",
-                        filesize: "File size must be less than 5MB"
+                        filesize: "File size must be less than 10MB"
                     }
                 },
                 errorElement: "div",

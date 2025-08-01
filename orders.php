@@ -662,7 +662,7 @@ $conn->close();
                 success: function() {
                     success();
                     $('#orderModal').modal('hide');
-                    showToast(`Order ${action.replace('_', ' ')} successful!`, 'success');
+                    // showToast(`Order ${action.replace('_', ' ')} successful!`, 'success');
                     setTimeout(() => location.reload(), 1000);
                 },
                 error: function(xhr) {
@@ -691,10 +691,10 @@ $conn->close();
                 : order.order_type.charAt(0).toUpperCase() + order.order_type.slice(1);
         }
 
-        function showToast(message, type) {
-            // Implement your toast notification system here
-            alert(`${type.toUpperCase()}: ${message}`);
-        }
+        // function showToast(message, type) {
+        //     // Implement your toast notification system here
+        //     alert(`${type.toUpperCase()}: ${message}`);
+        // }
 
         // Initialize
         bindOrderHandlers();
