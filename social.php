@@ -86,39 +86,44 @@ $conn->close();
 
                                 <form method="POST" action="update_social_links.php" id="socialForm">
 
-                                    <div class="mb-3">
-                                        <label for="facebook" class="form-label">Facebook</label>
-                                        <input type="url" class="form-control" id="facebook" name="facebook" value="<?php echo htmlspecialchars($facebook); ?>" placeholder="https://facebook.com/username">
-                                    </div>
+    <div class="mb-3">
+        <label for="facebook" class="form-label">Facebook</label>
+        <input type="url" class="form-control" id="facebook" name="facebook" value="<?php echo htmlspecialchars($facebook); ?>" placeholder="https://facebook.com/username">
+        <span style="margin-top: 5px; display:inline-block;">Note: Add URL eg. https://facebook.com/username</span>
+    </div>
 
-                                    <div class="mb-3">
-                                        <label for="instagram" class="form-label">Instagram</label>
-                                        <input type="url" class="form-control" id="instagram" name="instagram" value="<?php echo htmlspecialchars($instagram); ?>" placeholder="https://instagram.com/username">
-                                    </div>
+    <div class="mb-3">
+        <label for="instagram" class="form-label">Instagram</label>
+        <input type="url" class="form-control" id="instagram" name="instagram" value="<?php echo htmlspecialchars($instagram); ?>" placeholder="https://instagram.com/username">
+        <span style="margin-top: 5px; display:inline-block;">Note: Add URL eg. https://instagram.com/username</span>
+    </div>
 
-                                    <div class="mb-3">
-                                        <label for="whatsapp" class="form-label">WhatsApp</label>
-                                        <input type="url" class="form-control" id="whatsapp" name="whatsapp" value="<?php echo htmlspecialchars($whatsapp); ?>" placeholder="https://wa.me/phone_number">
-                                        <span style="margin-top: 5px; display:inline-block;">Note: Add URL eg. https://wa.me/91XXXXXXXXXX</span>
-                                    </div>
+    <div class="mb-3">
+        <label for="whatsapp" class="form-label">WhatsApp</label>
+        <input type="url" class="form-control" id="whatsapp" name="whatsapp" value="<?php echo htmlspecialchars($whatsapp); ?>" placeholder="https://wa.me/phone_number">
+        <span style="margin-top: 5px; display:inline-block;">Note: Add URL eg. https://wa.me/91XXXXXXXXXX</span>
+    </div>
 
-                                    <div class="mb-3">
-                                        <label for="linkedin" class="form-label">LinkedIn</label>
-                                        <input type="url" class="form-control" id="linkedin" name="linkedin" value="<?php echo htmlspecialchars($linkedin); ?>" placeholder="https://linkedin.com/in/username">
-                                    </div>
+    <div class="mb-3">
+        <label for="linkedin" class="form-label">LinkedIn</label>
+        <input type="url" class="form-control" id="linkedin" name="linkedin" value="<?php echo htmlspecialchars($linkedin); ?>" placeholder="https://linkedin.com/in/username">
+        <span style="margin-top: 5px; display:inline-block;">Note: Add URL eg. https://linkedin.com/in/username</span>
+    </div>
 
-                                    <div class="mb-3">
-                                        <label for="youtube" class="form-label">YouTube</label>
-                                        <input type="url" class="form-control" id="youtube" name="youtube" value="<?php echo htmlspecialchars($youtube); ?>" placeholder="https://youtube.com/username">
-                                    </div>
+    <div class="mb-3">
+        <label for="youtube" class="form-label">YouTube</label>
+        <input type="url" class="form-control" id="youtube" name="youtube" value="<?php echo htmlspecialchars($youtube); ?>" placeholder="https://youtube.com/username">
+        <span style="margin-top: 5px; display:inline-block;">Note: Add URL eg. https://youtube.com/username</span>
+    </div>
 
-                                    <div class="mb-3">
-                                        <label for="telegram" class="form-label">Telegram</label>
-                                        <input type="url" class="form-control" id="telegram" name="telegram" value="<?php echo htmlspecialchars($telegram); ?>" placeholder="https://t.me/username">
-                                    </div>
+    <div class="mb-3">
+        <label for="telegram" class="form-label">Telegram</label>
+        <input type="url" class="form-control" id="telegram" name="telegram" value="<?php echo htmlspecialchars($telegram); ?>" placeholder="https://t.me/username">
+        <span style="margin-top: 5px; display:inline-block;">Note: Add URL eg. https://t.me/username</span>
+    </div>
 
-                                    <button type="submit" class="btn btn-success">Update Social</button>
-                                </form>
+    <button type="submit" class="btn btn-success">Update Social</button>
+</form>
 
                             </div>
                         </div>

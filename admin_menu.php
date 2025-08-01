@@ -157,6 +157,15 @@
                     </a>
                </li> -->
 
+               <li class="nav-item">
+                 <a class="nav-link" href="view_tickets.php">
+                    <span class="nav-icon">
+                       <iconify-icon icon="material-symbols:help-outline"></iconify-icon>
+                    </span>
+                    <span class="nav-text">Tickets</span>
+                 </a>
+              </li>
+
 
           </ul>
      </div>
