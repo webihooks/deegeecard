@@ -80,6 +80,16 @@
                     </a>
                </li> -->
 
+
+               <li class="nav-item">
+                    <a class="nav-link" href="list-of-trial-users.php">
+                         <span class="nav-icon">
+                              <iconify-icon icon="mdi:subscriber-identification-module-outline"></iconify-icon>
+                         </span>
+                         <span class="nav-text"> Trial Users </span>
+                    </a>
+               </li>
+
                <li class="nav-item">
                     <a class="nav-link" href="list-of-subscribers.php">
                          <span class="nav-icon">
