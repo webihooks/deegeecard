@@ -299,6 +299,9 @@ window.addEventListener('beforeunload', () => {
                      <a class="sub-nav-link" href="products.php">Products</a>
                   </li>
                   <li class="sub-nav-item">
+                     <a class="sub-nav-link" href="tags.php">Tags</a>
+                  </li>
+                  <li class="sub-nav-item">
                      <a class="sub-nav-link" href="photo-gallery.php">Photo Gallery</a>
                   </li>
                </ul>

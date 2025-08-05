@@ -2,14 +2,14 @@
 <!-- products.php -->
 <div class="products">
     <h6>Products</h6>
-    <div class="mb-3">
+    <!-- <div class="mb-3">
         <div class="input-group">
             <input type="text" id="productSearch" class="form-control" placeholder="Search products...">
             <button class="btn btn-outline-secondary" type="button" id="clearSearch">
                 <i class="bi bi-x"></i>
             </button>
         </div>
-    </div>
+    </div> -->
 
     <?php if ($delivery_active || $dining_active): ?>
         <!-- Shopping Cart Sidebar -->
@@ -451,7 +451,10 @@ if (cart.coupon) {
             <div class="row" id="productsContainer">
                 <?php if (!empty($products)): ?>
                     <?php foreach ($products as $product): ?>
-                        <div class="col-sm-12 product-item" data-name="<?= htmlspecialchars(strtolower($product['product_name'])) ?>" data-desc="<?= htmlspecialchars(strtolower($product['description'])) ?>">
+                        <div class="col-sm-12 product-item" 
+         data-name="<?= htmlspecialchars(strtolower($product['product_name'])) ?>" 
+         data-desc="<?= htmlspecialchars(strtolower($product['description'])) ?>"
+         data-tag="<?= isset($product['tag']) ? htmlspecialchars(strtolower($product['tag'])) : '' ?>">
                             <div class="card product-card">
 
 
@@ -514,22 +517,122 @@ if (cart.coupon) {
                                 <?php endif; ?>
             </div>
 
-            <?php if ($delivery_active || $dining_active): ?>
-                <div class="cart-button-container" style="display: none;">
-                    <button class="btn btn-primary cart-button" onclick="toggleCart()">
-                        <span class="cart-count">0 item added</span>
-                        <span class="small discount-message" style="display: none;"></span>
-                    </button>
-                </div>
-                <?php endif; ?>
+
+
+
+
+
+<!-- Move search to bottom and make it sticky -->
+<div class="sticky-search-container">
+    <!-- Add tags filter above search -->
+    <div class="tags-filter-container">
+        <div class="tags-scroll">
+            <button class="tag-btn active" data-tag="all">All</button>
+            <?php foreach ($tags as $tag): ?>
+                <button class="tag-btn" data-tag="<?= htmlspecialchars(strtolower($tag['tag'])) ?>">
+                    <?= htmlspecialchars($tag['tag']) ?>
+                </button>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    
+    <div class="input-group sticky-search">
+        <input type="text" id="productSearch" class="form-control" placeholder="Search products...">
+        <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+            <i class="bi bi-x"></i>
+        </button>
+    </div>
+</div>
+<!-- Move search to bottom and make it sticky -->
+
+
+
+
+<?php if ($delivery_active || $dining_active): ?>
+    <div class="cart-button-container" style="display: none;">
+        <button class="btn btn-primary cart-button" onclick="toggleCart()">
+            <span class="cart-count">0 item added</span>
+            <span class="small discount-message" style="display: none;"></span>
+        </button>
+    </div>
+    <?php endif; ?>
+
+
 </div>
 
 <script>
     
+// Tag filtering functionality
+document.querySelectorAll('.tag-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        // Toggle active state
+        document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        const selectedTag = this.dataset.tag;
+        filterProductsByTag(selectedTag);
+    });
+});
 
+function filterProductsByTag(tag) {
+    const productItems = document.querySelectorAll('.product-item');
+    
+    if (tag === 'all') {
+        productItems.forEach(item => {
+            item.style.display = 'block';
+        });
+        return;
+    }
+    
+    productItems.forEach(item => {
+        const productTag = item.dataset.tag;
+        if (productTag === tag) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
 
+// Update your product search to work with tags
+document.getElementById('productSearch').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const activeTag = document.querySelector('.tag-btn.active')?.dataset.tag;
+    
+    const productItems = document.querySelectorAll('.product-item');
+    productItems.forEach(item => {
+        // Skip if hidden by tag filter
+        if (activeTag && activeTag !== 'all' && item.dataset.tag !== activeTag) {
+            item.style.display = 'none';
+            return;
+        }
+        
+        const productName = item.dataset.name;
+        const productDesc = item.dataset.desc;
+        
+        if (productName.includes(searchTerm) || productDesc.includes(searchTerm)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+});
 
-
+// Clear search should also respect the active tag filter
+document.getElementById('clearSearch').addEventListener('click', function() {
+    document.getElementById('productSearch').value = '';
+    const activeTag = document.querySelector('.tag-btn.active')?.dataset.tag;
+    
+    document.querySelectorAll('.product-item').forEach(item => {
+        if (activeTag && activeTag !== 'all') {
+            item.style.display = item.dataset.tag === activeTag ? 'block' : 'none';
+        } else {
+            item.style.display = 'block';
+        }
+    });
+    document.getElementById('productSearch').focus();
+});
+// Product search functionality
 
 
 
@@ -565,6 +668,15 @@ if (cart.coupon) {
     // Add to cart button click handler
     document.querySelectorAll('.add-to-cart').forEach(button => {
         button.addEventListener('click', function() {
+
+
+            // Add this to adjust the sticky search container
+            const stickySearchContainer = document.querySelector('.sticky-search-container');
+            if (stickySearchContainer) {
+                stickySearchContainer.style.bottom = '65px';
+            }
+
+
             const product = {
                 id: this.dataset.id,
                 name: this.dataset.name,
@@ -1095,6 +1207,12 @@ function updateCartUI() {
             const cartButtonContainer = document.querySelector('.cart-button-container');
             if (cartButtonContainer) {
                 cartButtonContainer.style.display = 'none';
+                
+                // Reset sticky search container position
+                const stickySearchContainer = document.querySelector('.sticky-search-container');
+                if (stickySearchContainer) {
+                    stickySearchContainer.style.bottom = ''; // Reset to original value
+                }
             }
         }
     }
@@ -1110,6 +1228,12 @@ function updateCartUI() {
     
     function closeCart() {
         document.querySelector('.cart-sidebar').classList.remove('open');
+    }
+
+    // Reset sticky search container position
+    const stickySearchContainer = document.querySelector('.sticky-search-container');
+    if (stickySearchContainer) {
+        stickySearchContainer.style.bottom = ''; // Reset to original value
     }
     
     // Order type toggle functionality
@@ -1796,5 +1920,3 @@ document.getElementById('viewCartBtn').addEventListener('click', function() {
         <button class="order-success-btn" onclick="closeOrderSuccessPopup()">OK</button>
     </div>
 </div>
-
-

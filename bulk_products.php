@@ -78,8 +78,9 @@ if (isset($_POST['import_csv']) && isset($_FILES['csv_file'])) {
                     description, 
                     price, 
                     quantity, 
-                    image_path
-                ) VALUES (?, ?, ?, ?, ?, ?)";
+                    image_path,
+                    tag_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)";
                 
                 $update_sql = "UPDATE products SET 
                     product_name = ?, 
@@ -87,6 +88,7 @@ if (isset($_POST['import_csv']) && isset($_FILES['csv_file'])) {
                     price = ?, 
                     quantity = ?, 
                     image_path = ?,
+                    tag_id = ?,
                     updated_at = NOW()
                 WHERE id = ? AND user_id = ?";
                 
@@ -107,8 +109,8 @@ if (isset($_POST['import_csv']) && isset($_FILES['csv_file'])) {
                         // Check if this is an update or insert operation
                         if ($has_product_id) {
                             // Update operation - CSV has product_id
-                            if (count($data) < 6) {
-                                $errors[] = "Row with data: " . implode(',', $data) . " - Insufficient columns for update (needs product_id)";
+                            if (count($data) < 7) {
+                                $errors[] = "Row with data: " . implode(',', $data) . " - Insufficient columns for update (needs product_id and tag_id)";
                                 $error_count++;
                                 continue;
                             }
@@ -119,10 +121,11 @@ if (isset($_POST['import_csv']) && isset($_FILES['csv_file'])) {
                             $price = trim($data[3] ?? '');
                             $quantity = trim($data[4] ?? '');
                             $image_path = trim($data[5] ?? '');
+                            $tag_id = trim($data[6] ?? '');
                         } else {
                             // Insert operation - no product_id in CSV
-                            if (count($data) < 5) {
-                                $errors[] = "Row with data: " . implode(',', $data) . " - Insufficient columns";
+                            if (count($data) < 6) {
+                                $errors[] = "Row with data: " . implode(',', $data) . " - Insufficient columns (needs tag_id)";
                                 $error_count++;
                                 continue;
                             }
@@ -133,6 +136,7 @@ if (isset($_POST['import_csv']) && isset($_FILES['csv_file'])) {
                             $price = trim($data[2] ?? '');
                             $quantity = trim($data[3] ?? '');
                             $image_path = trim($data[4] ?? '');
+                            $tag_id = trim($data[5] ?? '');
                         }
                         
                         // Validate required fields
@@ -170,15 +174,24 @@ if (isset($_POST['import_csv']) && isset($_FILES['csv_file'])) {
                             continue;
                         }
                         
+                        // Validate tag_id
+                        if (!empty($tag_id) && !is_numeric($tag_id)) {
+                            $errors[] = "Row with data: " . implode(',', $data) . " - Tag ID must be numeric";
+                            $error_count++;
+                            continue;
+                        }
+                        $tag_id = !empty($tag_id) ? (int)$tag_id : null;
+                        
                         // Process based on whether we have a product_id or not
                         if ($product_id) {
                             // Update existing product
-                            $update_stmt->bind_param("ssdisii", 
+                            $update_stmt->bind_param("ssdisiii", 
                                 $product_name, 
                                 $description, 
                                 $price, 
                                 $quantity, 
                                 $image_path,
+                                $tag_id,
                                 $product_id,
                                 $user_id
                             );
@@ -196,13 +209,14 @@ if (isset($_POST['import_csv']) && isset($_FILES['csv_file'])) {
                             }
                         } else {
                             // Insert new product
-                            $insert_stmt->bind_param("issdis", 
+                            $insert_stmt->bind_param("issdisi", 
                                 $user_id, 
                                 $product_name, 
                                 $description, 
                                 $price, 
                                 $quantity, 
-                                $image_path
+                                $image_path,
+                                $tag_id
                             );
                             
                             if ($insert_stmt->execute()) {
@@ -251,15 +265,15 @@ if (isset($_GET['download_sample'])) {
     if ($type === 'update') {
         header('Content-Disposition: attachment; filename="products_update_sample.csv"');
         $output = fopen('php://output', 'w');
-        fputcsv($output, ['Product ID', 'Product Name', 'Description', 'Price', 'Quantity', 'Image Path']);
-        fputcsv($output, ['3647', 'Chicken Manchow Soup', 'Updated description', '400.00', '200', '']);
-        fputcsv($output, ['3648', 'Veg Fried Rice', 'Updated description', '350.00', '150', '']);
+        fputcsv($output, ['Product ID', 'Product Name', 'Description', 'Price', 'Quantity', 'Image Path', 'Tag ID']);
+        fputcsv($output, ['3647', 'Chicken Manchow Soup', 'Updated description', '400.00', '200', '', '101']);
+        fputcsv($output, ['3648', 'Veg Fried Rice', 'Updated description', '350.00', '150', '', '102']);
     } else {
         header('Content-Disposition: attachment; filename="products_new_sample.csv"');
         $output = fopen('php://output', 'w');
-        fputcsv($output, ['Product Name', 'Description', 'Price', 'Quantity', 'Image Path']);
-        fputcsv($output, ['New Product 1', 'Description for product 1', '200.00', '100', '']);
-        fputcsv($output, ['New Product 2', 'Description for product 2', '300.00', '50', '']);
+        fputcsv($output, ['Product Name', 'Description', 'Price', 'Quantity', 'Image Path', 'Tag ID']);
+        fputcsv($output, ['New Product 1', 'Description for product 1', '200.00', '100', '', '101']);
+        fputcsv($output, ['New Product 2', 'Description for product 2', '300.00', '50', '', '102']);
     }
     
     fclose($output);
@@ -322,8 +336,8 @@ $conn->close();
                                     <label for="csv_file">CSV File</label>
                                     <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
                                     <small class="form-text text-muted">
-                                        For new products: Product Name, Description, Price, Quantity, Image Path<br>
-                                        For updates: Product ID, Product Name, Description, Price, Quantity, Image Path<br>
+                                        For new products: Product Name, Description, Price, Quantity, Image Path, Tag ID<br>
+                                        For updates: Product ID, Product Name, Description, Price, Quantity, Image Path, Tag ID<br>
                                         Note: Price can be in any format (₹200, $5.99, 150.00)
                                     </small>
                                 </div>
@@ -341,18 +355,18 @@ $conn->close();
                                 <div class="mb-4">
                                     <h6>For New Products:</h6>
                                     <pre>
-Product Name,Description,Price,Quantity,Image Path
-"Chicken Manchow Soup","Delicious soup with chicken",200.00,100,"images/soup.jpg"
-"Veg Fried Rice","Vegetable fried rice with spices",150.00,50,"images/rice.jpg"
+Product Name,Description,Price,Quantity,Image Path,Tag ID
+"Chicken Manchow Soup","Delicious soup with chicken",200.00,100,"images/soup.jpg",101
+"Veg Fried Rice","Vegetable fried rice with spices",150.00,50,"images/rice.jpg",102
                                     </pre>
                                 </div>
                                 
                                 <div>
                                     <h6>For Updating Existing Products:</h6>
                                     <pre>
-Product ID,Product Name,Description,Price,Quantity,Image Path
-3647,"Chicken Manchow Soup","Updated description",400.00,200,"images/soup_new.jpg"
-3648,"Veg Fried Rice","Updated description",350.00,150,"images/rice_new.jpg"
+Product ID,Product Name,Description,Price,Quantity,Image Path,Tag ID
+3647,"Chicken Manchow Soup","Updated description",400.00,200,"images/soup_new.jpg",101
+3648,"Veg Fried Rice","Updated description",350.00,150,"images/rice_new.jpg",102
                                     </pre>
                                 </div>
                             </div>

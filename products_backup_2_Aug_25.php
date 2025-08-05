@@ -72,14 +72,6 @@ $count_data = $result->fetch_assoc();
 $current_product_count = $count_data['count'];
 $stmt->close();
 
-// Fetch all tags for the current user
-$sql = "SELECT id, tag FROM tags WHERE user_id = ? ORDER BY tag";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$tags = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-$stmt->close();
-
 // Handle form submission for add/update
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $product_id = isset($_POST['product_id']) ? $_POST['product_id'] : null;
@@ -87,7 +79,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = trim($_POST['description']);
     $price = trim($_POST['price']);
     $quantity = trim($_POST['quantity']);
-    $tag_id = isset($_POST['tag_id']) && !empty($_POST['tag_id']) ? $_POST['tag_id'] : null;
 
     // Validate inputs
     if (empty($product_name) || empty($price) || empty($quantity)) {
@@ -137,19 +128,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($product_id) {
                     // Update existing product
                     if (!empty($image_path)) {
-                        $sql = "UPDATE products SET product_name = ?, description = ?, price = ?, quantity = ?, image_path = ?, tag_id = ? WHERE id = ? AND user_id = ?";
+                        $sql = "UPDATE products SET product_name = ?, description = ?, price = ?, quantity = ?, image_path = ? WHERE id = ? AND user_id = ?";
                         $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("ssdssiii", $product_name, $description, $price, $quantity, $image_path, $tag_id, $product_id, $user_id);
+                        $stmt->bind_param("ssdssii", $product_name, $description, $price, $quantity, $image_path, $product_id, $user_id);
                     } else {
-                        $sql = "UPDATE products SET product_name = ?, description = ?, price = ?, quantity = ?, tag_id = ? WHERE id = ? AND user_id = ?";
+                        $sql = "UPDATE products SET product_name = ?, description = ?, price = ?, quantity = ? WHERE id = ? AND user_id = ?";
                         $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("ssdiiii", $product_name, $description, $price, $quantity, $tag_id, $product_id, $user_id);
+                        $stmt->bind_param("ssdiii", $product_name, $description, $price, $quantity, $product_id, $user_id);
                     }
                 } else {
                     // Add new product
-                    $sql = "INSERT INTO products (user_id, product_name, description, price, quantity, image_path, tag_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                    $sql = "INSERT INTO products (user_id, product_name, description, price, quantity, image_path) VALUES (?, ?, ?, ?, ?, ?)";
                     $stmt = $conn->prepare($sql);
-                    $stmt->bind_param("issdisi", $user_id, $product_name, $description, $price, $quantity, $image_path, $tag_id);
+                    $stmt->bind_param("issdis", $user_id, $product_name, $description, $price, $quantity, $image_path);
                 }
 
                 if ($stmt->execute()) {
@@ -170,10 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Handle edit request
 if (isset($_GET['edit'])) {
     $product_id = $_GET['edit'];
-    $sql = "SELECT p.*, t.tag as tag_name 
-            FROM products p
-            LEFT JOIN tags t ON p.tag_id = t.id
-            WHERE p.id = ? AND p.user_id = ?";
+    $sql = "SELECT * FROM products WHERE id = ? AND user_id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ii", $product_id, $user_id);
     $stmt->execute();
@@ -218,11 +206,8 @@ if (isset($_GET['delete'])) {
     $stmt->close();
 }
 
-// Fetch all products for the current user with their tag names
-$sql = "SELECT p.*, t.tag as tag_name 
-        FROM products p
-        LEFT JOIN tags t ON p.tag_id = t.id
-        WHERE p.user_id = ? ORDER BY p.product_name";
+// Fetch all products for the current user
+$sql = "SELECT * FROM products WHERE user_id = ? ORDER BY product_name";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -234,6 +219,7 @@ $conn->close();
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <title>Products Management</title>
@@ -245,14 +231,10 @@ $conn->close();
     <script src="assets/js/config.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.19.3/jquery.validate.min.js"></script>
-    <style>
-        select[multiple] {
-            min-height: 100px;
-        }
-    </style>
 </head>
 
 <body>
+
     <div class="wrapper">
         <?php include 'toolbar.php'; ?>
         <?php include 'menu.php'; ?>
@@ -295,27 +277,10 @@ $conn->close();
                                     <input type="hidden" name="existing_image" value="<?php echo $is_edit_mode && !empty($product_data['image_path']) ? $product_data['image_path'] : ''; ?>">
                                     
                                     <div class="mb-3">
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <label for="product_name" class="form-label">Product Name *</label>
-                                                <input type="text" class="form-control" id="product_name" name="product_name" required 
-                                                    value="<?php echo $is_edit_mode ? htmlspecialchars($product_data['product_name']) : ''; ?>">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label for="tag_id" class="form-label">Tag</label>
-                                                <select class="form-select" id="tag_id" name="tag_id">
-                                                    <option value="">-- No Tag --</option>
-                                                    <?php foreach ($tags as $tag): ?>
-                                                        <option value="<?php echo $tag['id']; ?>" 
-                                                            <?php echo ($is_edit_mode && isset($product_data['tag_id']) && $product_data['tag_id'] == $tag['id']) ? 'selected' : ''; ?>>
-                                                            <?php echo htmlspecialchars($tag['tag']); ?>
-                                                        </option>
-                                                    <?php endforeach; ?>
-                                                </select>
-                                            </div>
-                                        </div>
+                                        <label for="product_name" class="form-label">Product Name *</label>
+                                        <input type="text" class="form-control" id="product_name" name="product_name" required 
+                                            value="<?php echo $is_edit_mode ? htmlspecialchars($product_data['product_name']) : ''; ?>">
                                     </div>
-
                                     <div class="mb-3">
                                         <label for="description" class="form-label">Description</label>
                                         <textarea class="form-control" id="description" name="description" rows="3"><?php 
@@ -375,7 +340,6 @@ $conn->close();
                                                 <tr>
                                                     <th>Image</th>
                                                     <th>Name</th>
-                                                    <th>Tag</th>
                                                     <th>Description</th>
                                                     <th>Price</th>
                                                     <th>Quantity</th>
@@ -393,11 +357,10 @@ $conn->close();
                                                             <?php endif; ?>
                                                         </td>
                                                         <td><?php echo htmlspecialchars($product['product_name']); ?></td>
-                                                        <td><?php echo !empty($product['tag_name']) ? htmlspecialchars($product['tag_name']) : '--'; ?></td>
                                                         <td><?php echo htmlspecialchars($product['description']); ?></td>
                                                         <td>₹<?php echo number_format($product['price'], 2); ?></td>
                                                         <td><?php echo $product['quantity']; ?></td>
-                                                        <td width="150">
+                                                        <td>
                                                             <a href="products.php?edit=<?php echo $product['id']; ?>" class="btn btn-sm btn-primary">Edit</a>
                                                             <a href="products.php?delete=<?php echo $product['id']; ?>" class="btn btn-sm btn-danger" 
                                                                 onclick="return confirm('Are you sure you want to delete this product?')">Delete</a>

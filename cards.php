@@ -190,7 +190,7 @@ if (!empty($search_term)) {
     $cards_sql .= " WHERE (u.name LIKE ? OR uc.card_type LIKE ? OR uc.file_path LIKE ?)";
 }
 
-$cards_sql .= " ORDER BY u.name ASC, uc.card_type ASC";
+$cards_sql .= " ORDER BY uc.uploaded_at DESC, u.name ASC, uc.card_type ASC";
 
 // Prepare and execute the query with search parameters if needed
 $cards_stmt = $conn->prepare($cards_sql);

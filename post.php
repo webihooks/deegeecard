@@ -158,6 +158,40 @@ $delivery_active = $dining_delivery_data['delivery_active'] ?? 0;
 
 
 
+// Get tags for this user
+$tags_sql = "SELECT id, tag FROM tags WHERE user_id = ? ORDER BY tag ASC";
+$tags_stmt = $conn->prepare($tags_sql);
+if ($tags_stmt) {
+    $tags_stmt->execute([$user_id]);
+    $tags = $tags_stmt->fetchAll(PDO::FETCH_ASSOC);
+} else {
+    error_log("Failed to prepare tags SQL statement.");
+    $tags = [];
+}
+
+// In your getProducts function (or wherever you fetch products), join with tags table:
+$products_sql = "SELECT p.*, t.tag 
+                 FROM products p 
+                 LEFT JOIN tags t ON p.tag_id = t.id 
+                 WHERE p.user_id = ?";
+$products_stmt = $conn->prepare($products_sql);
+$products_stmt->execute([$user_id]);
+$products = $products_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Then when displaying products, you can map tag_ids to tag names
+foreach ($products as &$product) {
+    $product['tags'] = [];
+    if (!empty($product['tag_ids'])) {
+        $tag_ids = explode(',', $product['tag_ids']);
+        foreach ($tags as $tag) {
+            if (in_array($tag['id'], $tag_ids)) {
+                $product['tags'][] = strtolower($tag['tag']);
+            }
+        }
+    }
+}
+
+
 // Include HTML components
 // These files will have access to all the variables defined above (e.g., $user, $discounts, $primary_color, etc.)
 require_once 'includes/header.php';

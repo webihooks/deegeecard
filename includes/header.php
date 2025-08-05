@@ -233,6 +233,11 @@
         @keyframes bounce {
             to { transform: translateY(-12px); }
         }
+        .tag-btn.active {
+            background: <?= $primary_color ?>;
+            color: white;
+            border-color: <?= $primary_color ?>;
+        }
     </style>
 </head>
 <body class="restaurant">

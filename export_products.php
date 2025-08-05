@@ -14,10 +14,32 @@ header('Content-Disposition: attachment;filename=products.csv');
 
 $output = fopen('php://output', 'w');
 
-// Column headers - updated to include id, user_id, and image_path
-fputcsv($output, ['ID', 'User ID', 'Product Name', 'Description', 'Price', 'Quantity', 'Image Path']);
+// Column headers - includes Tag ID but not Tag Name
+fputcsv($output, [
+    'ID', 
+    'User ID', 
+    'Product Name', 
+    'Description', 
+    'Price', 
+    'Quantity', 
+    'Image Path',
+    'Tag ID'
+]);
 
-$sql = "SELECT id, user_id, product_name, description, price, quantity, image_path FROM products WHERE user_id = ? ORDER BY product_name";
+// Query to get products sorted by ID in ascending order
+$sql = "SELECT 
+            p.id, 
+            p.user_id, 
+            p.product_name, 
+            p.description, 
+            p.price, 
+            p.quantity, 
+            p.image_path,
+            p.tag_id
+        FROM products p
+        WHERE p.user_id = ? 
+        ORDER BY p.id ASC";  // Changed to sort by ID ascending
+
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
