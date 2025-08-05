@@ -564,13 +564,33 @@ if (cart.coupon) {
     
 // Tag filtering functionality
 document.querySelectorAll('.tag-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault(); // Prevent default anchor behavior
+        
         // Toggle active state
         document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
         
         const selectedTag = this.dataset.tag;
         filterProductsByTag(selectedTag);
+        
+        // Calculate the exact scroll position to show products title
+        const productsSection = document.getElementById('productsContainer');
+        if (productsSection) {
+            // Get the position of the products section
+            const productsPosition = productsSection.getBoundingClientRect().top;
+            // Get current scroll position
+            const currentPosition = window.pageYOffset || document.documentElement.scrollTop;
+            // Calculate new position (adjust 100px to whatever offset you need)
+            const offset = 150; // Adjust this value as needed
+            const newPosition = currentPosition + productsPosition - offset;
+            
+            // Smooth scroll to the adjusted position
+            window.scrollTo({
+                top: newPosition,
+                behavior: 'smooth'
+            });
+        }
     });
 });
 
@@ -1390,6 +1410,12 @@ function placeOrder() {
                 document.getElementById('couponMessage').textContent = '';
                 document.getElementById('couponMessage').className = 'text-success';
             }
+
+            // Reset sticky search container position
+            const stickySearchContainer = document.querySelector('.sticky-search-container');
+            if (stickySearchContainer) {
+                stickySearchContainer.style.bottom = ''; // Reset to original value
+            }
             
             // Show success popup
             showOrderSuccessPopup();
@@ -1608,9 +1634,16 @@ function placeOrderOnWhatsApp() {
     saveCart();
     updateCartUI();
     closeCart();
+
+    // Reset sticky search container position
+    const stickySearchContainer = document.querySelector('.sticky-search-container');
+    if (stickySearchContainer) {
+        stickySearchContainer.style.bottom = ''; // Reset to original value
+    }
     
     // Success popup
     showOrderSuccessPopup();
+
 }
     
     
@@ -1920,3 +1953,4 @@ document.getElementById('viewCartBtn').addEventListener('click', function() {
         <button class="order-success-btn" onclick="closeOrderSuccessPopup()">OK</button>
     </div>
 </div>
+
