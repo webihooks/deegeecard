@@ -35,16 +35,6 @@ $subscription_stmt->store_result();
 $has_active_subscription = ($subscription_stmt->num_rows > 0);
 $subscription_stmt->close();
 
-// Fetch available packages including description and duration WHERE status is active
-$packages = [];
-$sql_packages = "SELECT id, name, price, description, duration FROM packages WHERE status = 'active'";
-$result_packages = $conn->query($sql_packages);
-if ($result_packages) {
-    while ($row = $result_packages->fetch_assoc()) {
-        $packages[] = $row;
-    }
-}
-
 // Fetch current subscription
 $current_subscription = null;
 $sql_subscription = "SELECT s.package_id, s.start_date, s.end_date, s.status, p.name as package_name, p.price 
@@ -58,6 +48,49 @@ if ($stmt_sub) {
     $result = $stmt_sub->get_result();
     $current_subscription = $result->fetch_assoc();
     $stmt_sub->close();
+}
+
+// Fetch available packages
+$packages = [];
+$current_package_id = $current_subscription['package_id'] ?? null;
+
+// If user has Delivery (1) or Dining (2) package, show only their current package and Premium as upgrade
+if ($current_package_id == 1 || $current_package_id == 2) {
+    // Get current package
+    $sql_current = "SELECT id, name, price, description, duration FROM packages WHERE id = ?";
+    $stmt_current = $conn->prepare($sql_current);
+    $stmt_current->bind_param("i", $current_package_id);
+    $stmt_current->execute();
+    $result_current = $stmt_current->get_result();
+    if ($row = $result_current->fetch_assoc()) {
+        $packages[] = $row;
+    }
+    $stmt_current->close();
+    
+    // Get Premium package
+    $sql_premium = "SELECT id, name, price, description, duration FROM packages WHERE id = 3";
+    $result_premium = $conn->query($sql_premium);
+    if ($row = $result_premium->fetch_assoc()) {
+        $packages[] = $row;
+    }
+} 
+// If user has Premium package (3), show only Premium package
+elseif ($current_package_id == 3) {
+    $sql_premium = "SELECT id, name, price, description, duration FROM packages WHERE id = 3";
+    $result_premium = $conn->query($sql_premium);
+    if ($row = $result_premium->fetch_assoc()) {
+        $packages[] = $row;
+    }
+}
+else {
+    // Show all active packages for users with no subscription
+    $sql_packages = "SELECT id, name, price, description, duration FROM packages WHERE status = 'active'";
+    $result_packages = $conn->query($sql_packages);
+    if ($result_packages) {
+        while ($row = $result_packages->fetch_assoc()) {
+            $packages[] = $row;
+        }
+    }
 }
 
 // Handle subscription cancel
@@ -218,30 +251,44 @@ $(document).ready(function() {
                                     </div>
                                 <?php endif; ?>
 
-                                <div class="available-packages">
-                                    <h5>Available Subscription Plans</h5>
-                                    <div class="row">
-                                        <?php foreach ($packages as $package): ?>
-                                            <div class="col-md-4 mb-4">
-                                                <div class="card">
-                                                    <div class="card-header">
-                                                        <h5 class="text-center"><?php echo htmlspecialchars($package['name']); ?></h5>
-                                                    </div>
-                                                    <div class="card-body text-center">
-                                                        <h3>₹<?php echo number_format($package['price']); ?></h3>
-                                                        <p><?php echo nl2br(htmlspecialchars($package['description'])); ?></p>
-                                                        <button class="btn btn-primary subscribe-btn" 
-                                                            data-package-id="<?php echo $package['id']; ?>"
-                                                            data-package-name="<?php echo htmlspecialchars($package['name']); ?>"
-                                                            data-package-price="<?php echo $package['price']; ?>">
-                                                            Subscribe Now
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </div>
+                                <!-- In the available-packages section -->
+<div class="available-packages">
+    <h5>Available Subscription Plans</h5>
+    <div class="row">
+        <?php foreach ($packages as $package): ?>
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="text-center"><?php echo htmlspecialchars($package['name']); ?></h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <h3>₹<?php echo number_format($package['price']); ?></h3>
+                        <p><?php echo nl2br(htmlspecialchars($package['description'])); ?></p>
+                        <button class="btn btn-primary subscribe-btn" 
+                            data-package-id="<?php echo $package['id']; ?>"
+                            data-package-name="<?php echo htmlspecialchars($package['name']); ?>"
+                            data-package-price="<?php echo $package['price']; ?>">
+                            <?php 
+                                // Modified this condition to only show "Upgrade to Premium" if current package is not Premium
+                                if ($current_package_id && $package['id'] == 3 && $current_package_id != 3) {
+                                    echo "Upgrade to Premium";
+                                } else {
+                                    echo "Subscribe Now";
+                                }
+                            ?>
+                        </button>
+                        <?php if ($current_package_id && $package['id'] == $current_package_id): ?>
+                            <div class="mt-2 text-success">Your current plan</div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+</div>
+
+
+                                
                             </div>
                         </div>
                     </div>

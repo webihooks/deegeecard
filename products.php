@@ -49,13 +49,13 @@ if ($subscription) {
     $package_name = $subscription['package_name'];
     switch ($subscription['package_id']) {
         case 1:
-            $max_products = 20;
+            $max_products = 600;
             break;
         case 2:
-            $max_products = 100;
+            $max_products = 600;
             break;
         case 3:
-            $max_products = 500;
+            $max_products = 600;
             break;
         default:
             $max_products = 0;
