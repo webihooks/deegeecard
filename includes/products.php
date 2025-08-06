@@ -1,4 +1,5 @@
 
+
 <!-- products.php -->
 <div class="products">
     <h6>Products</h6>
@@ -69,11 +70,17 @@
                             <i class="bi bi-truck"></i> Delivery
                         </button>
                         <?php endif; ?>
-                            <?php if ($dining_active): ?>
-                                <button class="btn btn-outline-primary w-50" id="dinningBtn">
-                                    <i class="bi bi-cup-hot"></i> Dining
-                                </button>
-                                <?php endif; ?>
+                            
+
+
+<?php if ($dining_active && ($package_id == 2 || $package_id == 3)): ?>
+    <button class="btn btn-outline-primary w-50" id="dinningBtn">
+        <i class="bi bi-cup-hot"></i> Dining
+    </button>
+<?php endif; ?>
+
+
+
                 </div>
                 <?php endif; ?>
 
@@ -215,6 +222,14 @@ document.getElementById('applyCouponBtn').addEventListener('click', function() {
 
 
 
+// In your JavaScript code, modify the dining button visibility check
+const showDiningBtn = <?= ($dining_active && ($package_id == 2 || $package_id == 3)) ? 'true' : 'false' ?>;
+if (dinningBtn) {
+    dinningBtn.style.display = showDiningBtn ? 'inline-block' : 'none';
+}
+
+
+
 
 function calculateSubtotal() {
     return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -319,7 +334,58 @@ if (cart.coupon) {
 
 
 
-                    <script>
+<script>
+// For View Cart Hide and Show
+function checkCartVisibility() {
+    const cartItems = document.getElementById('cartItems');
+    const viewCartBtn = document.getElementById('viewCartBtn');
+    
+    if (cartItems && viewCartBtn) {
+        if (cartItems.style.display === 'block' || 
+            cartItems.classList.contains('fade-in') || 
+            !cartItems.classList.contains('fade-out')) {
+            viewCartBtn.style.display = 'none';
+        } else {
+            viewCartBtn.style.display = 'block';
+        }
+    }
+}
+
+// Call this function whenever cart visibility might change
+document.addEventListener('DOMContentLoaded', function() {
+    checkCartVisibility();
+    
+    // Also check after cart updates
+    const originalUpdateCartUI = updateCartUI;
+    updateCartUI = function() {
+        originalUpdateCartUI.apply(this, arguments);
+        checkCartVisibility();
+    };
+});
+
+// Add to your fadeIn/fadeOut functions
+const originalFadeIn = fadeIn;
+fadeIn = function(element, callback) {
+    originalFadeIn.apply(this, arguments);
+    checkCartVisibility();
+    if (callback) callback();
+};
+
+const originalFadeOut = fadeOut;
+fadeOut = function(element, callback) {
+    originalFadeOut.apply(this, arguments);
+    checkCartVisibility();
+    if (callback) callback();
+};
+// For View Cart Hide and Show
+
+
+
+
+
+
+
+
                         // Fade Animation Functions
                         function fadeIn(element, callback) {
                             element.style.display = 'block';

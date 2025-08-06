@@ -191,6 +191,27 @@ foreach ($products as &$product) {
     }
 }
 
+// Check for active subscription and get package_id
+$subscription_sql = "SELECT package_id FROM subscriptions 
+                    WHERE user_id = ? 
+                    AND status = 'active' 
+                    AND end_date >= CURDATE()
+                    LIMIT 1";
+$subscription_stmt = $conn->prepare($subscription_sql);
+if ($subscription_stmt) {
+    $subscription_stmt->execute([$user_id]);
+    $active_subscription = $subscription_stmt->fetch(PDO::FETCH_ASSOC);
+} else {
+    error_log("Failed to prepare subscription SQL statement.");
+    $active_subscription = false;
+}
+
+$show_subscription_popup = !$active_subscription;
+$package_id = $active_subscription ? $active_subscription['package_id'] : null;
+
+
+
+
 
 // Include HTML components
 // These files will have access to all the variables defined above (e.g., $user, $discounts, $primary_color, etc.)
