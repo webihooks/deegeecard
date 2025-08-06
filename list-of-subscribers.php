@@ -96,7 +96,7 @@ $count_stmt->close();
 $sub_sql = "SELECT s.subscription_id, u.id as user_id, u.name, u.email, 
                    DATE(s.start_date) as start_date, 
                    DATE(s.end_date) as end_date, 
-                   s.status, s.subscription_type,
+                   s.status, s.subscription_type as package_name,
                    p.profile_url " . $base_sql . " 
             ORDER BY s.created_at DESC
             LIMIT ?, ?";
@@ -184,48 +184,51 @@ $conn->close();
 
                                 <div class="table-responsive">
                                     <table class="table table-centered table-striped table-hover">
-                                        <thead class="thead-light">
-                                            <tr>
-                                                <th>Sr. No.</th>
-                                                <th>User ID</th>
-                                                <th>User Name</th>
-                                                <th>Start Date</th>
-                                                <th>End Date</th>
-                                                <th>Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php 
-                                            if ($sub_result->num_rows > 0): 
-                                                $sr_no = $offset + 1;
-                                                while ($row = $sub_result->fetch_assoc()): 
-                                                    $is_expired = $row['status'] === 'expired';
-                                                    $status_class = $is_expired ? 'bg-warning' : 'bg-success';
-                                                    $status_text = $is_expired ? 'Expired' : 'Active';
-                                            ?>
-                                                <tr>
-                                                    <td><?php echo $sr_no++; ?></td>
-                                                    <td><?php echo htmlspecialchars($row['user_id']); ?></td>
-                                                    <td>
-                                                        <?php if (!empty($row['profile_url'])): ?>
-                                                            <a href="<?php echo htmlspecialchars($row['profile_url']); ?>" target="_blank"><?php echo htmlspecialchars($row['name']); ?></a>
-                                                        <?php else: ?>
-                                                            <?php echo htmlspecialchars($row['name']); ?>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td><?php echo htmlspecialchars($row['start_date']); ?></td>
-                                                    <td><?php echo htmlspecialchars($row['end_date']); ?></td>
-                                                    <td><span class="badge <?php echo $status_class; ?>"><?php echo $status_text; ?></span></td>
-                                                </tr>
-                                            <?php 
-                                                endwhile; 
-                                            else: 
-                                            ?>
-                                                <tr>
-                                                    <td colspan="6" class="text-center">No subscriptions found matching your criteria.</td>
-                                                </tr>
-                                            <?php endif; ?>
-                                        </tbody>
+
+<thead class="thead-light">
+    <tr>
+        <th>Sr. No.</th>
+        <th>User ID</th>
+        <th>User Name</th>
+        <th>Package</th>  <!-- Add this column -->
+        <th>Start Date</th>
+        <th>End Date</th>
+        <th>Status</th>
+    </tr>
+</thead>
+<tbody>
+    <?php 
+    if ($sub_result->num_rows > 0): 
+        $sr_no = $offset + 1;
+        while ($row = $sub_result->fetch_assoc()): 
+            $is_expired = $row['status'] === 'expired';
+            $status_class = $is_expired ? 'bg-warning' : 'bg-success';
+            $status_text = $is_expired ? 'Expired' : 'Active';
+    ?>
+        <tr>
+            <td><?php echo $sr_no++; ?></td>
+            <td><?php echo htmlspecialchars($row['user_id']); ?></td>
+            <td>
+                <?php if (!empty($row['profile_url'])): ?>
+                    <a href="<?php echo htmlspecialchars($row['profile_url']); ?>" target="_blank"><?php echo htmlspecialchars($row['name']); ?></a>
+                <?php else: ?>
+                    <?php echo htmlspecialchars($row['name']); ?>
+                <?php endif; ?>
+            </td>
+            <td><?php echo htmlspecialchars($row['package_name'] ?? 'N/A'); ?></td>  <!-- Add this cell -->
+            <td><?php echo htmlspecialchars($row['start_date']); ?></td>
+            <td><?php echo htmlspecialchars($row['end_date']); ?></td>
+            <td><span class="badge <?php echo $status_class; ?>"><?php echo $status_text; ?></span></td>
+        </tr>
+    <?php 
+        endwhile; 
+    else: 
+    ?>
+        <tr>
+            <td colspan="7" class="text-center">No subscriptions found matching your criteria.</td>  <!-- Update colspan to 7 -->
+        </tr>
+    <?php endif; ?>
+</tbody>
                                     </table>
                                 </div>
 

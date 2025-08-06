@@ -233,3 +233,4 @@ require_once 'includes/footer.php';
 // It's good practice to close the connection when it's no longer needed
 $conn = null;
 ?>
+

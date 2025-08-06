@@ -1,16 +1,42 @@
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const packageId = <?= $package_id ?? 0 ?>;
+    const deliveryBtn = document.getElementById('deliveryBtn');
+    const dinningBtn = document.getElementById('dinningBtn');
 
+    if (deliveryBtn && dinningBtn) {
+        switch(packageId) {
+            case 1:
+                deliveryBtn.style.display = 'inline-block';
+                dinningBtn.style.display = 'none';
+                break;
+            case 2:
+                deliveryBtn.style.display = 'none';
+                dinningBtn.style.display = 'inline-block';
+                break;
+            case 3:
+                deliveryBtn.style.display = 'inline-block';
+                dinningBtn.style.display = 'inline-block';
+                break;
+            default:
+                deliveryBtn.style.display = 'none';
+                dinningBtn.style.display = 'none';
+        }
+
+        const selectedOrderType = localStorage.getItem('selectedOrderType');
+        if (selectedOrderType === 'delivery' && deliveryBtn.style.display !== 'none') {
+            deliveryBtn.classList.add('active');
+        } else if (selectedOrderType === 'dining' && dinningBtn.style.display !== 'none') {
+            dinningBtn.classList.add('active');
+        }
+    }
+}); 
+</script>
 
 <!-- products.php -->
 <div class="products">
     <h6>Products</h6>
-    <!-- <div class="mb-3">
-        <div class="input-group">
-            <input type="text" id="productSearch" class="form-control" placeholder="Search products...">
-            <button class="btn btn-outline-secondary" type="button" id="clearSearch">
-                <i class="bi bi-x"></i>
-            </button>
-        </div>
-    </div> -->
+
 
     <?php if ($delivery_active || $dining_active): ?>
         <!-- Shopping Cart Sidebar -->
@@ -609,6 +635,37 @@ fadeOut = function(element, callback) {
         </button>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('productSearch');
+    
+    if (searchInput) {
+        searchInput.addEventListener('click', function() {
+            console.log('Search clicked');
+            
+            // Remove active from all buttons
+            document.querySelectorAll('.tag-btn').forEach(btn => {
+                btn.classList.remove('active');
+                console.log('Removed active from:', btn.textContent);
+            });
+            
+            // Add active to "All" button
+            const allButton = document.querySelector('.tag-btn[data-tag="all"]');
+            if (allButton) {
+                allButton.classList.add('active');
+                console.log('Added active to:', allButton.textContent);
+                
+                // Trigger filter if function exists
+                if (typeof filterProductsByTag === 'function') {
+                    filterProductsByTag('all');
+                }
+            }
+        });
+    } else {
+        console.warn('Search input not found');
+    }
+});
+</script>
 <!-- Move search to bottom and make it sticky -->
 
 
