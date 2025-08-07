@@ -31,6 +31,38 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 }); 
+// Add this to your existing JavaScript code
+document.addEventListener('DOMContentLoaded', function() {
+    const productsHeading = document.querySelector('.products h6');
+    const originalHeading = productsHeading ? productsHeading.textContent : 'Products';
+    
+    document.querySelectorAll('.tag-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const selectedTag = this.dataset.tag;
+            const tagName = this.textContent;
+            
+            if (productsHeading) {
+                if (selectedTag === 'all') {
+                    productsHeading.textContent = originalHeading;
+                } else {
+                    productsHeading.textContent = tagName;
+                }
+            }
+            
+            // Scroll to products section with offset
+            const productsSection = document.getElementById('productsContainer');
+            if (productsSection) {
+                const offset = 150; // Adjust this value as needed
+                const targetPosition = productsSection.getBoundingClientRect().top + window.pageYOffset - offset;
+                
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+});
 </script>
 
 <!-- products.php -->
@@ -638,6 +670,8 @@ fadeOut = function(element, callback) {
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('productSearch');
+    const productsHeading = document.querySelector('.products h6');
+    const originalHeading = productsHeading ? productsHeading.textContent : 'Products';
     
     if (searchInput) {
         searchInput.addEventListener('click', function() {
@@ -655,6 +689,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 allButton.classList.add('active');
                 console.log('Added active to:', allButton.textContent);
                 
+                // Reset the products heading to original
+                if (productsHeading) {
+                    productsHeading.textContent = originalHeading;
+                }
+                
                 // Trigger filter if function exists
                 if (typeof filterProductsByTag === 'function') {
                     filterProductsByTag('all');
@@ -664,6 +703,27 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.warn('Search input not found');
     }
+
+    // Tag button click handler
+    document.querySelectorAll('.tag-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const selectedTag = this.dataset.tag;
+            const tagName = this.textContent;
+            
+            if (productsHeading) {
+                if (selectedTag === 'all') {
+                    productsHeading.textContent = originalHeading;
+                } else {
+                    productsHeading.textContent = tagName;
+                }
+            }
+            
+            // Clear search input when tag is selected
+            if (searchInput) {
+                searchInput.value = '';
+            }
+        });
+    });
 });
 </script>
 <!-- Move search to bottom and make it sticky -->

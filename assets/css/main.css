@@ -64,7 +64,7 @@ h6 {
   border-radius: 0 0 20px 20px;
   box-shadow: 0px 0px 5px #B5B5B5;
   transition: all 0.3s ease;
-  z-index: 99;
+  z-index: 90;
 }
 
 .cover_photo.small {
@@ -147,7 +147,7 @@ h6 {
   object-fit: cover;
   overflow: hidden;
   box-shadow: 0px 0px 5px #B5B5B5;
-  z-index: 99;
+  z-index: 90;
   transition: all 0.3s ease;
   background-color: #eee;
 }
@@ -369,7 +369,7 @@ h6 {
   width: 40px;
   height: 31px;
   cursor: pointer;
-  z-index: 10000;
+  z-index: 100;
   opacity: 0;
   transform: translateY(-20px);
   transition: all 0.3s ease;
@@ -415,7 +415,7 @@ h6 {
   height: 0;
   width: 100%;
   position: fixed;
-  z-index: 1000;
+  z-index: 99;
   left: 0;
   top: 0;
   background-color: rgba(0, 0, 0, 0.95);
@@ -767,7 +767,7 @@ h6 {
   width: 350px;
   height: 100vh;
   background: #fff;
-  z-index: 99999999;
+  z-index: 200;
   transition: right 0.3s ease;
   padding: 20px;
   overflow-y: auto;
@@ -882,7 +882,7 @@ h6 {
   position: fixed;
   bottom: 0;
   left: 0;
-  z-index: 2000;
+  z-index: 99;
   width: 100%;
 }
 
@@ -1416,7 +1416,7 @@ h6 {
     background: white;
     padding: 10px;
     box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-    z-index: 1000;
+    z-index: 95;
     transition: bottom 0.3s ease;
 }
 

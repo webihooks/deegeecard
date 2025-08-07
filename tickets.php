@@ -124,7 +124,7 @@ $conn->close();
                                                     <th>Priority</th>
                                                     <th>Status</th>
                                                     <th>Created</th>
-                                                    <th>Actions</th>
+                                                    <th width="170">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
