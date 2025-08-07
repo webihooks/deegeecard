@@ -159,7 +159,7 @@ $delivery_active = $dining_delivery_data['delivery_active'] ?? 0;
 
 
 // Get tags for this user
-$tags_sql = "SELECT id, tag FROM tags WHERE user_id = ? ORDER BY id ASC";
+$tags_sql = "SELECT id, tag FROM tags WHERE user_id = ? ORDER BY  position ASC";
 $tags_stmt = $conn->prepare($tags_sql);
 if ($tags_stmt) {
     $tags_stmt->execute([$user_id]);

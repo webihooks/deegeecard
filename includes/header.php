@@ -243,14 +243,14 @@
 <body class="restaurant">
 
 <!-- Loader -->
-<div class="loader-container" id="loader">
+<!-- <div class="loader-container" id="loader">
     <div class="bouncing-loader">
         <div></div>
         <div></div>
         <div></div>
     </div>
-</div>
-<script>
+</div> -->
+<!-- <script>
     // Hide loader when page is fully loaded
     window.addEventListener('load', function() {
         const loader = document.getElementById('loader');
@@ -279,7 +279,7 @@
             document.body.classList.remove('loading');
         }, 500);
     });
-</script>
+</script> -->
 
 
 <?php if ($show_subscription_popup): ?>
