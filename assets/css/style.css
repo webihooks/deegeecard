@@ -35,6 +35,14 @@ font-weight: bold;
 border-left: 4px solid #0d6efd;
 }
 
+.userid_class {
+    background: #ff6c2f;
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 10px;
+    margin-left: 10px;
+}
+
 
 /* Table Styles */
 .table-responsive {

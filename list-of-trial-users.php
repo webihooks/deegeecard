@@ -1,4 +1,6 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 session_start();
 require 'db_connection.php';
 
@@ -27,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['approve_trial'])) {
     $package_id = $_POST['package_id'];
     
     // Get package details
-    $package_sql = "SELECT * FROM packages WHERE id = ?";
+    $package_sql = "SELECT id, name, price, duration FROM packages WHERE id = ?";
     $package_stmt = $conn->prepare($package_sql);
     $package_stmt->bind_param("i", $package_id);
     $package_stmt->execute();
@@ -39,34 +41,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['approve_trial'])) {
         $start_date = date('Y-m-d H:i:s');
         $end_date = date('Y-m-d H:i:s', strtotime("+{$package['duration']} days"));
         $renewal_date = $end_date;
+        $package_name = $package['name'];
         
-        // Insert new subscription
+        // Insert new subscription - corrected parameter count
         $insert_sql = "INSERT INTO subscriptions (
             user_id, package_id, subscription_type, start_date, end_date, renewal_date, 
             status, last_payment_date, next_payment_date, auto_renewal, created_at, updated_at
-        ) VALUES (?, ?, 'regular', ?, ?, ?, 'active', ?, ?, 1, NOW(), NOW())";
+        ) VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, 1, NOW(), NOW())";
         
         $insert_stmt = $conn->prepare($insert_sql);
         $insert_stmt->bind_param(
-            "iisssss", 
+            "iissssss", // 8 parameters: user_id, package_id, subscription_type, start_date, end_date, renewal_date, last_payment_date, next_payment_date
             $trial_user_id, 
             $package_id, 
+            $package_name,
             $start_date, 
             $end_date, 
-            $renewal_date, 
+            $renewal_date,
             $start_date, 
             $renewal_date
         );
         
         if ($insert_stmt->execute()) {
-            // Optionally deactivate the trial subscription
+            // Deactivate the trial subscription
             $deactivate_sql = "UPDATE trial_subscriptions SET is_active = 0 WHERE user_id = ?";
             $deactivate_stmt = $conn->prepare($deactivate_sql);
             $deactivate_stmt->bind_param("i", $trial_user_id);
             $deactivate_stmt->execute();
             $deactivate_stmt->close();
             
-            $success_message = "Trial user successfully converted to regular subscriber!";
+            $success_message = "Trial user successfully converted to regular subscriber! Package: " . htmlspecialchars($package_name);
         } else {
             $error_message = "Error converting trial user: " . $conn->error;
         }

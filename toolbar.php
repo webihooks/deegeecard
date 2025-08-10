@@ -35,7 +35,9 @@
                          </a>
                          <div class="dropdown-menu dropdown-menu-end">
                               <!-- item-->
-                              <h6 class="dropdown-header">Welcome, <?php echo htmlspecialchars($user_name); ?>!</h6>
+
+                              <h6 class="dropdown-header">Welcome, <?php echo htmlspecialchars($user_name); ?>! 
+                              <span class="userid_class">ID: <?php echo $user_id; ?></span></h6>
 
 
                               <!-- <a class="dropdown-item" href="profile.php">

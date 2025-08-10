@@ -161,6 +161,59 @@ $conn->close();
     <script src="assets/js/config.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.19.3/jquery.validate.min.js"></script>
+    <style>
+        /* Mobile-first approach */
+@media (max-width: 767.98px) {
+  .mb-3 {
+    margin-bottom: 1rem !important;
+  }
+  
+  .input-group {
+    flex-direction: column;
+  }
+  
+  .input-group-text {
+    border-radius: 0.25rem 0.25rem 0 0 !important;
+    padding: 0.375rem 0.75rem;
+    border-bottom: 0;
+    text-align: center;
+    width: 100%;
+  }
+  
+  .form-control {
+    border-radius: 0 !important;
+    width: 100% !important;
+  }
+  
+  #checkAvailability {
+    border-radius: 0 0 0.25rem 0.25rem !important;
+    width: 100%;
+    margin-top: -1px; /* Removes double border */
+    padding: 0.5rem;
+  }
+  
+  #availabilityMessage {
+    font-size: 0.875rem;
+  }
+  
+  .text-muted {
+    font-size: 0.75rem;
+  }
+}
+
+/* Optional: Adjustments for very small screens */
+@media (max-width: 400px) {
+  .input-group-text {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .form-control, #checkAvailability {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.5rem;
+  }
+}
+    </style>
 </head>
 
 <body>

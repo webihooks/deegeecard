@@ -54,9 +54,9 @@ if ($stmt_sub) {
 $packages = [];
 $current_package_id = $current_subscription['package_id'] ?? null;
 
-// If user has Delivery (1) or Dining (2) package, show only their current package and Premium as upgrade
+// If user has Delivery (1) or Dining (2) package, show their current package and Premium as upgrade
 if ($current_package_id == 1 || $current_package_id == 2) {
-    // Get current package
+    // Get current package (show even if inactive)
     $sql_current = "SELECT id, name, price, description, duration FROM packages WHERE id = ?";
     $stmt_current = $conn->prepare($sql_current);
     $stmt_current->bind_param("i", $current_package_id);
@@ -67,8 +67,8 @@ if ($current_package_id == 1 || $current_package_id == 2) {
     }
     $stmt_current->close();
     
-    // Get Premium package
-    $sql_premium = "SELECT id, name, price, description, duration FROM packages WHERE id = 3";
+    // Get Premium package (only if active)
+    $sql_premium = "SELECT id, name, price, description, duration FROM packages WHERE id = 3 AND status = 'active'";
     $result_premium = $conn->query($sql_premium);
     if ($row = $result_premium->fetch_assoc()) {
         $packages[] = $row;
@@ -159,14 +159,13 @@ $(document).ready(function() {
             data: { amount: packagePrice },
             success: function(order) {
                 var options = {
-                    "key": "<?php echo RAZORPAY_KEY_ID; ?>", // Ensure your Razorpay key is correct
+                    "key": "<?php echo RAZORPAY_KEY_ID; ?>",
                     "amount": packagePrice,
                     "currency": "INR",
                     "name": "DeeGeeCard",
                     "description": packageName,
                     "order_id": JSON.parse(order).order_id,
                     "handler": function (response) {
-                        // This is where the AJAX call to process the subscription happens
                         $.ajax({
                             url: 'process_subscription.php',
                             method: 'POST',
@@ -177,12 +176,12 @@ $(document).ready(function() {
                                 package_id: packageId
                             },
                             success: function(data) {
-                                alert(data); // You can replace this with a success message on the page itself
-                                location.reload(); // Optional: refresh the page to show the updated subscription
+                                alert("Subscription successful!");
+                                location.reload();
                             },
                             error: function(err) {
                                 alert('Payment processing failed. Please try again or contact support.');
-                                console.error(err); // Log the error to the console for debugging
+                                console.error(err);
                             }
                         });
                     },
@@ -223,8 +222,8 @@ $(document).ready(function() {
                                 <h4 class="card-title">Subscription Management</h4>
                             </div>
                             <div class="card-body">
-                                <?php if ($message): ?>
-                                    <div class="alert alert-success"><?php echo $message; ?></div>
+                                <?php if (isset($_SESSION['message'])): ?>
+                                    <div class="alert alert-success"><?php echo $_SESSION['message']; unset($_SESSION['message']); ?></div>
                                 <?php endif; ?>
                                 <?php if ($error): ?>
                                     <div class="alert alert-danger"><?php echo $error; ?></div>
@@ -242,6 +241,11 @@ $(document).ready(function() {
                                                     <strong>Start Date:</strong> <?php echo date('M d, Y', strtotime($current_subscription['start_date'])); ?><br>
                                                     <strong>Renewal Date:</strong> <?php echo date('M d, Y', strtotime($current_subscription['end_date'])); ?>
                                                 </p>
+                                                <?php if ($current_package_id != 3): // Don't show cancel for Premium ?>
+                                                    <form method="post">
+                                                        <button type="submit" name="cancel_subscription" class="btn btn-danger" style="display:none;">Cancel Subscription</button>
+                                                    </form>
+                                                <?php endif; ?>
                                             </div>
                                         </div>
                                     </div>
@@ -251,44 +255,40 @@ $(document).ready(function() {
                                     </div>
                                 <?php endif; ?>
 
-                                <!-- In the available-packages section -->
-<div class="available-packages">
-    <h5>Available Subscription Plans</h5>
-    <div class="row">
-        <?php foreach ($packages as $package): ?>
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="text-center"><?php echo htmlspecialchars($package['name']); ?></h5>
-                    </div>
-                    <div class="card-body text-center">
-                        <h3>₹<?php echo number_format($package['price']); ?></h3>
-                        <p><?php echo nl2br(htmlspecialchars($package['description'])); ?></p>
-                        <button class="btn btn-primary subscribe-btn" 
-                            data-package-id="<?php echo $package['id']; ?>"
-                            data-package-name="<?php echo htmlspecialchars($package['name']); ?>"
-                            data-package-price="<?php echo $package['price']; ?>">
-                            <?php 
-                                // Modified this condition to only show "Upgrade to Premium" if current package is not Premium
-                                if ($current_package_id && $package['id'] == 3 && $current_package_id != 3) {
-                                    echo "Upgrade to Premium";
-                                } else {
-                                    echo "Subscribe Now";
-                                }
-                            ?>
-                        </button>
-                        <?php if ($current_package_id && $package['id'] == $current_package_id): ?>
-                            <div class="mt-2 text-success">Your current plan</div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-        <?php endforeach; ?>
-    </div>
-</div>
-
-
-                                
+                                <div class="available-packages">
+                                    <h5>Available Subscription Plans</h5>
+                                    <div class="row">
+                                        <?php foreach ($packages as $package): ?>
+                                            <div class="col-md-4 mb-4">
+                                                <div class="card <?php echo ($current_package_id == $package['id']) ? 'border-primary' : ''; ?>">
+                                                    <div class="card-header">
+                                                        <h5 class="text-center"><?php echo htmlspecialchars($package['name']); ?></h5>
+                                                    </div>
+                                                    <div class="card-body text-center">
+                                                        <h3>₹<?php echo number_format($package['price']); ?></h3>
+                                                        <p><?php echo nl2br(htmlspecialchars($package['description'])); ?></p>
+                                                        <?php if ($current_package_id != $package['id']): ?>
+                                                            <button class="btn btn-primary subscribe-btn" 
+                                                                data-package-id="<?php echo $package['id']; ?>"
+                                                                data-package-name="<?php echo htmlspecialchars($package['name']); ?>"
+                                                                data-package-price="<?php echo $package['price']; ?>">
+                                                                <?php 
+                                                                    if ($current_package_id && $package['id'] == 3) {
+                                                                        echo "Upgrade to Premium";
+                                                                    } else {
+                                                                        echo "Subscribe Now";
+                                                                    }
+                                                                ?>
+                                                            </button>
+                                                        <?php else: ?>
+                                                            <div class="mt-2 text-success">Your current plan</div>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

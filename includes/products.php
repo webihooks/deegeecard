@@ -1,36 +1,27 @@
+
+<?php if ($active_subscription): ?>
+    <?php if ($active_subscription['package_id'] == 1): ?>
+        <style>#dinningBtn { display: none !important; }</style>
+    <?php elseif ($active_subscription['package_id'] == 2): ?>
+        <style>#deliveryBtn { display: none !important; }</style>
+    <?php endif; ?>
+<?php endif; ?>
+
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const packageId = <?= $package_id ?? 0 ?>;
     const deliveryBtn = document.getElementById('deliveryBtn');
     const dinningBtn = document.getElementById('dinningBtn');
 
-    if (deliveryBtn && dinningBtn) {
-        switch(packageId) {
-            case 1:
-                deliveryBtn.style.display = 'inline-block';
-                dinningBtn.style.display = 'none';
-                break;
-            case 2:
-                deliveryBtn.style.display = 'none';
-                dinningBtn.style.display = 'inline-block';
-                break;
-            case 3:
-                deliveryBtn.style.display = 'inline-block';
-                dinningBtn.style.display = 'inline-block';
-                break;
-            default:
-                deliveryBtn.style.display = 'none';
-                dinningBtn.style.display = 'none';
-        }
-
-        const selectedOrderType = localStorage.getItem('selectedOrderType');
-        if (selectedOrderType === 'delivery' && deliveryBtn.style.display !== 'none') {
-            deliveryBtn.classList.add('active');
-        } else if (selectedOrderType === 'dining' && dinningBtn.style.display !== 'none') {
-            dinningBtn.classList.add('active');
-        }
+    const selectedOrderType = localStorage.getItem('selectedOrderType');
+    if (selectedOrderType === 'delivery' && deliveryBtn) {
+        deliveryBtn.classList.add('active');
+    } else if (selectedOrderType === 'dining' && dinningBtn) {
+        dinningBtn.classList.add('active');
     }
-}); 
+});
+
+
 // Add this to your existing JavaScript code
 document.addEventListener('DOMContentLoaded', function() {
     const productsHeading = document.querySelector('.products h6');
@@ -131,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             
 
 
-<?php if ($dining_active && ($package_id == 2 || $package_id == 3)): ?>
+<?php if ($dining_active): ?>
     <button class="btn btn-outline-primary w-50" id="dinningBtn">
         <i class="bi bi-cup-hot"></i> Dining
     </button>
@@ -279,12 +270,6 @@ document.getElementById('applyCouponBtn').addEventListener('click', function() {
 
 
 
-
-// In your JavaScript code, modify the dining button visibility check
-const showDiningBtn = <?= ($dining_active && ($package_id == 2 || $package_id == 3)) ? 'true' : 'false' ?>;
-if (dinningBtn) {
-    dinningBtn.style.display = showDiningBtn ? 'inline-block' : 'none';
-}
 
 
 
@@ -2136,4 +2121,5 @@ document.getElementById('viewCartBtn').addEventListener('click', function() {
         <button class="order-success-btn" onclick="closeOrderSuccessPopup()">OK</button>
     </div>
 </div>
+
 

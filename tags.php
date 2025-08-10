@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param("sii", $tag, $tag_id, $user_id);
         } else {
             // Add new tag
-            $sql = "INSERT INTO tags (user_id, tag, position) VALUES (?, ?, (SELECT IFNULL(MAX(position), 0) + 1 FROM tags WHERE user_id = ?))";
+            $sql = "INSERT INTO tags (user_id, tag, position) VALUES (?, ?, (SELECT IFNULL(MAX(position), 0) + 1 FROM (SELECT * FROM tags) AS temp WHERE user_id = ?))";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("isi", $user_id, $tag, $user_id);
         }
