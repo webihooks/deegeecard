@@ -139,6 +139,16 @@ if ($stmt_trial) {
     $stmt_trial->close();
 }
 
+// Fetch active announcements
+$announcements = [];
+$sql_announcements = "SELECT title, content FROM announcements WHERE is_active = 1 ORDER BY created_at DESC";
+$result_announcements = $conn->query($sql_announcements);
+if ($result_announcements) {
+    while ($row = $result_announcements->fetch_assoc()) {
+        $announcements[] = $row;
+    }
+}
+
 $conn->close();
 ?>
 
@@ -174,6 +184,10 @@ $conn->close();
         .original-price {
             text-decoration: line-through;
             color: #6c757d;
+        }
+        .modal-title {
+          margin-top: 0;
+          color: #fff;
         }
     </style>
 </head>
@@ -320,10 +334,68 @@ $conn->close();
         </div>
     </div>
 
+
+<!-- Announcements Modal -->
+<div class="modal fade" id="announcementsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Announcements</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <?php if (!empty($announcements)): ?>
+                    <div id="announcementsCarousel" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            <?php foreach ($announcements as $index => $announcement): ?>
+                                <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>">
+                                    <h5><?php echo htmlspecialchars($announcement['title']); ?></h5>
+                                    <p><?php echo nl2br(htmlspecialchars($announcement['content'])); ?></p>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php if (count($announcements) > 1): ?>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#announcementsCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#announcementsCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
+                        <?php endif; ?>
+                    </div>
+                <?php else: ?>
+                    <p>No current announcements.</p>
+                <?php endif; ?>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
     <script src="assets/js/vendor.js"></script>
     <script src="assets/js/app.js"></script>
     
     <script>
+    // Show announcements modal if there are announcements
+    $(window).on('load', function() {
+        <?php if (!empty($announcements)): ?>
+            var announcementsShown = localStorage.getItem('announcementsShown');
+            if (!announcementsShown) {
+                $('#announcementsModal').modal('show');
+                localStorage.setItem('announcementsShown', 'true');
+                
+                // Reset the flag after 24 hours
+                setTimeout(function() {
+                    localStorage.removeItem('announcementsShown');
+                }, 24 * 60 * 60 * 1000);
+            }
+        <?php endif; ?>
+    });
+    
     $(document).ready(function() {
         // Subscription button handler
         $('.subscribe-btn').click(function() {
