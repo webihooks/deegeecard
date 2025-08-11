@@ -40,6 +40,26 @@
                     </a>
                </li>
 
+
+               <li class="nav-item">
+                  <a class="nav-link menu-arrow" href="#addon" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="addon">
+                     <span class="nav-icon">
+                        <iconify-icon icon="carbon:application-mobile"></iconify-icon>
+                     </span>
+                     <span class="nav-text"> Addons </span>
+                  </a>
+                  <div class="collapse" id="addon">
+                     <ul class="nav sub-navbar-nav">
+                        <li class="sub-nav-item">
+                           <a class="sub-nav-link" href="addon.php">Create Addon</a>
+                        </li>
+                        <li class="sub-nav-item">
+                           <a class="sub-nav-link" href="addon_orders.php">View Addon Orders</a>
+                        </li>
+                     </ul>
+                  </div>
+               </li>
+
                <li class="menu-title">Products</li>
 
                <li class="nav-item">
@@ -194,6 +214,15 @@
          </li>
       </ul>
    </div>
+</li>
+
+<li class="nav-item">
+     <a class="nav-link" href="announcement.php">
+          <span class="nav-icon">
+               <iconify-icon icon="streamline:announcement-megaphone-remix"></iconify-icon>
+          </span>
+          <span class="nav-text"> Announcement </span>
+     </a>
 </li>
 
 

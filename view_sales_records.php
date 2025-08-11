@@ -297,6 +297,15 @@ $fetch_sales_sql = "SELECT
          background-color: #f8d7da;
          color: #721c24;
          }
+
+
+@media (max-width: 767px) {
+    .sales_table td[data-label="Sr. No"] {
+        display: table-cell !important;
+        background-color: #fff3cd;
+        color: #856404;
+    }
+}
       </style>
       <script src="assets/js/config.js"></script>
       <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

@@ -93,6 +93,16 @@ else {
     }
 }
 
+// Fetch active addons
+$addons = [];
+$sql_addons = "SELECT * FROM addons WHERE status = 1 ORDER BY created_at DESC";
+$result_addons = $conn->query($sql_addons);
+if ($result_addons) {
+    while ($row = $result_addons->fetch_assoc()) {
+        $addons[] = $row;
+    }
+}
+
 // Handle subscription cancel
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cancel_subscription'])) {
     $sql = "UPDATE subscriptions SET status = 'canceled', end_date = NOW() 
@@ -145,59 +155,27 @@ $conn->close();
     <script src="assets/js/config.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-
-<script>
-$(document).ready(function() {
-    $('.subscribe-btn').click(function() {
-        var packageId = $(this).data('package-id');
-        var packageName = $(this).data('package-name');
-        var packagePrice = $(this).data('package-price') * 100; // In paise
-
-        $.ajax({
-            url: 'create_order.php',
-            method: 'POST',
-            data: { amount: packagePrice },
-            success: function(order) {
-                var options = {
-                    "key": "<?php echo RAZORPAY_KEY_ID; ?>",
-                    "amount": packagePrice,
-                    "currency": "INR",
-                    "name": "DeeGeeCard",
-                    "description": packageName,
-                    "order_id": JSON.parse(order).order_id,
-                    "handler": function (response) {
-                        $.ajax({
-                            url: 'process_subscription.php',
-                            method: 'POST',
-                            data: {
-                                razorpay_payment_id: response.razorpay_payment_id,
-                                razorpay_order_id: response.razorpay_order_id,
-                                razorpay_signature: response.razorpay_signature,
-                                package_id: packageId
-                            },
-                            success: function(data) {
-                                alert("Subscription successful!");
-                                location.reload();
-                            },
-                            error: function(err) {
-                                alert('Payment processing failed. Please try again or contact support.');
-                                console.error(err);
-                            }
-                        });
-                    },
-                    "theme": { "color": "#3399cc" }
-                };
-                var rzp1 = new Razorpay(options);
-                rzp1.open();
-            },
-            error: function(err) {
-                alert('Unable to initiate payment.');
-            }
-        });
-    });
-});
-</script>
-
+    <style>
+        .addon-card {
+            transition: transform 0.3s;
+        }
+        .addon-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .addon-img {
+            height: 200px;
+            object-fit: cover;
+        }
+        .special-price {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .original-price {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+    </style>
 </head>
 <body>
     <div class="wrapper">
@@ -216,7 +194,7 @@ $(document).ready(function() {
         <div class="page-content">
             <div class="container">
                 <div class="row">
-                    <div class="col-xl-9">
+                    <div class="col-xl-12">
                         <div class="card">
                             <div class="card-header">
                                 <h4 class="card-title">Subscription Management</h4>
@@ -230,7 +208,7 @@ $(document).ready(function() {
                                 <?php endif; ?>
 
                                 <?php if ($current_subscription): ?>
-                                    <div class="current-subscription mb-4">
+                                    <div class="current-subscription mb-1">
                                         <div class="card">
                                             <div class="card-header">
                                                 <h4>Your Current Subscription: <?php echo htmlspecialchars($current_subscription['package_name']); ?></h4>
@@ -255,12 +233,12 @@ $(document).ready(function() {
                                     </div>
                                 <?php endif; ?>
 
-                                <div class="available-packages">
-                                    <h5>Available Subscription Plans</h5>
+                                <div class="available-packages mb-1">
+                                    <h5 class="mb-4">Available Subscription Plans</h5>
                                     <div class="row">
                                         <?php foreach ($packages as $package): ?>
                                             <div class="col-md-4 mb-4">
-                                                <div class="card <?php echo ($current_package_id == $package['id']) ? 'border-primary' : ''; ?>">
+                                                <div class="card h-100 <?php echo ($current_package_id == $package['id']) ? 'border-primary' : ''; ?>">
                                                     <div class="card-header">
                                                         <h5 class="text-center"><?php echo htmlspecialchars($package['name']); ?></h5>
                                                     </div>
@@ -289,6 +267,50 @@ $(document).ready(function() {
                                         <?php endforeach; ?>
                                     </div>
                                 </div>
+
+                                <!-- Addons Section -->
+                                <div class="available-addons">
+                                    <h5 class="mb-4">Premium Addons</h5>
+                                    <div class="row">
+                                        <?php foreach ($addons as $addon): ?>
+                                            <div class="col-md-4 mb-4">
+                                                <div class="card h-100 addon-card">
+                                                    <?php if (!empty($addon['image'])): ?>
+                                                        <img src="<?php echo $addon['image']; ?>" class="card-img-top addon-img" alt="<?php echo htmlspecialchars($addon['name']); ?>">
+                                                    <?php endif; ?>
+                                                    <div class="card-body">
+                                                        <h5 class="card-title mb-1"><?php echo htmlspecialchars($addon['name']); ?></h5>
+                                                        <p class="card-text"><?php echo htmlspecialchars($addon['description']); ?></p>
+                                                        
+
+<div class="price-section mb-3">
+    <?php 
+    $has_special = ($addon['special_price'] !== null && 
+                  (empty($addon['valid_until']) || strtotime($addon['valid_until']) >= time()));
+    ?>
+    
+    <?php if ($has_special): ?>
+        <span class="special-price">₹<?php echo number_format($addon['special_price'], 2); ?></span>
+        <span class="original-price ms-2">₹<?php echo number_format($addon['price'], 2); ?></span>
+        <?php if ($addon['valid_until']): ?>
+            <small class="text-muted d-block">Offer valid until <?php echo date('M d, Y', strtotime($addon['valid_until'])); ?></small>
+        <?php endif; ?>
+    <?php else: ?>
+        <span class="special-price">₹<?php echo number_format($addon['price'], 2); ?></span>
+    <?php endif; ?>
+</div>
+                                                        <button class="btn btn-success buy-addon-btn w-100"
+                                                            data-addon-id="<?php echo $addon['id']; ?>"
+                                                            data-addon-name="<?php echo htmlspecialchars($addon['name']); ?>"
+                                                            data-addon-price="<?php echo ($addon['special_price'] !== null && $addon['special_price'] < $addon['price']) ? $addon['special_price'] : $addon['price']; ?>">
+                                                            Buy Now
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -300,5 +322,155 @@ $(document).ready(function() {
 
     <script src="assets/js/vendor.js"></script>
     <script src="assets/js/app.js"></script>
+    
+    <script>
+    $(document).ready(function() {
+        // Subscription button handler
+        $('.subscribe-btn').click(function() {
+            var packageId = $(this).data('package-id');
+            var packageName = $(this).data('package-name');
+            var packagePrice = $(this).data('package-price') * 100; // In paise
+
+            $.ajax({
+                url: 'create_order.php',
+                method: 'POST',
+                data: { amount: packagePrice },
+                success: function(order) {
+                    var options = {
+                        "key": "<?php echo RAZORPAY_KEY_ID; ?>",
+                        "amount": packagePrice,
+                        "currency": "INR",
+                        "name": "DeeGeeCard",
+                        "description": packageName,
+                        "order_id": JSON.parse(order).order_id,
+                        "handler": function (response) {
+                            $.ajax({
+                                url: 'process_subscription.php',
+                                method: 'POST',
+                                data: {
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_signature: response.razorpay_signature,
+                                    package_id: packageId
+                                },
+                                success: function(data) {
+                                    alert("Subscription successful!");
+                                    location.reload();
+                                },
+                                error: function(err) {
+                                    alert('Payment processing failed. Please try again or contact support.');
+                                    console.error(err);
+                                }
+                            });
+                        },
+                        "theme": { "color": "#3399cc" }
+                    };
+                    var rzp1 = new Razorpay(options);
+                    rzp1.open();
+                },
+                error: function(err) {
+                    alert('Unable to initiate payment.');
+                }
+            });
+        });
+
+
+// In your subscription.php
+$('.buy-addon-btn').click(function() {
+    var btn = $(this);
+    var addonId = btn.data('addon-id');
+    var addonName = btn.data('addon-name');
+    
+    // Get the price from the displayed special price or regular price
+    var priceElement = btn.closest('.card-body').find('.special-price');
+    var addonPrice = parseFloat(priceElement.text().replace('₹', '').trim());
+    
+    // Convert to paise
+    addonPrice = addonPrice * 100;
+    
+    // Show loading state
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...');
+
+    $.ajax({
+        url: 'create_order.php',
+        method: 'POST',
+        data: { amount: addonPrice },
+        success: function(order) {
+            try {
+                var orderData = JSON.parse(order);
+                if (!orderData.order_id) {
+                    throw new Error('Invalid order response');
+                }
+                
+                var options = {
+                    "key": "<?php echo RAZORPAY_KEY_ID; ?>",
+                    "amount": addonPrice,
+                    "currency": "INR",
+                    "name": "DeeGeeCard",
+                    "description": addonName + " Addon",
+                    "order_id": orderData.order_id,
+                    "handler": function (response) {
+                        processAddonPayment(response, addonId, btn);
+                    },
+                    "modal": {
+                        "ondismiss": function() {
+                            btn.prop('disabled', false).html('Buy Now');
+                        }
+                    },
+                    "theme": { "color": "#3399cc" }
+                };
+                var rzp1 = new Razorpay(options);
+                rzp1.open();
+            } catch (e) {
+                console.error(e);
+                alert('Error creating payment order. Please try again.');
+                btn.prop('disabled', false).html('Buy Now');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error(xhr.responseText);
+            alert('Failed to initiate payment. Please try again later.');
+            btn.prop('disabled', false).html('Buy Now');
+        }
+    });
+});
+
+function processAddonPayment(response, addonId, btn) {
+    $.ajax({
+        url: 'process_addon_purchase.php',
+        method: 'POST',
+        data: {
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_signature: response.razorpay_signature,
+            addon_id: addonId
+        },
+        success: function(data) {
+            try {
+                var result = JSON.parse(data);
+                if (result.status === 'success') {
+                    alert("Addon purchased successfully!");
+                    location.reload();
+                } else {
+                    throw new Error(result.message || 'Payment processing failed');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Payment verification failed. Please contact support.');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error(xhr.responseText);
+            alert('Payment processing failed. Please check your email for confirmation or contact support.');
+        },
+        complete: function() {
+            btn.prop('disabled', false).html('Buy Now');
+        }
+    });
+}
+
+
+    });
+    </script>
 </body>
 </html>
