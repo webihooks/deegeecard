@@ -63,6 +63,24 @@
                <li class="menu-title">Products</li>
 
                <li class="nav-item">
+                    <a class="nav-link" href="scan_to_csv.php">
+                         <span class="nav-icon">
+                              <iconify-icon icon="bx:scan"></iconify-icon>
+                         </span>
+                         <span class="nav-text"> Scan Text to CSV </span>
+                    </a>
+               </li>
+
+               <li class="nav-item">
+                    <a class="nav-link" href="image_resizer.php">
+                         <span class="nav-icon">
+                              <iconify-icon icon="fluent:resize-16-filled"></iconify-icon>
+                         </span>
+                         <span class="nav-text"> Image Resizer </span>
+                    </a>
+               </li>
+
+               <li class="nav-item">
                     <a class="nav-link" href="master_products.php">
                          <span class="nav-icon">
                               <iconify-icon icon="fluent-mdl2:product-list"></iconify-icon>
