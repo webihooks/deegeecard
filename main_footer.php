@@ -126,10 +126,10 @@
 
                   <div class="col-md-4">
                     <ul class="social_media">
-                      <li><a href="https://themeforest.net/user/kalanidhithemes/portfolio" aria-label="facebook page" ><i class="icofont-facebook"></i></a></li>
-                      <li><a href="https://www.behance.net/kalanidhithemes" aria-label="twitter page"><i class="icofont-twitter"></i></a></li>
-                      <li><a href="https://themeforest.net/user/kalanidhithemes/portfolio" aria-label="instagram page"><i class="icofont-instagram"></i></a></li>
-                      <li><a href="https://themeforest.net/user/kalanidhithemes/portfolio" aria-label="pinterest page"><i class="icofont-pinterest"></i></a></li>
+                      <li><a href="javascript:void(0)" aria-label="facebook page" ><i class="icofont-facebook"></i></a></li>
+                      <li><a href="javascript:void(0)" aria-label="twitter page"><i class="icofont-twitter"></i></a></li>
+                      <li><a href="javascript:void(0)" aria-label="instagram page"><i class="icofont-instagram"></i></a></li>
+                      <li><a href="javascript:void(0)" aria-label="pinterest page"><i class="icofont-pinterest"></i></a></li>
                     </ul>
                   </div>
 

@@ -257,7 +257,7 @@ $conn->close();
                                                         <h5 class="text-center"><?php echo htmlspecialchars($package['name']); ?></h5>
                                                     </div>
                                                     <div class="card-body text-center">
-                                                        <h3>₹<?php echo number_format($package['price']); ?></h3>
+                                                        <h3>₹<?php echo (int)$package['price']; ?></h3>
                                                         <p><?php echo nl2br(htmlspecialchars($package['description'])); ?></p>
                                                         <?php if ($current_package_id != $package['id']): ?>
                                                             <button class="btn btn-primary subscribe-btn" 
@@ -304,13 +304,13 @@ $conn->close();
     ?>
     
     <?php if ($has_special): ?>
-        <span class="special-price">₹<?php echo number_format($addon['special_price'], 2); ?></span>
-        <span class="original-price ms-2">₹<?php echo number_format($addon['price'], 2); ?></span>
+        <span class="special-price">₹<?php echo (int)$addon['special_price']; ?></span>
+        <span class="original-price ms-2">₹<?php echo (int)$addon['price']; ?></span>
         <?php if ($addon['valid_until']): ?>
             <small class="text-muted d-block">Offer valid until <?php echo date('M d, Y', strtotime($addon['valid_until'])); ?></small>
         <?php endif; ?>
     <?php else: ?>
-        <span class="special-price">₹<?php echo number_format($addon['price'], 2); ?></span>
+        <span class="special-price">₹<?php echo (int)$addon['price']; ?></span>
     <?php endif; ?>
 </div>
                                                         <button class="btn btn-success buy-addon-btn w-100"

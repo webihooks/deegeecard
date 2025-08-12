@@ -41,7 +41,7 @@
             <div class="col-sm-12">
                 <label for="reviewer_phone" class="form-label">Your Phone</label>
                 <input type="tel" class="form-control" id="reviewer_phone" name="reviewer_phone" 
-                       pattern="[0-9]{10,15}" title="Phone number (10-15 digits)">
+                       pattern="[0-9]{10,15}" title="Phone number (10-15 digits)" required>
             </div>
         </div>
         <div class="mb-3 col-sm-12">
@@ -56,9 +56,11 @@
                 <?php endfor; ?>
             </div>
         </div>
+
+
         <div class="mb-3">
             <label for="feedback" class="form-label">Your Feedback</label>
-            <textarea class="form-control" id="feedback" name="feedback" rows="3"></textarea>
+            <textarea class="form-control" id="feedback" name="feedback" rows="3" required></textarea>
         </div>
         <button type="submit" name="submit_rating" class="btn btn-primary">Submit Review</button>
     </form>

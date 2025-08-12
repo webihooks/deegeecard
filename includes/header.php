@@ -238,6 +238,10 @@
             color: white;
             border-color: <?= $primary_color ?>;
         }
+        .rating-input .form-check-input:checked + .form-check-label {
+            background-color: <?php echo $primary_color; ?>;
+            color: #fff;
+        }
     </style>
 </head>
 <body class="restaurant">
