@@ -102,7 +102,7 @@ $conn->close();
 
 <head>
     <meta charset="utf-8" />
-    <title>Scan Text to CSV | Admin</title>
+    <title>Invoice | Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="assets/css/vendor.min.css" rel="stylesheet" type="text/css" />
     <link href="assets/css/icons.min.css" rel="stylesheet" type="text/css" />
@@ -171,11 +171,11 @@ $conn->close();
                         
 <div class="card">
     <div class="card-header">
-        <h4 class="card-title">Scan Text To CSV</h4>
+        <h4 class="card-title">Invoice</h4>
     </div>
     <div class="card-body">
         <div class="iframe-container">
-            <iframe src="https://deegeecard.netlify.app/" allowfullscreen></iframe>
+            <iframe src="https://deegeecardinvoicegenerator.netlify.app" allowfullscreen></iframe>
         </div>
     </div>
 </div>

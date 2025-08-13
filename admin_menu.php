@@ -184,6 +184,15 @@
                     </a>
                </li>
 
+               <li class="nav-item">
+                    <a class="nav-link" href="invoice.php">
+                         <span class="nav-icon">
+                              <iconify-icon icon="la:file-invoice-dollar"></iconify-icon>
+                         </span>
+                         <span class="nav-text"> Invoice </span>
+                    </a>
+               </li>
+
                
                <li class="menu-title">Sales Track Records</li>
 

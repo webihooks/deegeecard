@@ -171,7 +171,7 @@ $conn->close();
                         
 <div class="card">
     <div class="card-header">
-        <h4 class="card-title">Dashboard</h4>
+        <h4 class="card-title">Image Resizer</h4>
     </div>
     <div class="card-body">
         <div class="iframe-container">
