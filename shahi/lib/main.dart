@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Aai Saheb Lunch Home',
+      title: 'New Shahi Family Restaurant',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const WebViewScreen(),
     );
@@ -59,7 +59,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
           },
         ),
       )
-      ..loadRequest(Uri.parse('https://deegeecard.com/hotelaaisaheb'));
+      ..loadRequest(Uri.parse('https://deegeecard.com/newshahi'));
   }
 
   @override
