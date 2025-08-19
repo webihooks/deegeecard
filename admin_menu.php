@@ -81,6 +81,15 @@
                </li>
 
                <li class="nav-item">
+                    <a class="nav-link" href="whatsapp_marketing.php">
+                         <span class="nav-icon">
+                              <iconify-icon icon="mdi:whatsapp"></iconify-icon>
+                         </span>
+                         <span class="nav-text"> WhatsApp Marketing </span>
+                    </a>
+               </li>
+
+               <li class="nav-item">
                     <a class="nav-link" href="master_products.php">
                          <span class="nav-icon">
                               <iconify-icon icon="fluent-mdl2:product-list"></iconify-icon>
@@ -95,6 +104,15 @@
                               <iconify-icon icon="fluent-mdl2:bulk-upload"></iconify-icon>
                          </span>
                          <span class="nav-text"> Bulk Master Products </span>
+                    </a>
+               </li>
+
+               <li class="nav-item">
+                    <a class="nav-link" href="all_orders.php">
+                         <span class="nav-icon">
+                              <iconify-icon icon="famicons:fast-food-outline"></iconify-icon>
+                         </span>
+                         <span class="nav-text"> All Orders </span>
                     </a>
                </li>
 

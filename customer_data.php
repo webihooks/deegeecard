@@ -11,6 +11,9 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// Set header to UTF-8 to handle special characters
+header('Content-Type: text/html; charset=utf-8');
+
 $user_id = $_SESSION['user_id'];
 $message = '';
 $message_type = '';
@@ -24,45 +27,83 @@ $stmt->bind_result($user_name, $email, $phone, $address, $role);
 $stmt->fetch();
 $stmt->close();
 
+// Set connection charset to UTF-8
+$conn->set_charset("utf8mb4");
+
 // Search functionality
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $search_condition = '';
 if (!empty($search)) {
     $search = $conn->real_escape_string($search);
     $search_condition = " AND (customer_name LIKE '%$search%' OR 
-                              customer_phone LIKE '%$search%' OR 
-                              delivery_address LIKE '%$search%')";
+                          customer_phone LIKE '%$search%' OR 
+                          delivery_address LIKE '%$search%')";
 }
 
 // Pagination setup
-$limit = 100; // records per page
+$limit = 5000; // records per page
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $page = max($page, 1);
 $offset = ($page - 1) * $limit;
 
-// Count total unique customers
-$count_sql = "SELECT COUNT(*) as total FROM (
-    SELECT customer_name, customer_phone, delivery_address
-    FROM orders
-    WHERE user_id = $user_id $search_condition
-    GROUP BY customer_name, customer_phone, delivery_address
-) AS grouped_customers";
+// Count total unique customers from both tables
+$count_sql = "SELECT (SELECT COUNT(*) FROM (
+                SELECT customer_name, customer_phone, delivery_address
+                FROM orders
+                WHERE user_id = $user_id $search_condition
+                GROUP BY customer_name, customer_phone, delivery_address
+              ) AS orders_customers) + 
+              (SELECT COUNT(*) FROM customer_data 
+               WHERE user_id = $user_id $search_condition) AS total";
 $count_result = $conn->query($count_sql);
 $total_records = ($count_result && $row = $count_result->fetch_assoc()) ? (int)$row['total'] : 0;
 $total_pages = ceil($total_records / $limit);
 
-// Fetch paginated customer data
+/**
+ * Clean and validate customer names
+ */
+function cleanCustomerName($name) {
+    // Trim whitespace
+    $name = trim($name);
+    
+    // Remove any non-printable characters
+    $name = preg_replace('/[\x00-\x1F\x7F]/u', '', $name);
+    
+    // Replace common problematic patterns
+    $name = str_replace(['#ERROR!', '""', "''", '***', '---', '...', ',,,'], '', $name);
+    
+    // If name is empty after cleaning, set to "Unknown"
+    if (empty($name) || ctype_punct($name)) {
+        return 'Unknown';
+    }
+    
+    return $name;
+}
+
+// Fetch paginated customer data from both tables with UNION
 $customer_data = [];
-$sql = "SELECT customer_name, customer_phone, delivery_address 
+$sql = "(SELECT customer_name, customer_phone, delivery_address, 'order' as source, MAX(created_at) as updated_at
         FROM orders 
         WHERE user_id = $user_id $search_condition
-        GROUP BY customer_name, customer_phone, delivery_address
-        ORDER BY MAX(created_at) DESC
+        GROUP BY customer_name, customer_phone, delivery_address)
+        
+        UNION
+        
+        (SELECT customer_name, customer_phone, delivery_address, 'customer_data' as source, updated_at
+         FROM customer_data 
+         WHERE user_id = $user_id $search_condition)
+         
+        ORDER BY updated_at DESC
         LIMIT $limit OFFSET $offset";
+
 $result = $conn->query($sql);
 
-while ($row = $result->fetch_assoc()) {
-    $customer_data[] = $row;
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        // Clean and validate customer names
+        $row['customer_name'] = cleanCustomerName($row['customer_name']);
+        $customer_data[] = $row;
+    }
 }
 
 $conn->close();
@@ -74,6 +115,7 @@ $conn->close();
     <meta charset="utf-8" />
     <title>Customer Data</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <link href="assets/css/vendor.min.css" rel="stylesheet" />
     <link href="assets/css/icons.min.css" rel="stylesheet" />
     <link href="assets/css/app.min.css" rel="stylesheet" />
@@ -98,6 +140,11 @@ $conn->close();
                         <div class="card">
                             <div class="card-header">
                                 <h4 class="card-title">Customer Data</h4>
+                                <div class="float-end">
+                                    <a href="import_customer_data.php" class="btn btn-success btn-sm">
+                                        <i class="fas fa-upload me-1"></i> Import Data
+                                    </a>
+                                </div>
                             </div>
                             <div class="card-body">
                                 <div class="row mb-3">
@@ -106,7 +153,7 @@ $conn->close();
                                             <form method="GET" class="d-flex">
                                                 <input type="text" name="search" class="form-control me-2"
                                                        placeholder="Search by name, phone, or address"
-                                                       value="<?php echo htmlspecialchars($search); ?>">
+                                                       value="<?php echo htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>">
                                                 <button type="submit" class="btn btn-primary">Search</button>
                                                 <?php if (!empty($search)): ?>
                                                     <a href="customer_data.php" class="btn btn-secondary ms-2">Clear</a>
@@ -118,7 +165,7 @@ $conn->close();
 
                                 <?php if (!empty($message)): ?>
                                     <div class="alert alert-<?php echo $message_type; ?>">
-                                        <?php echo $message; ?>
+                                        <?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?>
                                     </div>
                                 <?php endif; ?>
 
@@ -137,6 +184,8 @@ $conn->close();
                                                             <th>Customer Name</th>
                                                             <th>Phone Number</th>
                                                             <th>Delivery Address</th>
+                                                            <th>Source</th>
+                                                            <th>Last Updated</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -145,13 +194,28 @@ $conn->close();
                                                         foreach ($customer_data as $customer): ?>
                                                             <tr>
                                                                 <td><?php echo $sr_no++; ?></td>
-                                                                <td><?php echo htmlspecialchars($customer['customer_name']); ?></td>
-                                                                <td><?php echo htmlspecialchars($customer['customer_phone']); ?></td>
+                                                                <td><?php echo htmlspecialchars($customer['customer_name'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                                                <td><?php echo htmlspecialchars($customer['customer_phone'], ENT_QUOTES, 'UTF-8'); ?></td>
                                                                 <td>
                                                                     <?php 
-                                                                    echo empty(trim($customer['delivery_address'])) 
-                                                                        ? 'Table Ordered' 
-                                                                        : htmlspecialchars($customer['delivery_address']);
+                                                                    $address = trim($customer['delivery_address']);
+                                                                    echo empty($address) || strtoupper($address) === 'NA' 
+                                                                        ? 'N/A' 
+                                                                        : htmlspecialchars($address, ENT_QUOTES, 'UTF-8');
+                                                                    ?>
+                                                                </td>
+                                                                <td>
+                                                                    <span class="badge bg-<?php echo $customer['source'] === 'order' ? 'primary' : 'success'; ?>">
+                                                                        <?php echo ucfirst($customer['source']); ?>
+                                                                    </span>
+                                                                </td>
+                                                                <td>
+                                                                    <?php 
+                                                                    if (isset($customer['updated_at'])) {
+                                                                        echo date('d M Y H:i', strtotime($customer['updated_at']));
+                                                                    } else {
+                                                                        echo 'N/A';
+                                                                    }
                                                                     ?>
                                                                 </td>
                                                             </tr>

@@ -170,6 +170,22 @@ foreach ($transactions as $transaction) {
 }
 $balance = $income_total - $expense_total;
 
+
+// Calculate DeeGeeCard Bank total
+$deegee_bank_total = 0;
+$deegee_bank_sql = "SELECT SUM(amount) as total FROM dg_transactions 
+                   WHERE category_id = 13"; // 13 is the ID for DeeGeeCard Bank
+if ($role !== 'admin') {
+    $deegee_bank_sql .= " AND user_id = $user_id";
+}
+$deegee_bank_result = $conn->query($deegee_bank_sql);
+if ($deegee_bank_result) {
+    $row = $deegee_bank_result->fetch_assoc();
+    $deegee_bank_total = $row['total'] ?? 0;
+}
+
+
+
 // Fetch user name for display
 $sql = "SELECT name FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
@@ -227,7 +243,7 @@ $conn->close();
                            <div class="alert alert-danger"><?php echo $error_message; ?></div>
                            <?php endif; ?>
                            <div class="row mb-4">
-                              <div class="col-md-4">
+                              <div class="col-md-3">
                                  <div class="card bg-success text-white">
                                     <div class="card-body">
                                        <h5 class="card-title">Income</h5>
@@ -235,7 +251,7 @@ $conn->close();
                                     </div>
                                  </div>
                               </div>
-                              <div class="col-md-4">
+                              <div class="col-md-3">
                                  <div class="card bg-danger text-white">
                                     <div class="card-body">
                                        <h5 class="card-title">Expenses</h5>
@@ -243,13 +259,21 @@ $conn->close();
                                     </div>
                                  </div>
                               </div>
-                              <div class="col-md-4">
+                              <div class="col-md-3">
                                  <div class="card bg-primary text-white">
                                     <div class="card-body">
                                        <h5 class="card-title">Balance</h5>
                                        <h2 class="card-text">₹<?php echo number_format($balance); ?></h2>
                                     </div>
                                  </div>
+                              </div>
+                              <div class="col-md-3">
+                                  <div class="card bg-warning text-white">
+                                      <div class="card-body">
+                                          <h5 class="card-title">DeeGeeCard Bank</h5>
+                                          <h2 class="card-text">₹<?php echo number_format($deegee_bank_total); ?></h2>
+                                      </div>
+                                  </div>
                               </div>
                            </div>
                            <div class="row">
