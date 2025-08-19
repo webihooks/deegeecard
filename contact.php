@@ -143,7 +143,7 @@
                           <hr>
 
                           Mira Road Branch <br>
-                        1404, Vasudev Sky High, Mira Road East, Thane - 401105 <br><br>
+                        1404, Vasudev Sky High, Mira Road East, Thane - 401107 <br><br>
 
                         <hr>
 

@@ -72,6 +72,7 @@ if (isset($_GET['edit'])) {
     }
 }
 
+
 // Handle delete request
 if (isset($_GET['delete'])) {
     $tag_id = $_GET['delete'];
@@ -84,15 +85,28 @@ if (isset($_GET['delete'])) {
     if ($stmt->execute()) {
         $success_message = "Tag deleted successfully!";
         
-        // Reorder remaining tags
-        $sql = "SET @pos := 0;
-                UPDATE tags 
-                SET position = (@pos := @pos + 1) 
-                WHERE user_id = ? 
-                ORDER BY position";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $user_id);
-        $stmt->execute();
+        // Reorder remaining tags - FIXED VERSION
+        // First get all remaining tags in order
+        $sql_select = "SELECT id FROM tags WHERE user_id = ? ORDER BY position ASC, id ASC";
+        $stmt_select = $conn->prepare($sql_select);
+        $stmt_select->bind_param("i", $user_id);
+        $stmt_select->execute();
+        $result = $stmt_select->get_result();
+        $remaining_tags = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt_select->close();
+        
+        // Update positions sequentially
+        $sql_update = "UPDATE tags SET position = ? WHERE id = ? AND user_id = ?";
+        $stmt_update = $conn->prepare($sql_update);
+        
+        $position = 1;
+        foreach ($remaining_tags as $tag) {
+            $stmt_update->bind_param("iii", $position, $tag['id'], $user_id);
+            $stmt_update->execute();
+            $position++;
+        }
+        $stmt_update->close();
+        
     } else {
         $error_message = "Error deleting tag: " . $conn->error;
     }
@@ -124,125 +138,7 @@ $conn->close();
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        .drag-handle {
-            cursor: move;
-            touch-action: none;
-            padding: 8px 12px;
-            display: inline-block;
-        }
-        .dragging {
-            opacity: 0.8;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-        }
-        .dragging-active {
-            overflow: hidden !important;
-        }
-        .ui-sortable-helper {
-            transform: scale(1.02);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            background-color: #fff;
-        }
-        @media (pointer: coarse) {
-            .drag-handle {
-                width: 40px;
-                height: 40px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            table tbody tr {
-                padding: 8px 0;
-            }
-        }
-        .table tbody tr {
-            cursor: move;
-            transition: all 0.2s ease;
-        }
-/* Add this to your existing CSS in the <style> section */
-@media screen and (max-width: 768px) {
-    /* Table adjustments */
-    .table-responsive {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    table {
-        width: 100%;
-        font-size: 13px;
-    }
-    
-    th, td {
-        padding: 6px 4px;
-    }
-    
-    /* Drag handle optimization */
-    .drag-handle {
-        width: 30px;
-        height: 30px;
-        padding: 5px;
-    }
-    
-    .drag-handle i {
-        font-size: 14px;
-    }
-    
-    /* Button adjustments */
-    .btn {
-        padding: 4px 8px;
-        font-size: 12px;
-        margin: 2px 0;
-        display: block;
-    }
-    
-    /* Form adjustments */
-    .card-body {
-        padding: 10px;
-    }
-    
-    .form-control {
-        font-size: 14px;
-        padding: 6px 8px;
-    }
-    
-    .form-label {
-        font-size: 14px;
-        margin-bottom: 5px;
-    }
-    
-    /* Alert messages */
-    .alert {
-        padding: 8px 12px;
-        font-size: 13px;
-    }
-    
-    /* Dragging visual feedback */
-    .ui-sortable-helper {
-        transform: scale(1.01);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    /* Prevent text selection during drag */
-    table tbody tr {
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-    }
-    
-    /* Action column optimization */
-    td:nth-child(4) {
-        white-space: nowrap;
-    }
-    
-    /* Position column */
-    td:nth-child(3) {
-        display: none; /* Hide position number on very small screens */
-    }
-    
-    th:nth-child(3) {
-        display: none; /* Hide position header */
-    }
-}
+       .drag-handle{cursor:move;touch-action:none;padding:8px 12px;display:inline-block}.dragging{opacity:.8;box-shadow:0 0 10px rgba(0,0,0,.2)}.dragging-active{overflow:hidden!important}.ui-sortable-helper{transform:scale(1.02);box-shadow:0 5px 15px rgba(0,0,0,.1);background-color:#fff}@media (pointer:coarse){.drag-handle{width:40px;height:40px;display:flex;align-items:center;justify-content:center}table tbody tr{padding:8px 0}}.table tbody tr{cursor:move;transition:.2s}@media screen and (max-width:768px){.table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch}table{width:100%;font-size:13px}td,th{padding:6px 4px}.drag-handle{width:30px;height:30px;padding:5px}.drag-handle i{font-size:14px}.btn{padding:4px 8px;font-size:12px;margin:2px 0;display:block}.card-body{padding:10px}.form-control{font-size:14px;padding:6px 8px}.form-label{font-size:14px;margin-bottom:5px}.alert{padding:8px 12px;font-size:13px}.ui-sortable-helper{transform:scale(1.01);box-shadow:0 2px 8px rgba(0,0,0,.1)}table tbody tr{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}td:nth-child(4){white-space:nowrap}td:nth-child(3),th:nth-child(3){display:none}}
     </style>
 </head>
 
