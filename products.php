@@ -49,13 +49,13 @@ if ($subscription) {
     $package_name = $subscription['package_name'];
     switch ($subscription['package_id']) {
         case 1:
-            $max_products = 600;
+            $max_products = 1000;
             break;
         case 2:
-            $max_products = 600;
+            $max_products = 1000;
             break;
         case 3:
-            $max_products = 600;
+            $max_products = 1000;
             break;
         default:
             $max_products = 0;
@@ -218,16 +218,111 @@ if (isset($_GET['delete'])) {
     $stmt->close();
 }
 
-// Fetch all products for the current user with their tag names
+// Handle delete all request
+if (isset($_GET['delete_all'])) {
+    // Verify CSRF token for security
+    if (!isset($_GET['csrf_token']) || $_GET['csrf_token'] !== $_SESSION['csrf_token']) {
+        $error_message = "Security token mismatch. Operation cancelled.";
+    } else {
+        // First get all image paths to delete the files
+        $sql = "SELECT image_path FROM products WHERE user_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $image_paths = [];
+        while ($row = $result->fetch_assoc()) {
+            if (!empty($row['image_path'])) {
+                $image_paths[] = $row['image_path'];
+            }
+        }
+        $stmt->close();
+        
+        // Delete all products for the current user
+        $sql = "DELETE FROM products WHERE user_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $user_id);
+        
+        if ($stmt->execute()) {
+            // Delete all image files if they exist
+            foreach ($image_paths as $path) {
+                if (file_exists($path)) {
+                    unlink($path);
+                }
+            }
+            $success_message = "All products deleted successfully!";
+            // Reset product count
+            $current_product_count = 0;
+            // Refresh the products list
+            $products = [];
+        } else {
+            $error_message = "Error deleting products: " . $conn->error;
+        }
+        $stmt->close();
+    }
+}
+
+
+// Fetch all products for the current user with their tag names, ordered by id in ascending order
 $sql = "SELECT p.*, t.tag as tag_name 
         FROM products p
         LEFT JOIN tags t ON p.tag_id = t.id
-        WHERE p.user_id = ? ORDER BY p.product_name";
+        WHERE p.user_id = ? ORDER BY p.id ASC";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $products = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
+
+// Generate CSRF token for security if not already set
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// Handle search functionality
+$search_query = '';
+$where_conditions = ["p.user_id = ?"];
+$params = [$user_id];
+$param_types = "i";
+
+if (isset($_GET['search']) && !empty(trim($_GET['search']))) {
+    $search_query = trim($_GET['search']);
+    $where_conditions[] = "(p.product_name LIKE ? OR p.description LIKE ? OR p.price LIKE ? OR p.quantity LIKE ? OR t.tag LIKE ?)";
+    
+    $search_param = "%" . $search_query . "%";
+    // Add 5 parameters for the search
+    for ($i = 0; $i < 5; $i++) {
+        $params[] = $search_param;
+        $param_types .= "s";
+    }
+}
+
+// Build the SQL query
+$sql = "SELECT p.*, t.tag as tag_name 
+        FROM products p
+        LEFT JOIN tags t ON p.tag_id = t.id";
+        
+if (!empty($where_conditions)) {
+    $sql .= " WHERE " . implode(" AND ", $where_conditions);
+}
+
+$sql .= " ORDER BY p.id ASC";
+
+// Fetch products with optional search filter
+$stmt = $conn->prepare($sql);
+
+// Dynamic binding based on search
+if ($param_types === "i") {
+    $stmt->bind_param($param_types, ...$params);
+} else {
+    $stmt->bind_param($param_types, ...$params);
+}
+
+$stmt->execute();
+$products = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
+
+
 
 $conn->close();
 ?>
@@ -245,9 +340,51 @@ $conn->close();
     <script src="assets/js/config.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.19.3/jquery.validate.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         select[multiple] {
             min-height: 100px;
+        }
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .product-table th, 
+        .product-table td {
+            padding: 12px;
+            border: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+        .product-img {
+            max-width: 60px;
+            max-height: 60px;
+            border-radius: 4px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .search-container {
+            display: flex;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        .search-container input {
+            flex: 1;
+        }
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #6c757d;
         }
     </style>
 </head>
@@ -359,20 +496,49 @@ $conn->close();
                         </div>
                         
                         <div class="card mt-4">
-                            <div class="card-header">
-                                <h4 class="card-title">Your Products</h4>
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h4 class="card-title mb-0">Your Products</h4>
+                                <form method="GET" action="products.php" class="d-flex">
+                                    <input type="hidden" name="search" value="<?php echo htmlspecialchars($search_query); ?>">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" placeholder="Search products..." name="search" value="<?php echo htmlspecialchars($search_query); ?>">
+                                        <button class="btn btn-outline-secondary" type="submit">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                        <?php if (!empty($search_query)): ?>
+                                            <a href="products.php" class="btn btn-outline-danger">Clear</a>
+                                        <?php endif; ?>
+                                    </div>
+                                </form>
                             </div>
                             <div class="card-body">
-                                <a href="export_products.php" class="fr link-btn">Download All Products CSV</a>
-                                <br>
+                                <a href="export_products.php" class="btn btn-outline-primary mb-3">Download All Products CSV</a>
+                                
+                                <?php if ($current_product_count > 0): ?>
+                                    <a href="products.php?delete_all=1&csrf_token=<?php echo $_SESSION['csrf_token']; ?>" 
+                                       class="btn btn-outline-danger mb-3"
+                                       style="display: none;" 
+                                       onclick="return confirm('Are you sure you want to delete ALL your products? This action cannot be undone.')">
+                                       Remove All Products
+                                    </a>
+                                <?php endif; ?>
 
                                 <?php if (empty($products)): ?>
-                                    <p>No products found. <?php echo $subscription_active ? 'Add your first product above.' : 'Subscribe to add products.'; ?></p>
+                                    <div class="no-results">
+                                        <?php if (!empty($search_query)): ?>
+                                            <p>No products found matching "<?php echo htmlspecialchars($search_query); ?>".</p>
+                                            <a href="products.php" class="btn btn-primary">View All Products</a>
+                                        <?php else: ?>
+                                            <p>No products found. <?php echo $subscription_active ? 'Add your first product above.' : 'Subscribe to add products.'; ?></p>
+                                        <?php endif; ?>
+                                    </div>
                                 <?php else: ?>
                                     <div class="table-responsive">
-                                        <table class="table table-striped">
+                                        <table class="table table-striped product-table">
                                             <thead>
                                                 <tr>
+                                                    <th>Sr.No.</th>
+                                                    <th>Product ID</th>
                                                     <th>Image</th>
                                                     <th>Name</th>
                                                     <th>Tag</th>
@@ -383,24 +549,41 @@ $conn->close();
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <?php foreach ($products as $product): ?>
+                                                <?php 
+                                                $counter = 1;
+                                                foreach ($products as $product): 
+                                                    // Highlight search terms if search is active
+                                                    $highlighted_name = $product['product_name'];
+                                                    $highlighted_tag = $product['tag_name'] ?? '';
+                                                    $highlighted_desc = $product['description'];
+                                                    
+                                                    if (!empty($search_query)) {
+                                                        $highlighted_name = preg_replace("/(" . preg_quote($search_query, '/') . ")/i", "<mark>$1</mark>", $product['product_name']);
+                                                        $highlighted_tag = $product['tag_name'] ? preg_replace("/(" . preg_quote($search_query, '/') . ")/i", "<mark>$1</mark>", $product['tag_name']) : '';
+                                                        $highlighted_desc = preg_replace("/(" . preg_quote($search_query, '/') . ")/i", "<mark>$1</mark>", $product['description']);
+                                                    }
+                                                ?>
                                                     <tr>
+                                                        <td><?php echo $counter++; ?></td>
+                                                        <td><?php echo $product['id']; ?></td>
                                                         <td>
                                                             <?php if (!empty($product['image_path'])): ?>
-                                                                <img src="<?php echo $product['image_path']; ?>" alt="Product Image" style="max-width: 50px; max-height: 50px;">
+                                                                <img src="<?php echo $product['image_path']; ?>" alt="Product Image" class="product-img">
                                                             <?php else: ?>
                                                                 <span class="text-muted">No image</span>
                                                             <?php endif; ?>
                                                         </td>
-                                                        <td><?php echo htmlspecialchars($product['product_name']); ?></td>
-                                                        <td><?php echo !empty($product['tag_name']) ? htmlspecialchars($product['tag_name']) : '--'; ?></td>
-                                                        <td><?php echo htmlspecialchars($product['description']); ?></td>
-                                                        <td>₹<?php echo number_format($product['price'], 2); ?></td>
+                                                        <td><?php echo $highlighted_name; ?></td>
+                                                        <td><?php echo !empty($highlighted_tag) ? $highlighted_tag : '--'; ?></td>
+                                                        <td><?php echo $highlighted_desc; ?></td>
+                                                        <td>₹<?php echo number_format($product['price']); ?></td>
                                                         <td><?php echo $product['quantity']; ?></td>
-                                                        <td width="150">
-                                                            <a href="products.php?edit=<?php echo $product['id']; ?>" class="btn btn-sm btn-primary">Edit</a>
-                                                            <a href="products.php?delete=<?php echo $product['id']; ?>" class="btn btn-sm btn-danger" 
-                                                                onclick="return confirm('Are you sure you want to delete this product?')">Delete</a>
+                                                        <td>
+                                                            <div class="action-buttons">
+                                                                <a href="products.php?edit=<?php echo $product['id']; ?>" class="btn btn-sm btn-primary">Edit</a>
+                                                                <a href="products.php?delete=<?php echo $product['id']; ?>" class="btn btn-sm btn-danger" 
+                                                                    onclick="return confirm('Are you sure you want to delete this product?')">Delete</a>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 <?php endforeach; ?>
@@ -422,6 +605,105 @@ $conn->close();
     <script src="assets/js/app.js"></script>
     <script>
         $(document).ready(function() {
+
+            // Handle image selection and resize before upload
+            $('#product_image').on('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                // Check if file is an image
+                if (!file.type.match('image.*')) {
+                    alert('Please select an image file (JPG, PNG, GIF)');
+                    $(this).val('');
+                    return;
+                }
+                
+                // Check file size (max 5MB)
+                if (file.size > 5000000) {
+                    alert('File size must be less than 5MB');
+                    $(this).val('');
+                    return;
+                }
+                
+                // Create a canvas for resizing
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                
+                img.onload = function() {
+                    // Calculate dimensions to maintain aspect ratio
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > height) {
+                        if (width > 200) {
+                            height *= 200 / width;
+                            width = 200;
+                        }
+                    } else {
+                        if (height > 200) {
+                            width *= 200 / height;
+                            height = 200;
+                        }
+                    }
+                    
+                    // Set canvas dimensions
+                    canvas.width = 200;
+                    canvas.height = 200;
+                    
+                    // Create a white background
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, 200, 200);
+                    
+                    // Center and draw the resized image
+                    const xOffset = (200 - width) / 2;
+                    const yOffset = (200 - height) / 2;
+                    
+                    ctx.drawImage(img, xOffset, yOffset, width, height);
+                    
+                    // Convert canvas to blob and create a new file
+                    canvas.toBlob(function(blob) {
+                        // Create a new file from the blob
+                        const resizedFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        
+                        // Create a new FileList and DataTransfer to set the file
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(resizedFile);
+                        
+                        // Replace the original file with the resized one
+                        $('#product_image')[0].files = dataTransfer.files;
+                        
+                        // Preview the resized image
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            // Remove any existing preview
+                            $('.image-preview').remove();
+                            
+                            // Create preview
+                            const preview = $('<div class="image-preview mt-2"><p>Resized preview (200×200px):</p><img src="' + e.target.result + '" alt="Preview" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd; padding: 5px;"></div>');
+                            $('#product_image').after(preview);
+                        };
+                        reader.readAsDataURL(resizedFile);
+                        
+                    }, 'image/jpeg', 0.9); // 0.9 quality
+                };
+                
+                img.src = URL.createObjectURL(file);
+            });
+            
+            // Remove preview when removing image
+            $('#remove_image').on('change', function() {
+                if (this.checked) {
+                    $('.image-preview').hide();
+                } else {
+                    $('.image-preview').show();
+                }
+            });
+
+
             // Form validation
             $("#productForm").validate({
                 rules: {
@@ -464,6 +746,11 @@ $conn->close();
             $.validator.addMethod('filesize', function(value, element, param) {
                 return this.optional(element) || (element.files[0].size <= param);
             }, 'File size must be less than {0} bytes');
+
+            // Focus on search input when page loads if there's a search query
+            <?php if (!empty($search_query)): ?>
+                $('input[name="search"]').focus();
+            <?php endif; ?>
         });
     </script>
 </body>

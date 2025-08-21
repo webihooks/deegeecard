@@ -1,7 +1,6 @@
 <?php
 // Start the session
 session_start();
-header("Content-Security-Policy: frame-ancestors 'self' login.digitalsms.biz");
 
 // Include the database connection file
 require 'db_connection.php';
@@ -176,7 +175,7 @@ $conn->close();
     </div>
     <div class="card-body">
         <div class="iframe-container">
-            <iframe src="https://login.digitalsms.biz/signin.php" allowfullscreen></iframe>
+            <iframe src="https://marketing.deegeecard.com/signin.php" allowfullscreen></iframe>
         </div>
     </div>
 </div>

@@ -81,7 +81,7 @@
                </li>
 
                <li class="nav-item">
-                    <a class="nav-link" href="whatsapp_marketing.php">
+                    <a class="nav-link" href="https://marketing.deegeecard.com/" target="_blank">
                          <span class="nav-icon">
                               <iconify-icon icon="mdi:whatsapp"></iconify-icon>
                          </span>
