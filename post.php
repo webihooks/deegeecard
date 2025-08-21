@@ -178,18 +178,6 @@ $products_stmt = $conn->prepare($products_sql);
 $products_stmt->execute([$user_id]);
 $products = $products_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Then when displaying products, you can map tag_ids to tag names
-foreach ($products as &$product) {
-    $product['tags'] = [];
-    if (!empty($product['tag_ids'])) {
-        $tag_ids = explode(',', $product['tag_ids']);
-        foreach ($tags as $tag) {
-            if (in_array($tag['id'], $tag_ids)) {
-                $product['tags'][] = strtolower($tag['tag']);
-            }
-        }
-    }
-}
 
 // Check for active subscription and get package_id
 $subscription_sql = "SELECT package_id FROM subscriptions 
@@ -233,4 +221,3 @@ require_once 'includes/footer.php';
 // It's good practice to close the connection when it's no longer needed
 $conn = null;
 ?>
-
