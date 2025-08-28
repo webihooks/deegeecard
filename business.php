@@ -54,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $business_address = trim(htmlspecialchars($_POST['business_address'] ?? ''));
     $google_direction = trim(htmlspecialchars($_POST['google_direction'] ?? ''));
     $designation = trim(htmlspecialchars($_POST['designation'] ?? ''));
+    $website = trim(htmlspecialchars($_POST['website'] ?? ''));
     $business_id = isset($_POST['business_id']) ? (int)$_POST['business_id'] : null;
 
     // Validate inputs
@@ -80,6 +81,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "Please enter a valid Google Maps URL.";
     }
 
+    // Website URL validation - allow URLs without http/https
+    if (!empty($website)) {
+        // Add http:// prefix if missing for validation
+        $website_to_validate = $website;
+        if (!preg_match("~^(?:f|ht)tps?://~i", $website)) {
+            $website_to_validate = "http://" . $website;
+        }
+        
+        if (!filter_var($website_to_validate, FILTER_VALIDATE_URL)) {
+            $errors[] = "Please enter a valid website URL.";
+        }
+    }
+
     // If no errors, proceed with database operation
     if (empty($errors)) {
         // Remove any remaining line breaks from address
@@ -93,10 +107,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     business_address = ?, 
                     google_direction = ?,
                     designation = ?,
+                    website = ?,
                     updated_at = NOW()
                     WHERE id = ? AND user_id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("sssssii", $business_name, $business_description, $business_address, $google_direction, $designation, $business_id, $user_id);
+            $stmt->bind_param("ssssssii", $business_name, $business_description, $business_address, $google_direction, $designation, $website, $business_id, $user_id);
             
             if ($stmt->execute()) {
                 $success_message = "Business information updated successfully!";
@@ -107,6 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'business_address' => $business_address,
                     'google_direction' => $google_direction,
                     'designation' => $designation,
+                    'website' => $website,
                     'id' => $business_id
                 ];
             } else {
@@ -115,10 +131,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } else {
             // Insert new business
-            $sql = "INSERT INTO business_info (user_id, business_name, business_description, business_address, google_direction, designation) 
-                    VALUES (?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO business_info (user_id, business_name, business_description, business_address, google_direction, designation, website) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("isssss", $user_id, $business_name, $business_description, $business_address, $google_direction, $designation);
+            $stmt->bind_param("issssss", $user_id, $business_name, $business_description, $business_address, $google_direction, $designation, $website);
             
             if ($stmt->execute()) {
                 $success_message = "Business information added successfully!";
@@ -140,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Fetch all businesses for the current user
 $businesses = [];
-$sql = "SELECT id, business_name, business_address, designation FROM business_info WHERE user_id = ? ORDER BY created_at DESC";
+$sql = "SELECT id, business_name, business_address, designation, website FROM business_info WHERE user_id = ? ORDER BY created_at DESC";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -226,6 +242,13 @@ onkeydown="if(event.keyCode === 13) { return false; }"
                                     </div>
                                     
                                     <div class="mb-3">
+                                        <label for="website" class="form-label">Website</label>
+                                        <input type="text" class="form-control" id="website" name="website" 
+                                               value="<?php echo htmlspecialchars($business_data['website'] ?? $_POST['website'] ?? ''); ?>">
+                                        <small class="text-muted">Example: www.example.com or https://www.example.com</small>
+                                    </div>
+                                    
+                                    <div class="mb-3">
                                         <label for="google_direction" class="form-label">Google Maps Direction Link</label>
                                         <input type="text" class="form-control" id="google_direction" name="google_direction" 
                                                value="<?php echo htmlspecialchars($business_data['google_direction'] ?? $_POST['google_direction'] ?? ''); ?>">
@@ -252,6 +275,7 @@ onkeydown="if(event.keyCode === 13) { return false; }"
                                                 <th>Business Name</th>
                                                 <th>Designation</th>
                                                 <th>Address</th>
+                                                <th>Website</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
@@ -261,6 +285,20 @@ onkeydown="if(event.keyCode === 13) { return false; }"
                                                 <td><?php echo htmlspecialchars($business['business_name']); ?></td>
                                                 <td><?php echo htmlspecialchars($business['designation']); ?></td>
                                                 <td><?php echo htmlspecialchars($business['business_address']); ?></td>
+                                                <td>
+                                                    <?php if (!empty($business['website'])): ?>
+                                                        <?php
+                                                        // Add http:// if missing to make it a clickable link
+                                                        $website_url = $business['website'];
+                                                        if (!preg_match("~^(?:f|ht)tps?://~i", $website_url)) {
+                                                            $website_url = "http://" . $website_url;
+                                                        }
+                                                        ?>
+                                                        <a href="<?php echo htmlspecialchars($website_url); ?>" target="_blank">Visit Website</a>
+                                                    <?php else: ?>
+                                                        <span class="text-muted">Not provided</span>
+                                                    <?php endif; ?>
+                                                </td>
                                                 <td>
                                                     <a href="business.php?edit=<?php echo $business['id']; ?>" class="btn btn-sm btn-primary">Edit</a>
                                                 </td>
@@ -296,6 +334,10 @@ onkeydown="if(event.keyCode === 13) { return false; }"
                         minlength: 5,
                         noLineBreaks: true
                     },
+                    website: {
+                        // Custom validation for website with or without http/https
+                        pattern: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/
+                    },
                     google_direction: {
                         url: true
                     }
@@ -309,6 +351,9 @@ onkeydown="if(event.keyCode === 13) { return false; }"
                         required: "Please enter your business address",
                         minlength: "Address must be at least 5 characters",
                         noLineBreaks: "Line breaks are not allowed in the address"
+                    },
+                    website: {
+                        pattern: "Please enter a valid website URL (with or without http://)"
                     },
                     google_direction: {
                         url: "Please enter a valid URL"

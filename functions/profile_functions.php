@@ -12,7 +12,7 @@ function getUserById($conn, $user_id) {
 }
 
 function getBusinessInfo($conn, $user_id) {
-    $stmt = $conn->prepare("SELECT business_name, business_description, business_address, google_direction, designation FROM business_info WHERE user_id = ?");
+    $stmt = $conn->prepare("SELECT business_name, business_description, business_address, google_direction, designation, website FROM business_info WHERE user_id = ?");
     $stmt->execute([$user_id]);
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
@@ -80,4 +80,6 @@ function submitRating($conn, $user_id, $data) {
     }
     return false;
 }
+
+
 ?>

@@ -242,6 +242,9 @@
             background-color: <?php echo $primary_color; ?>;
             color: #fff;
         }
+        a {
+            color: <?php echo $primary_color; ?>;
+        }
     </style>
 </head>
 <body class="restaurant">

@@ -1,6 +1,6 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
 
 // Ensure these paths are correct relative to where this script is executed
 require_once 'config/db_connection.php';
@@ -196,8 +196,6 @@ if ($subscription_stmt) {
 
 $show_subscription_popup = !$active_subscription;
 $package_id = $active_subscription ? $active_subscription['package_id'] : null;
-
-
 
 
 

@@ -7,7 +7,6 @@
     <?php endif; ?>
 <?php endif; ?>
 
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const deliveryBtn = document.getElementById('deliveryBtn');
@@ -20,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function() {
         dinningBtn.classList.add('active');
     }
 });
-
 
 // Add this to your existing JavaScript code
 document.addEventListener('DOMContentLoaded', function() {
@@ -60,7 +58,6 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="products">
     <h6>Products</h6>
 
-
     <?php if ($delivery_active || $dining_active): ?>
         <!-- Shopping Cart Sidebar -->
         <div class="cart-sidebar">
@@ -68,11 +65,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 <h5>Your Cart</h5>
                 <button class="btn-close" onclick="closeCart()"></button>
             </div>
-
-
-
-
-
 
             <!-- Cart Section (shown initially) -->
             <div class="cart_group" id="cartGroup">
@@ -93,17 +85,17 @@ document.addEventListener('DOMContentLoaded', function() {
                             GST (
                             <?= $gst_percent ?>%): ₹<span id="gstCharges">0.00</span>
                         </div>
-                        <?php endif; ?>
+                    <?php endif; ?>
 
-                            <?php if ($delivery_active && isset($delivery_charges)): ?>
-                                <div class="cart-delivery-charges">
-                                    Delivery: <span id="deliveryChargeText">₹0.00</span>
-                                </div>
-                                <?php endif; ?>
+                    <?php if ($delivery_active && isset($delivery_charges)): ?>
+                        <div class="cart-delivery-charges">
+                            Delivery: <span id="deliveryChargeText">₹0.00</span>
+                        </div>
+                    <?php endif; ?>
 
-                                    <div class="cart-total">
-                                        Total: ₹<span id="cartTotal">0.00</span>
-                                    </div>
+                    <div class="cart-total">
+                        Total: ₹<span id="cartTotal">0.00</span>
+                    </div>
                 </div>
                 <!-- View Cart Button -->
                 <button class="btn btn-outline-secondary mb-3 w-100" id="viewCartBtn" style="display: none;">
@@ -118,76 +110,178 @@ document.addEventListener('DOMContentLoaded', function() {
                         <button class="btn btn-outline-primary w-50" id="deliveryBtn">
                             <i class="bi bi-truck"></i> Delivery
                         </button>
-                        <?php endif; ?>
+                    <?php endif; ?>
                             
-
-
-<?php if ($dining_active): ?>
-    <button class="btn btn-outline-primary w-50" id="dinningBtn">
-        <i class="bi bi-cup-hot"></i> Dining
-    </button>
-<?php endif; ?>
-
-
-
+                    <?php if ($dining_active): ?>
+                        <button class="btn btn-outline-primary w-50" id="dinningBtn">
+                            <i class="bi bi-cup-hot"></i> Dining
+                        </button>
+                    <?php endif; ?>
                 </div>
+            <?php endif; ?>
+
+            <!-- Customer Details Section (hidden initially) -->
+            <div id="customerDetailsSection" style="display: none;">
+                <?php if ($dining_active): ?>
+                    <div class="customer-details dinning-details" id="diningDetails" style="display: none;">
+                        <h6>Dinning Information</h6>
+                        <div class="mb-1 col-full">
+                            <label for="tableNumber" class="form-label">Table No.*</label>
+                            <select class="form-control" id="tableNumber" required>
+                                <option value="">Select Table</option>
+                                <?php for ($i = 1; $i <= $table_count; $i++): ?>
+                                    <option value="<?= $i ?>">Table
+                                        <?= $i ?>
+                                    </option>
+                                <?php endfor; ?>
+                            </select>
+                        </div>
+                        <div class="mb-1 col-half">
+                            <label for="dinningName" class="form-label">Name*</label>
+                            <input type="text" class="form-control" id="dinningName" placeholder="Your name" required>
+                        </div>
+                        <div class="mb-1 col-half">
+                            <label for="dinningPhone" class="form-label">Phone*</label>
+                            <input type="tel" class="form-control" id="dinningPhone" placeholder="Your phone number" pattern="[0-9]{10}" title="Please enter exactly 10 digits" required oninput="validatePhoneNumber(this)">
+                        </div>
+                        <!-- Add Order Notes for Dining -->
+                        <div class="mb-1 col-full">
+                            <label for="dinningNotes" class="form-label">Order Notes</label>
+                            <textarea class="form-control" id="dinningNotes" rows="2" placeholder="Any special instructions"></textarea>
+                        </div>
+                    </div>
                 <?php endif; ?>
 
-                    <!-- Customer Details Section (hidden initially) -->
-                    <div id="customerDetailsSection" style="display: none;">
-
-
-                        <?php if ($dining_active): ?>
-                            <div class="customer-details dinning-details" id="diningDetails" style="display: none;">
-                                <h6>Dinning Information</h6>
-                                <div class="mb-1 col-full">
-                                    <label for="tableNumber" class="form-label">Table No.*</label>
-                                    <select class="form-control" id="tableNumber" required>
-                                        <option value="">Select Table</option>
-                                        <?php for ($i = 1; $i <= $table_count; $i++): ?>
-                                            <option value="<?= $i ?>">Table
-                                                <?= $i ?>
-                                            </option>
-                                            <?php endfor; ?>
-                                    </select>
-                                </div>
-                                <div class="mb-1 col-half">
-                                    <label for="dinningName" class="form-label">Name*</label>
-                                    <input type="text" class="form-control" id="dinningName" placeholder="Your name" required>
-                                </div>
-                                <div class="mb-1 col-half">
-                                    <label for="dinningPhone" class="form-label">Phone*</label>
-                                    <input type="tel" class="form-control" id="dinningPhone" placeholder="Your phone number" pattern="[0-9]{10}" title="Please enter exactly 10 digits" required oninput="validatePhoneNumber(this)">
-                                </div>
-                                <!-- Add Order Notes for Dining -->
-                                <div class="mb-1 col-full">
-                                    <label for="dinningNotes" class="form-label">Order Notes</label>
-                                    <textarea class="form-control" id="dinningNotes" rows="2" placeholder="Any special instructions"></textarea>
-                                </div>
+                <?php if ($delivery_active): ?>
+                    <div class="customer-details delivery-details" id="deliveryDetails" style="display: none;">
+                        <!-- Add this inside the delivery-details div in products.php -->
+                        <div class="mb-1 col-full">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="couponCode" placeholder="Enter coupon code">
+                                <button class="btn btn-outline-secondary" type="button" id="applyCouponBtn">Apply</button>
                             </div>
+                            <small id="couponMessage" class="text-success"></small>
+                        </div>
+
+                        <h6>Delivery Information</h6>
+                        <div class="mb-1 col-half">
+                            <label for="customerName" class="form-label">Name*</label>
+                            <input type="text" class="form-control" id="customerName" placeholder="Your name" required>
+                        </div>
+                        <div class="mb-1 col-half">
+                            <label for="customerPhone" class="form-label">Phone*</label>
+                            <input type="tel" class="form-control" id="customerPhone" placeholder="Your phone number" pattern="[0-9]{10}" title="Please enter exactly 10 digits" required oninput="validatePhoneNumber(this)">
+                        </div>
+                        <div class="mb-1 col-full">
+                            <label for="customerAddress" class="form-label">Address*</label>
+                            <textarea class="form-control" id="customerAddress" rows="2" placeholder="Delivery address" required></textarea>
+                        </div>
+                        <div class="mb-1 col-full">
+                            <label for="customerNotes" class="form-label">Order Notes</label>
+                            <textarea class="form-control" id="customerNotes" rows="2" placeholder="Any special instructions"></textarea>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <div class="cart-footer">
+                    <button class="btn btn-success w-100" id="placeOrderBtn">Place Order</button>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <div class="row" id="productsContainer">
+        <?php if (!empty($products)): ?>
+            <?php foreach ($products as $product): ?>
+                <div class="col-sm-12 product-item" 
+     data-name="<?= htmlspecialchars(strtolower($product['product_name'])) ?>" 
+     data-desc="<?= htmlspecialchars(strtolower($product['description'])) ?>"
+     data-tag="<?= isset($product['tag']) ? htmlspecialchars(strtolower($product['tag'])) : '' ?>">
+                    <div class="card product-card">
+                        <div class="card-body">
+                            <h5 class="card-title"><?= htmlspecialchars($product['product_name']) ?></h5>
+                            <p class="card-text">
+                                <?= htmlspecialchars($product['description']) ?>
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-primary fw-bold">₹<?= number_format($product['price']) ?></span>
+                                <span class="badge bg-<?= ($product['quantity'] > 0) ? 'success' : 'danger' ?>" style="display: none;">
+                                    <?= ($product['quantity'] > 0) ? 'In Stock' : 'Out of Stock' ?>
+                                </span>
+                            </div>
+                            <?php if ($product['quantity'] > 0): ?>
+                                <small class="text-muted">Quantity: <?= $product['quantity'] ?></small>
                             <?php endif; ?>
+                            <?php if ($product['quantity'] > 0 && ($delivery_active || $dining_active)): ?>
+                                <div class="mt-3 cart_btn_group <?= empty($product['image_path']) ? 'top' : '' ?>">
+                                    <button class="btn btn-primary w-100 add-to-cart" data-id="<?= htmlspecialchars($product['product_name']) ?>" data-name="<?= htmlspecialchars($product['product_name']) ?>" data-price="<?= $product['price'] ?>" data-max="<?= $product['quantity'] ?>" data-image="<?= htmlspecialchars($product['image_path']) ?>">
+                                        <i class="bi bi-cart-plus"></i> Add
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+                        </div>
 
-                                <?php if ($delivery_active): ?>
-                                    <div class="customer-details delivery-details" id="deliveryDetails" style="display: none;">
+                        <?php if (!empty($product['image_path'])): ?>
+                            <div class="img-group">
+                                <img src="<?= htmlspecialchars($product['image_path']) ?>" class="card-img-top product-img" alt="<?= htmlspecialchars($product['product_name']) ?>" onerror="this.style.display='none'">
+                            </div>
+                        <?php endif; ?>
 
-
-
-
-
-
-
-
-<!-- Add this inside the delivery-details div in products.php -->
-<div class="mb-1 col-full">
-    <div class="input-group">
-        <input type="text" class="form-control" id="couponCode" placeholder="Enter coupon code">
-        <button class="btn btn-outline-secondary" type="button" id="applyCouponBtn">Apply</button>
+                        <script>
+                            document.querySelectorAll('.product-img').forEach(img => {
+                              img.addEventListener('error', function() {
+                                // Find the closest parent `.product-card`, then navigate to `.card-body .cart_btn_group`
+                                const productCard = this.closest('.product-card');
+                                if (productCard) {
+                                  const cartBtnGroup = productCard.querySelector('.card-body .cart_btn_group');
+                                  if (cartBtnGroup) {
+                                    cartBtnGroup.classList.add('top'); // Add the "top" class
+                                  }
+                                }
+                              });
+                            });
+                        </script>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <div class="col-12">
+                <div class="alert alert-info">No products available yet.</div>
+            </div>
+        <?php endif; ?>
     </div>
-    <small id="couponMessage" class="text-success"></small>
+
+    <!-- Move search to bottom and make it sticky -->
+    <div class="sticky-search-container">
+        <!-- Add tags filter above search -->
+        <div class="tags-filter-container">
+            <div class="tags-scroll">
+                <button class="tag-btn active" data-tag="all">All</button>
+                <?php foreach ($tags as $tag): ?>
+                    <button class="tag-btn" data-tag="<?= htmlspecialchars(strtolower($tag['tag'])) ?>">
+                        <?= htmlspecialchars($tag['tag']) ?>
+                    </button>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        
+        <div class="input-group sticky-search">
+            <input type="text" id="productSearch" class="form-control" placeholder="Search products...">
+            <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+    </div>
+
+    <?php if ($delivery_active || $dining_active): ?>
+        <div class="cart-button-container" style="display: none;">
+            <button class="btn btn-primary cart-button" onclick="toggleCart()">
+                <span class="cart-count">0 item added</span>
+                <span class="small discount-message" style="display: none;"></span>
+            </button>
+        </div>
+    <?php endif; ?>
 </div>
-
-
-
 
 <script>
 // Initialize cart at the very top
@@ -207,6 +301,247 @@ if (localStorage.getItem(cartKey)) {
         cart.coupon = savedCart.coupon;
     }
 }
+
+
+
+
+
+
+// Whatsapp Msg Start
+// Add this function to your existing code
+function calculateSubtotal() {
+    return cart.filter(item => item.id).reduce((sum, item) => sum + (item.price * item.quantity), 0);
+}
+
+function placeOrderOnWhatsApp() {
+    if (cart.length === 0) {
+        showToast('Your cart is empty', 'error');
+        return;
+    }
+
+    <?php if ($delivery_active || $dining_active): ?>
+    const isDelivery = <?= $delivery_active ? 'document.getElementById("deliveryBtn").classList.contains("active")' : 'false' ?>;
+    const deliveryCharge = Number(<?= json_encode($delivery_charges['delivery_charge'] ?? 0) ?>);
+    const freeDeliveryMin = Number(<?= json_encode($delivery_charges['free_delivery_minimum'] ?? 0) ?>);
+    const gstPercent = Number(<?= json_encode($gst_percent ?? 0) ?>);
+    
+    // Validate required fields
+    const phoneInput = isDelivery ? document.getElementById('customerPhone') : document.getElementById('dinningPhone');
+    if (!phoneInput.value || phoneInput.value.length !== 10) {
+        showToast('Please enter a valid 10-digit phone number', 'error');
+        phoneInput.focus();
+        return;
+    }
+
+    let customerName, orderDetails;
+    
+    if (isDelivery) {
+        customerName = document.getElementById('customerName').value;
+        const customerPhone = phoneInput.value;
+        const customerAddress = document.getElementById('customerAddress').value;
+        const customerNotes = document.getElementById('customerNotes').value;
+        
+        if (!customerName || !customerAddress) {
+            showToast('Please provide your name and address', 'error');
+            return;
+        }
+        
+        orderDetails = `*Delivery Order*\nName: ${customerName}\nPhone: ${customerPhone}\nAddress: ${customerAddress}`;
+        if (customerNotes) orderDetails += `\nNotes: ${customerNotes}`;
+    } else {
+        customerName = document.getElementById('dinningName').value;
+        const customerPhone = phoneInput.value;
+        const tableNumber = document.getElementById('tableNumber').value;
+        const dinningNotes = document.getElementById('dinningNotes').value;
+        
+        if (!customerName || !tableNumber) {
+            showToast('Please provide your name and table number', 'error');
+            return;
+        }
+        
+        orderDetails = `*Dining Order*\nName: ${customerName}\nPhone: ${customerPhone}\nTable No.: ${tableNumber}`;
+        if (dinningNotes) orderDetails += `\nNotes: ${dinningNotes}`;
+    }
+    <?php else: ?>
+    let customerName = 'Guest';
+    let orderDetails = `*Quick Order*`;
+    <?php endif; ?>
+
+    // Get WhatsApp number safely
+    const whatsappLink = <?= json_encode($social_link['whatsapp'] ?? '') ?>;
+    let phoneNumber = whatsappLink.match(/wa\.me\/(\d+)/)?.[1] || <?= json_encode($user['phone'] ?? '') ?>;
+
+    if (!phoneNumber) {
+        showToast('WhatsApp number not available for this business', 'error');
+        return;
+    }
+
+    // Format order date
+    const orderDate = new Date().toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    // Calculate order totals correctly
+    let subtotal = 0;
+    cart.forEach(item => {
+        if (item.id) { // Only count actual products, not coupon objects
+            subtotal += item.price * item.quantity;
+        }
+    });
+
+    // Get discount information from the UI
+    const discountSection = document.getElementById('discountSection');
+    let discountAmount = 0;
+    let discountText = '';
+    
+    if (discountSection && discountSection.style.display !== 'none') {
+        discountAmount = parseFloat(document.getElementById('discountAmount').textContent) || 0;
+        discountText = document.getElementById('discountType').textContent || '';
+    }
+
+    // Calculate amount after discount
+    let amountAfterDiscount = subtotal - discountAmount;
+    if (amountAfterDiscount < 0) amountAfterDiscount = 0;
+
+    // Calculate GST on amount after discount
+    let gstAmount = 0;
+    if (gstPercent > 0) {
+        gstAmount = (amountAfterDiscount * gstPercent) / 100;
+    }
+
+    // Calculate delivery charge
+    let actualDeliveryCharge = 0;
+    let deliveryText = '';
+    
+    if (isDelivery) {
+        // Check if free delivery minimum is set and applicable
+        if (freeDeliveryMin > 0 && amountAfterDiscount >= freeDeliveryMin) {
+            actualDeliveryCharge = 0;
+            deliveryText = `Delivery:       FREE\n(Order above ₹${freeDeliveryMin.toFixed(2)})\n`;
+        } else if (freeDeliveryMin > 0) {
+            // Not eligible for free delivery but free delivery minimum exists
+            actualDeliveryCharge = deliveryCharge;
+            const neededForFree = freeDeliveryMin - amountAfterDiscount;
+            deliveryText = `Delivery:       ₹${deliveryCharge.toFixed(2)}\n(Add ₹${neededForFree.toFixed(2)} more for FREE delivery)\n`;
+        } else {
+            // No free delivery minimum set, just charge normal delivery
+            actualDeliveryCharge = deliveryCharge;
+            deliveryText = `Delivery:       ₹${deliveryCharge.toFixed(2)}\n`;
+        }
+    }
+
+    // Calculate total
+    let total = amountAfterDiscount + gstAmount + actualDeliveryCharge;
+
+    // Business details
+    const businessName = <?= json_encode(htmlspecialchars($business_info['business_name'] ?? '')) ?>;
+    const businessAddress = <?= json_encode(htmlspecialchars($business_info['business_address'] ?? '')) ?>;
+    const businessPhone = <?= json_encode($user['phone'] ?? '') ?>;
+
+    // Build WhatsApp message
+    let message = `*${businessName.toUpperCase()}*\n` +
+                  `${businessAddress}\n` +
+                  `Phone: ${businessPhone}\n\n` +
+                  `Date: ${orderDate}\n` +
+                  `Order Type: ${isDelivery ? 'DELIVERY' : 'DINING'}\n` +
+                  `--------------------------\n` +
+                  `*ITEMS ORDERED*\n` +
+                  `--------------------------\n`;
+
+    // Add cart items
+    cart.forEach(item => {
+        if (item.id) { // Only show actual products, not coupon objects
+            const itemTotal = (item.price * item.quantity).toFixed(2);
+            message += `${item.name} x ${item.quantity}\n` +
+                      `₹${item.price.toFixed(2)} x ${item.quantity} = ₹${itemTotal}\n\n`;
+        }
+    });
+
+    // Add pricing summary
+    message += `--------------------------\n` +
+               `Subtotal:        ₹${subtotal.toFixed(2)}\n`;
+    
+    if (discountAmount > 0) {
+        message += `Discount:       -₹${discountAmount.toFixed(2)}\n`;
+        if (discountText) {
+            message += `(${discountText})\n`;
+        }
+    }
+    
+    if (gstPercent > 0) {
+        message += `GST (${gstPercent}%):    ₹${gstAmount.toFixed(2)}\n`;
+    }
+    
+    // Add delivery information
+    if (isDelivery) {
+        message += deliveryText;
+    }
+
+    message += `--------------------------\n` +
+               `*TOTAL:          ₹${total.toFixed(2)}*\n\n` +
+               `*CUSTOMER DETAILS*\n` +
+               `--------------------------\n` +
+               `${orderDetails}\n\n` +
+               `Thank you for your order. We'll process it shortly.\n\n` +
+               `*STORE INFORMATION*\n` +
+               `--------------------------\n`;
+
+    // Add website if available
+    <?php if (!empty($business_info['website'])): ?>
+    message += `Website: ${<?= json_encode($business_info['website']) ?>}\n`;
+    <?php endif; ?>
+
+    // Add profile URL
+    message += `Profile: ${window.location.origin}/<?= $profile_url ?>\n\n` +
+               `Explore our profile for more delicious dishes and offers!`;
+
+    // Safari-compatible WhatsApp opening
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    
+    // Create and click a hidden link (most reliable for Safari)
+    const link = document.createElement('a');
+    link.href = whatsappUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    
+    try {
+        link.click();
+    } catch (e) {
+        // Fallback if click fails
+        window.location.href = whatsappUrl;
+    }
+    
+    // Clean up
+    setTimeout(() => {
+        document.body.removeChild(link);
+    }, 1000);
+
+    // Reset coupon fields
+    if (cart.coupon) {
+        delete cart.coupon;
+        document.getElementById('couponCode').value = '';
+        document.getElementById('couponMessage').textContent = '';
+        document.getElementById('couponMessage').className = 'text-success';
+    }
+
+    // Reset cart
+    cart = [];
+    saveCart();
+    updateCartUI();
+    closeCart();
+    
+    // Success popup
+    showOrderSuccessPopup();
+}
+// Whatsapp Msg End
+
+
 
 
 // Add this to your JavaScript section
@@ -267,17 +602,6 @@ document.getElementById('applyCouponBtn').addEventListener('click', function() {
     });
 });
 
-
-
-
-
-
-
-
-function calculateSubtotal() {
-    return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-}
-
 // In the applyCoupon function
 function applyCoupon(discount_type, discount_value, coupon_code) {
     // Ensure discount_value is a number
@@ -290,6 +614,7 @@ function applyCoupon(discount_type, discount_value, coupon_code) {
     
     cart.coupon = {
         code: coupon_code || 'COUPON', // Fallback to 'COUPON' if null
+        name: coupon_code || 'COUPON', // Store the coupon code name
         type: discount_type,
         value: discountAmount  // Store as number
     };
@@ -298,86 +623,6 @@ function applyCoupon(discount_type, discount_value, coupon_code) {
     updateCartUI();
 }
 
-// Modify your updateCartUI function to include coupon discount
-// Replace the discount calculation section with this:
-let couponDiscount = 0;
-
-
-if (cart.coupon) {
-    if (cart.coupon.type === 'percentage') {
-        discountAmount = Number((subtotal * Number(cart.coupon.value)) / 100);
-        discountType = cart.coupon.value + '% coupon (' + cart.coupon.code + ')';
-    } else {
-        discountAmount = Number(cart.coupon.value);
-        discountType = 'Flat ₹' + formatNumber(cart.coupon.value) + ' OFF (' + cart.coupon.code + ')';
-    }
-    
-    // Ensure coupon discount doesn't exceed subtotal
-    if (couponDiscount > subtotal) {
-        couponDiscount = subtotal;
-    }
-    
-    discountAmount = couponDiscount;
-    
-    // Show discount section
-    if (discountSection) {
-        discountSection.style.display = 'block';
-        document.getElementById('discountAmount').textContent = formatNumber(discountAmount);
-        document.getElementById('discountType').textContent = discountType;
-    }
-    
-    // Show discount applied message in cart button
-    if (discountMessageElement) {
-        discountMessageElement.innerHTML = `<i class="bi bi-tag-fill"></i> ${discountType} applied!`;
-        discountMessageElement.style.display = 'block';
-    }
-}
-</script>
-
-
-
-
-
-
-
-
-
-
-
-                                        <h6>Delivery Information</h6>
-                                        <div class="mb-1 col-half">
-                                            <label for="customerName" class="form-label">Name*</label>
-                                            <input type="text" class="form-control" id="customerName" placeholder="Your name" required>
-                                        </div>
-                                        <div class="mb-1 col-half">
-                                            <label for="customerPhone" class="form-label">Phone*</label>
-                                            <input type="tel" class="form-control" id="customerPhone" placeholder="Your phone number" pattern="[0-9]{10}" title="Please enter exactly 10 digits" required oninput="validatePhoneNumber(this)">
-                                        </div>
-                                        <div class="mb-1 col-full">
-                                            <label for="customerAddress" class="form-label">Address*</label>
-                                            <textarea class="form-control" id="customerAddress" rows="2" placeholder="Delivery address" required></textarea>
-                                        </div>
-                                        <div class="mb-1 col-full">
-                                            <label for="customerNotes" class="form-label">Order Notes</label>
-                                            <textarea class="form-control" id="customerNotes" rows="2" placeholder="Any special instructions"></textarea>
-                                        </div>
-                                    </div>
-                                    <?php endif; ?>
-
-                                        <div class="cart-footer">
-                                            <button class="btn btn-success w-100" id="placeOrderBtn">Place Order</button>
-                                            <button class="btn btn-success w-100 mt-2" onclick="placeOrderOnWhatsApp()" style="display:none;">
-                                                <i class="bi bi-whatsapp"></i> Place Order via WhatsApp
-                                            </button>
-                                        </div>
-                    </div>
-
-
-
-
-
-
-<script>
 // For View Cart Hide and Show
 function checkCartVisibility() {
     const cartItems = document.getElementById('cartItems');
@@ -420,316 +665,124 @@ fadeOut = function(element, callback) {
     checkCartVisibility();
     if (callback) callback();
 };
-// For View Cart Hide and Show
 
-
-
-
-
-
-
-
-                        // Fade Animation Functions
-                        function fadeIn(element, callback) {
-                            element.style.display = 'block';
-                            // Force reflow to enable transition
-                            void element.offsetHeight;
-                            element.classList.add('fade-in');
-                            element.classList.remove('fade-out');
-                            
-                            setTimeout(() => {
-                                if (callback) callback();
-                            }, 300);
-                        }
-                        
-                        function fadeOut(element, callback) {
-                            element.classList.add('fade-out');
-                            element.classList.remove('fade-in');
-                            
-                            setTimeout(() => {
-                                element.style.display = 'none';
-                                if (callback) callback();
-                            }, 300);
-                        }
-                        
-                        // Initialize elements with fade classes
-                        document.addEventListener('DOMContentLoaded', function() {
-                            const fadeElements = [
-                                document.getElementById('cartItems'),
-                                document.getElementById('customerDetailsSection'),
-                                document.getElementById('deliveryDetails'),
-                                document.getElementById('diningDetails')
-                            ].filter(el => el);
-                            
-                            fadeElements.forEach(el => {
-                                el.classList.add('fade-element');
-                                if (el.style.display !== 'none') {
-                                    el.classList.add('fade-in');
-                                }
-                            });
-                        });
-                        
-                        // Modified Event Listeners with Fade Animation
-                        document.addEventListener('DOMContentLoaded', function() {
-                            const cartItems = document.getElementById('cartItems');
-                            const customerDetailsSection = document.getElementById('customerDetailsSection');
-                            const viewCartBtn = document.getElementById('viewCartBtn');
-                            
-                            // Initialize View Cart button as hidden (already set in HTML)
-                            viewCartBtn.classList.add('fade-element');
-                            
-                            <?php if ($delivery_active): ?>
-                            document.getElementById('deliveryBtn').addEventListener('click', function() {
-                                fadeOut(cartItems, function() {
-                                    fadeIn(customerDetailsSection);
-                                    fadeIn(document.getElementById('deliveryDetails'));
-                                    <?php if ($dining_active): ?>
-                                    fadeOut(document.getElementById('diningDetails'));
-                                    <?php endif; ?>
-                                });
-                                
-                                // Show the View Cart button when switching to delivery
-                                fadeIn(viewCartBtn);
-                                
-                                this.classList.add('active');
-                                <?php if ($dining_active): ?>
-                                document.getElementById('dinningBtn').classList.remove('active');
-                                <?php endif; ?>
-                                
-                                localStorage.setItem('selectedOrderType', 'delivery');
-                            });
-                            <?php endif; ?>
-                            
-                            <?php if ($dining_active): ?>
-                            document.getElementById('dinningBtn').addEventListener('click', function() {
-                                fadeOut(cartItems, function() {
-                                    fadeIn(customerDetailsSection);
-                                    fadeIn(document.getElementById('diningDetails'));
-                                    <?php if ($delivery_active): ?>
-                                    fadeOut(document.getElementById('deliveryDetails'));
-                                    <?php endif; ?>
-                                });
-                                
-                                // Show the View Cart button when switching to dining
-                                fadeIn(viewCartBtn);
-                                
-                                this.classList.add('active');
-                                <?php if ($delivery_active): ?>
-                                document.getElementById('deliveryBtn').classList.remove('active');
-                                <?php endif; ?>
-                                
-                                localStorage.setItem('selectedOrderType', 'dining');
-                            });
-                            <?php endif; ?>
-                            
-                            // View Cart button with fade animation
-                            viewCartBtn.addEventListener('click', function() {
-                                fadeOut(customerDetailsSection, function() {
-                                    fadeIn(cartItems);
-                                });
-                                
-                                // Hide the View Cart button when viewing cart
-                                fadeOut(viewCartBtn);
-                            });
-                            
-                            // Restore selected order type
-                            const selectedOrderType = localStorage.getItem('selectedOrderType');
-                            if (selectedOrderType === 'delivery' && <?= $delivery_active ? 'true' : 'false' ?>) {
-                                document.getElementById('deliveryBtn').classList.add('active');
-                                // Show View Cart button if coming from saved delivery state
-                                fadeIn(viewCartBtn);
-                            } else if (selectedOrderType === 'dining' && <?= $dining_active ? 'true' : 'false' ?>) {
-                                document.getElementById('dinningBtn').classList.add('active');
-                                // Show View Cart button if coming from saved dining state
-                                fadeIn(viewCartBtn);
-                            }
-                            // No else needed since button is hidden by default
-                        });
-                    </script>
-
-
-
-
-
-
-
-
-        </div>
-        <?php endif; ?>
-
-            <div class="row" id="productsContainer">
-                <?php if (!empty($products)): ?>
-                    <?php foreach ($products as $product): ?>
-                        <div class="col-sm-12 product-item" 
-         data-name="<?= htmlspecialchars(strtolower($product['product_name'])) ?>" 
-         data-desc="<?= htmlspecialchars(strtolower($product['description'])) ?>"
-         data-tag="<?= isset($product['tag']) ? htmlspecialchars(strtolower($product['tag'])) : '' ?>">
-                            <div class="card product-card">
-
-
-
-
-                                <div class="card-body">
-                                    <h5 class="card-title"><?= htmlspecialchars($product['product_name']) ?></h5>
-                                    <p class="card-text">
-                                        <?= htmlspecialchars($product['description']) ?>
-                                    </p>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-primary fw-bold">₹<?= number_format($product['price']) ?></span>
-                                        <span class="badge bg-<?= ($product['quantity'] > 0) ? 'success' : 'danger' ?>" style="display: none;">
-                        <?= ($product['quantity'] > 0) ? 'In Stock' : 'Out of Stock' ?>
-                    </span>
-                                    </div>
-                                    <?php if ($product['quantity'] > 0): ?>
-                                        <small class="text-muted">Quantity: <?= $product['quantity'] ?></small>
-                                        <?php endif; ?>
-                                            <?php if ($product['quantity'] > 0 && ($delivery_active || $dining_active)): ?>
-                                                <div class="mt-3 cart_btn_group <?= empty($product['image_path']) ? 'top' : '' ?>">
-                                                    <button class="btn btn-primary w-100 add-to-cart" data-id="<?= htmlspecialchars($product['product_name']) ?>" data-name="<?= htmlspecialchars($product['product_name']) ?>" data-price="<?= $product['price'] ?>" data-max="<?= $product['quantity'] ?>" data-image="<?= htmlspecialchars($product['image_path']) ?>">
-                                                        <i class="bi bi-cart-plus"></i> Add
-                                                    </button>
-                                                </div>
-                                                <?php endif; ?>
-                                </div>
-
-                                <?php if (!empty($product['image_path'])): ?>
-                                    <div class="img-group">
-                                        <img src="<?= htmlspecialchars($product['image_path']) ?>" class="card-img-top product-img" alt="<?= htmlspecialchars($product['product_name']) ?>" onerror="this.style.display='none'">
-                                    </div>
-                                    <?php endif; ?>
-
-
-                                        <script>
-                                            document.querySelectorAll('.product-img').forEach(img => {
-                                              img.addEventListener('error', function() {
-                                                // Find the closest parent `.product-card`, then navigate to `.card-body .cart_btn_group`
-                                                const productCard = this.closest('.product-card');
-                                                if (productCard) {
-                                                  const cartBtnGroup = productCard.querySelector('.card-body .cart_btn_group');
-                                                  if (cartBtnGroup) {
-                                                    cartBtnGroup.classList.add('top'); // Add the "top" class
-                                                  }
-                                                }
-                                              });
-                                            });
-                                        </script>
-
-
-
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
-                            <?php else: ?>
-                                <div class="col-12">
-                                    <div class="alert alert-info">No products available yet.</div>
-                                </div>
-                                <?php endif; ?>
-            </div>
-
-
-
-
-
-
-<!-- Move search to bottom and make it sticky -->
-<div class="sticky-search-container">
-    <!-- Add tags filter above search -->
-    <div class="tags-filter-container">
-        <div class="tags-scroll">
-            <button class="tag-btn active" data-tag="all">All</button>
-            <?php foreach ($tags as $tag): ?>
-                <button class="tag-btn" data-tag="<?= htmlspecialchars(strtolower($tag['tag'])) ?>">
-                    <?= htmlspecialchars($tag['tag']) ?>
-                </button>
-            <?php endforeach; ?>
-        </div>
-    </div>
+// Fade Animation Functions
+function fadeIn(element, callback) {
+    element.style.display = 'block';
+    // Force reflow to enable transition
+    void element.offsetHeight;
+    element.classList.add('fade-in');
+    element.classList.remove('fade-out');
     
-    <div class="input-group sticky-search">
-        <input type="text" id="productSearch" class="form-control" placeholder="Search products...">
-        <button class="btn btn-outline-secondary" type="button" id="clearSearch">
-            <i class="bi bi-x"></i>
-        </button>
-    </div>
-</div>
-<script>
+    setTimeout(() => {
+        if (callback) callback();
+    }, 300);
+}
+
+function fadeOut(element, callback) {
+    element.classList.add('fade-out');
+    element.classList.remove('fade-in');
+    
+    setTimeout(() => {
+        element.style.display = 'none';
+        if (callback) callback();
+    }, 300);
+}
+
+// Initialize elements with fade classes
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('productSearch');
-    const productsHeading = document.querySelector('.products h6');
-    const originalHeading = productsHeading ? productsHeading.textContent : 'Products';
+    const fadeElements = [
+        document.getElementById('cartItems'),
+        document.getElementById('customerDetailsSection'),
+        document.getElementById('deliveryDetails'),
+        document.getElementById('diningDetails')
+    ].filter(el => el);
     
-    if (searchInput) {
-        searchInput.addEventListener('click', function() {
-            console.log('Search clicked');
-            
-            // Remove active from all buttons
-            document.querySelectorAll('.tag-btn').forEach(btn => {
-                btn.classList.remove('active');
-                console.log('Removed active from:', btn.textContent);
-            });
-            
-            // Add active to "All" button
-            const allButton = document.querySelector('.tag-btn[data-tag="all"]');
-            if (allButton) {
-                allButton.classList.add('active');
-                console.log('Added active to:', allButton.textContent);
-                
-                // Reset the products heading to original
-                if (productsHeading) {
-                    productsHeading.textContent = originalHeading;
-                }
-                
-                // Trigger filter if function exists
-                if (typeof filterProductsByTag === 'function') {
-                    filterProductsByTag('all');
-                }
-            }
-        });
-    } else {
-        console.warn('Search input not found');
-    }
-
-    // Tag button click handler
-    document.querySelectorAll('.tag-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const selectedTag = this.dataset.tag;
-            const tagName = this.textContent;
-            
-            if (productsHeading) {
-                if (selectedTag === 'all') {
-                    productsHeading.textContent = originalHeading;
-                } else {
-                    productsHeading.textContent = tagName;
-                }
-            }
-            
-            // Clear search input when tag is selected
-            if (searchInput) {
-                searchInput.value = '';
-            }
-        });
+    fadeElements.forEach(el => {
+        el.classList.add('fade-element');
+        if (el.style.display !== 'none') {
+            el.classList.add('fade-in');
+        }
     });
 });
-</script>
-<!-- Move search to bottom and make it sticky -->
 
-
-
-
-<?php if ($delivery_active || $dining_active): ?>
-    <div class="cart-button-container" style="display: none;">
-        <button class="btn btn-primary cart-button" onclick="toggleCart()">
-            <span class="cart-count">0 item added</span>
-            <span class="small discount-message" style="display: none;"></span>
-        </button>
-    </div>
-    <?php endif; ?>
-
-
-</div>
-
-<script>
+// Modified Event Listeners with Fade Animation
+document.addEventListener('DOMContentLoaded', function() {
+    const cartItems = document.getElementById('cartItems');
+    const customerDetailsSection = document.getElementById('customerDetailsSection');
+    const viewCartBtn = document.getElementById('viewCartBtn');
     
+    // Initialize View Cart button as hidden (already set in HTML)
+    viewCartBtn.classList.add('fade-element');
+    
+    <?php if ($delivery_active): ?>
+    document.getElementById('deliveryBtn').addEventListener('click', function() {
+        fadeOut(cartItems, function() {
+            fadeIn(customerDetailsSection);
+            fadeIn(document.getElementById('deliveryDetails'));
+            <?php if ($dining_active): ?>
+            fadeOut(document.getElementById('diningDetails'));
+            <?php endif; ?>
+        });
+        
+        // Show the View Cart button when switching to delivery
+        fadeIn(viewCartBtn);
+        
+        this.classList.add('active');
+        <?php if ($dining_active): ?>
+        document.getElementById('dinningBtn').classList.remove('active');
+        <?php endif; ?>
+        
+        localStorage.setItem('selectedOrderType', 'delivery');
+    });
+    <?php endif; ?>
+    
+    <?php if ($dining_active): ?>
+    document.getElementById('dinningBtn').addEventListener('click', function() {
+        fadeOut(cartItems, function() {
+            fadeIn(customerDetailsSection);
+            fadeIn(document.getElementById('diningDetails'));
+            <?php if ($delivery_active): ?>
+            fadeOut(document.getElementById('deliveryDetails'));
+            <?php endif; ?>
+        });
+        
+        // Show the View Cart button when switching to dining
+        fadeIn(viewCartBtn);
+        
+        this.classList.add('active');
+        <?php if ($delivery_active): ?>
+        document.getElementById('deliveryBtn').classList.remove('active');
+        <?php endif; ?>
+        
+        localStorage.setItem('selectedOrderType', 'dining');
+    });
+    <?php endif; ?>
+    
+    // View Cart button with fade animation
+    viewCartBtn.addEventListener('click', function() {
+        fadeOut(customerDetailsSection, function() {
+            fadeIn(cartItems);
+        });
+        
+        // Hide the View Cart button when viewing cart
+        fadeOut(viewCartBtn);
+    });
+    
+    // Restore selected order type
+    const selectedOrderType = localStorage.getItem('selectedOrderType');
+    if (selectedOrderType === 'delivery' && <?= $delivery_active ? 'true' : 'false' ?>) {
+        document.getElementById('deliveryBtn').classList.add('active');
+        // Show View Cart button if coming from saved delivery state
+        fadeIn(viewCartBtn);
+    } else if (selectedOrderType === 'dining' && <?= $dining_active ? 'true' : 'false' ?>) {
+        document.getElementById('dinningBtn').classList.add('active');
+        // Show View Cart button if coming from saved dining state
+        fadeIn(viewCartBtn);
+    }
+    // No else needed since button is hidden by default
+});
+
 // Tag filtering functionality
 document.querySelectorAll('.tag-btn').forEach(btn => {
     btn.addEventListener('click', function(e) {
@@ -820,127 +873,80 @@ document.getElementById('clearSearch').addEventListener('click', function() {
     });
     document.getElementById('productSearch').focus();
 });
-// Product search functionality
 
+function formatNumber(num) {
+    // Convert to number if it's a string
+    num = typeof num === 'string' ? parseFloat(num) : num;
+    // Handle NaN cases
+    if (isNaN(num)) num = 0;
+    return num % 1 === 0 ? num.toString() : num.toFixed(2).replace(/\.?0+$/, '');
+}
 
-
-
+function validatePhoneNumber(input) {
+    // Remove any non-digit characters
+    input.value = input.value.replace(/\D/g, '');
     
-    
-    function formatNumber(num) {
-        // Convert to number if it's a string
-        num = typeof num === 'string' ? parseFloat(num) : num;
-        // Handle NaN cases
-        if (isNaN(num)) num = 0;
-        return num % 1 === 0 ? num.toString() : num.toFixed(2).replace(/\.?0+$/, '');
+    // Trim to 10 digits if longer
+    if (input.value.length > 10) {
+        input.value = input.value.substring(0, 10);
     }
     
-    function validatePhoneNumber(input) {
-        // Remove any non-digit characters
-        input.value = input.value.replace(/\D/g, '');
-        
-        // Trim to 10 digits if longer
-        if (input.value.length > 10) {
-            input.value = input.value.substring(0, 10);
-        }
-        
-        // Check validity and show error if needed
-        if (input.value.length !== 10 && input.value.length > 0) {
-            input.setCustomValidity('Phone number must be exactly 10 digits');
-        } else {
-            input.setCustomValidity('');
-        }
+    // Check validity and show error if needed
+    if (input.value.length !== 10 && input.value.length > 0) {
+        input.setCustomValidity('Phone number must be exactly 10 digits');
+    } else {
+        input.setCustomValidity('');
     }
-    
-    
-    // Add to cart button click handler
-    document.querySelectorAll('.add-to-cart').forEach(button => {
-        button.addEventListener('click', function() {
+}
 
+// Add to cart button click handler
+document.querySelectorAll('.add-to-cart').forEach(button => {
+    button.addEventListener('click', function() {
+        // Add this to adjust the sticky search container
+        const stickySearchContainer = document.querySelector('.sticky-search-container');
+        if (stickySearchContainer) {
+            stickySearchContainer.style.bottom = '65px';
+        }
 
-            // Add this to adjust the sticky search container
-            const stickySearchContainer = document.querySelector('.sticky-search-container');
-            if (stickySearchContainer) {
-                stickySearchContainer.style.bottom = '65px';
-            }
+        const product = {
+            id: this.dataset.id,
+            name: this.dataset.name,
+            price: parseFloat(this.dataset.price),
+            max: parseInt(this.dataset.max),
+            quantity: 1,
+            image_path: this.dataset.image
+        };
 
+        const existingItem = cart.find(item => item.id === product.id);
 
-            const product = {
-                id: this.dataset.id,
-                name: this.dataset.name,
-                price: parseFloat(this.dataset.price),
-                max: parseInt(this.dataset.max),
-                quantity: 1,
-                image_path: this.dataset.image
-            };
-    
-            const existingItem = cart.find(item => item.id === product.id);
-    
-            if (existingItem) {
-                if (existingItem.quantity < existingItem.max) {
-                    existingItem.quantity++;
-                    // showToast(`${product.name} quantity increased to ${existingItem.quantity}`);
-                } else {
-                    // showToast(`Maximum quantity reached for ${product.name}`, true);
-                    return;
-                }
+        if (existingItem) {
+            if (existingItem.quantity < existingItem.max) {
+                existingItem.quantity++;
+                // showToast(`${product.name} quantity increased to ${existingItem.quantity}`);
             } else {
-                cart.push(product);
-                // showToast(`${product.name} added to cart`);
-                // Add pulse animation to cart button
-                document.querySelector('.cart-button').classList.add('cart-item-added');
-                setTimeout(() => {
-                    document.querySelector('.cart-button').classList.remove('cart-item-added');
-                }, 500);
+                // showToast(`Maximum quantity reached for ${product.name}`, true);
+                return;
             }
-    
-            saveCart();
-            updateCartUI();
-            
-            // Show cart button container if it's hidden
-            const cartButtonContainer = document.querySelector('.cart-button-container');
-            if (cartButtonContainer && cartButtonContainer.style.display === 'none') {
-                cartButtonContainer.style.display = 'block';
-            }
-            
-        });
-    });
-    
-    
-    
-    
-    
-    // Function to show toast notification
-    function showToast(message, isError = false) {
-        const toastElement = document.getElementById('cartToast');
-        const toastMessage = document.getElementById('toastMessage');
-        
-        toastMessage.textContent = message;
-        
-        // Change style if it's an error message
-        if (isError) {
-            toastElement.querySelector('.toast-header').classList.remove('bg-primary');
-            toastElement.querySelector('.toast-header').classList.add('bg-danger');
         } else {
-            toastElement.querySelector('.toast-header').classList.remove('bg-danger');
-            toastElement.querySelector('.toast-header').classList.add('bg-primary');
+            cart.push(product);
+            // showToast(`${product.name} added to cart`);
+            // Add pulse animation to cart button
+            document.querySelector('.cart-button').classList.add('cart-item-added');
+            setTimeout(() => {
+                document.querySelector('.cart-button').classList.remove('cart-item-added');
+            }, 500);
         }
+
+        saveCart();
+        updateCartUI();
         
-        // Initialize and show the toast
-        const toast = new bootstrap.Toast(toastElement);
-        toast.show();
-        
-        // Auto-hide after 2 seconds
-        setTimeout(() => {
-            toast.hide();
-        }, 2000);
-    }
-    
-    
-
-
-
-
+        // Show cart button container if it's hidden
+        const cartButtonContainer = document.querySelector('.cart-button-container');
+        if (cartButtonContainer && cartButtonContainer.style.display === 'none') {
+            cartButtonContainer.style.display = 'block';
+        }
+    });
+});
 
 function saveCart() {
     localStorage.setItem(cartKey, JSON.stringify({
@@ -948,34 +954,7 @@ function saveCart() {
         coupon: cart.coupon || null // Save coupon if it exists
     }));
 }
-    
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    
-    
 function updateCartUI() {
     const cartItemsContainer = document.getElementById('cartItems');
     const cartTotalDetails = document.querySelector('.cart-total-details');
@@ -998,13 +977,6 @@ function updateCartUI() {
 
     cartItemsContainer.innerHTML = '';
 
-
-
-
-
-
-
-
     // Clear discount section if no coupon or discount
     if (!cart.coupon && discountSection) {
         discountSection.style.display = 'none';
@@ -1014,11 +986,6 @@ function updateCartUI() {
     if (discountMessageElement) {
         discountMessageElement.style.display = 'none';
     }
-
-
-
-
-    
 
     // Handle empty cart case
     if (cart.length === 0) {
@@ -1105,13 +1072,10 @@ function updateCartUI() {
     if (cartTotalDetails) cartTotalDetails.style.display = 'block';
 
     // Calculate discount
-    // In updateCartUI function
-    // Replace the discount calculation section with this:
     let discountAmount = 0;
     let discountType = '';
 
     // 1. Check for coupon discount first
-    // In the updateCartUI function, replace the coupon display section with:
     if (cart.coupon) {
         const couponCode = cart.coupon.code || 'COUPON'; // Fallback if code is null
         if (cart.coupon.type === 'percentage') {
@@ -1135,10 +1099,6 @@ function updateCartUI() {
             discountMessageElement.style.display = 'block';
         }
     }
-
-
-
-
 
     // 2. Check for automatic discounts if no coupon applied
     else if (<?php if (!empty($discounts)): ?>true<?php else: ?>false<?php endif; ?>) {
@@ -1308,154 +1268,103 @@ function updateCartUI() {
         if (deliveryDetails) deliveryDetails.style.display = 'block';
     <?php endif; ?>
 }
-    
-    
 
+// Update quantity with buttons
+function updateQuantity(index, change) {
+    const item = cart[index];
+    const newQuantity = item.quantity + change;
 
+    if (newQuantity < 1) {
+        removeFromCart(index);
+        return;
+    }
 
+    if (newQuantity > item.max) {
+        alert('Maximum quantity reached for this product');
+        return;
+    }
 
+    item.quantity = newQuantity;
+    saveCart();
+    updateCartUI();
+}
 
+// Update quantity via input field
+function updateQuantityInput(index, value) {
+    const item = cart[index];
+    const newQuantity = parseInt(value);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    // Update quantity with buttons
-    function updateQuantity(index, change) {
-        const item = cart[index];
-        const newQuantity = item.quantity + change;
-    
-        if (newQuantity < 1) {
-            removeFromCart(index);
-            return;
-        }
-    
-        if (newQuantity > item.max) {
-            alert('Maximum quantity reached for this product');
-            return;
-        }
-    
+    if (isNaN(newQuantity) || newQuantity < 1) {
+        item.quantity = 1;
+    } else if (newQuantity > item.max) {
+        alert('Maximum quantity reached for this product');
+        item.quantity = item.max;
+    } else {
         item.quantity = newQuantity;
-        saveCart();
-        updateCartUI();
     }
+
+    saveCart();
+    updateCartUI();
+}
+
+// Remove item from cart
+function removeFromCart(index) {
+    cart.splice(index, 1);
+    saveCart();
+    updateCartUI();
     
-    // Update quantity via input field
-    function updateQuantityInput(index, value) {
-        const item = cart[index];
-        const newQuantity = parseInt(value);
-    
-        if (isNaN(newQuantity) || newQuantity < 1) {
-            item.quantity = 1;
-        } else if (newQuantity > item.max) {
-            alert('Maximum quantity reached for this product');
-            item.quantity = item.max;
-        } else {
-            item.quantity = newQuantity;
-        }
-    
-        saveCart();
-        updateCartUI();
-    }
-    
-    // Remove item from cart
-    function removeFromCart(index) {
-        cart.splice(index, 1);
-        saveCart();
-        updateCartUI();
-        
-        // Hide cart button container if no items left
-        if (cart.length === 0) {
-            const cartButtonContainer = document.querySelector('.cart-button-container');
-            if (cartButtonContainer) {
-                cartButtonContainer.style.display = 'none';
-                
-                // Reset sticky search container position
-                const stickySearchContainer = document.querySelector('.sticky-search-container');
-                if (stickySearchContainer) {
-                    stickySearchContainer.style.bottom = ''; // Reset to original value
-                }
+    // Hide cart button container if no items left
+    if (cart.length === 0) {
+        const cartButtonContainer = document.querySelector('.cart-button-container');
+        if (cartButtonContainer) {
+            cartButtonContainer.style.display = 'none';
+            
+            // Reset sticky search container position
+            const stickySearchContainer = document.querySelector('.sticky-search-container');
+            if (stickySearchContainer) {
+                stickySearchContainer.style.bottom = ''; // Reset to original value
             }
         }
     }
-    
-    // Cart toggle controls
-    function toggleCart() {
-        document.querySelector('.cart-sidebar').classList.toggle('open');
-    }
-    
-    function showCart() {
-        document.querySelector('.cart-sidebar').classList.add('open');
-    }
-    
-    function closeCart() {
-        document.querySelector('.cart-sidebar').classList.remove('open');
-    }
+}
 
-    // Reset sticky search container position
-    const stickySearchContainer = document.querySelector('.sticky-search-container');
-    if (stickySearchContainer) {
-        stickySearchContainer.style.bottom = ''; // Reset to original value
-    }
-    
-    // Order type toggle functionality
-    <?php if ($delivery_active && $dining_active): ?>
-    document.getElementById('deliveryBtn').addEventListener('click', function() {
-        this.classList.add('active');
-        document.getElementById('dinningBtn').classList.remove('active');
-        document.querySelector('.delivery-details').style.display = 'block';
-        document.querySelector('.dinning-details').style.display = 'none';
-        updateCartUI();
-    });
-    
-    document.getElementById('dinningBtn').addEventListener('click', function() {
-        this.classList.add('active');
-        document.getElementById('deliveryBtn').classList.remove('active');
-        document.querySelector('.dinning-details').style.display = 'block';
-        document.querySelector('.delivery-details').style.display = 'none';
-        updateCartUI();
-    });
-    <?php endif; ?>
-    
+// Cart toggle controls
+function toggleCart() {
+    document.querySelector('.cart-sidebar').classList.toggle('open');
+}
 
+function showCart() {
+    document.querySelector('.cart-sidebar').classList.add('open');
+}
 
+function closeCart() {
+    document.querySelector('.cart-sidebar').classList.remove('open');
+}
 
+// Reset sticky search container position
+const stickySearchContainer = document.querySelector('.sticky-search-container');
+if (stickySearchContainer) {
+    stickySearchContainer.style.bottom = ''; // Reset to original value
+}
 
+// Order type toggle functionality
+<?php if ($delivery_active && $dining_active): ?>
+document.getElementById('deliveryBtn').addEventListener('click', function() {
+    this.classList.add('active');
+    document.getElementById('dinningBtn').classList.remove('active');
+    document.querySelector('.delivery-details').style.display = 'block';
+    document.querySelector('.dinning-details').style.display = 'none';
+    updateCartUI();
+});
 
-
-
-
-
-
-
-
-
+document.getElementById('dinningBtn').addEventListener('click', function() {
+    this.classList.add('active');
+    document.getElementById('deliveryBtn').classList.remove('active');
+    document.querySelector('.dinning-details').style.display = 'block';
+    document.querySelector('.delivery-details').style.display = 'none';
+    updateCartUI();
+});
+<?php endif; ?>
 
 // Show order success popup
 function showOrderSuccessPopup() {
@@ -1469,21 +1378,6 @@ function closeOrderSuccessPopup() {
     popup.classList.remove('active');
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    
 function placeOrder() {
     if (cart.length === 0) {
         alert('Your cart is empty');
@@ -1494,6 +1388,16 @@ function placeOrder() {
     const deliveryCharge = <?= isset($delivery_charges['delivery_charge']) ? $delivery_charges['delivery_charge'] : 0 ?>;
     const freeDeliveryMin = <?= isset($delivery_charges['free_delivery_minimum']) ? $delivery_charges['free_delivery_minimum'] : 0 ?>;
     const gstPercent = <?= $gst_percent ?? 0 ?>;
+    
+    // Get discount information from UI
+    const discountSection = document.getElementById('discountSection');
+    let discountAmount = 0;
+    let discountType = '';
+    
+    if (discountSection && discountSection.style.display !== 'none') {
+        discountAmount = parseFloat(document.getElementById('discountAmount').textContent) || 0;
+        discountType = document.getElementById('discountType').textContent || '';
+    }
     
     // Collect customer details based on order type
     let customerName, customerPhone, deliveryAddress, tableNumber, orderNotes;
@@ -1528,7 +1432,7 @@ function placeOrder() {
         }
     }
     
-    // Prepare order data
+    // Prepare order data - MAKE SURE DISCOUNT DATA IS INCLUDED
     const orderData = {
         user_id: <?= $user_id ?>,
         order_type: isDelivery ? 'delivery' : 'dining',
@@ -1542,13 +1446,16 @@ function placeOrder() {
             price: item.price,
             quantity: item.quantity
         })),
-        discount_amount: discountAmount,
-        discount_type: discountType,
+        discount_amount: discountAmount, // ADD THIS
+        discount_type: discountType,     // ADD THIS
         gst_percent: gstPercent,
         delivery_charge: deliveryCharge,
         free_delivery_min: freeDeliveryMin,
         coupon_data: cart.coupon || null
     };
+    
+    // Debug: Log what's being sent to the server
+    console.log('Sending order data:', orderData);
     
     // Show loading state
     const placeOrderBtn = document.getElementById('placeOrderBtn');
@@ -1613,460 +1520,30 @@ function placeOrder() {
     });
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-function placeOrderOnWhatsApp() {
-    if (cart.length === 0) {
-        showToast('Your cart is empty', 'error');
-        return;
-    }
-
-    <?php if ($delivery_active || $dining_active): ?>
-    const isDelivery = <?= $delivery_active ? 'document.getElementById("deliveryBtn").classList.contains("active")' : 'false' ?>;
-    const deliveryCharge = Number(<?= json_encode($delivery_charges['delivery_charge'] ?? 0) ?>);
-    const freeDeliveryMin = Number(<?= json_encode($delivery_charges['free_delivery_minimum'] ?? 0) ?>);
-    const gstPercent = Number(<?= json_encode($gst_percent ?? 0) ?>);
+// Toast notification function (add this to your code if you don't have it already)
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast-notification ${type}`;
+    toast.innerHTML = `
+        <div class="toast-icon">
+            ${type === 'success' ? '<i class="bi bi-check-circle-fill"></i>' : '<i class="bi bi-exclamation-circle-fill"></i>'}
+        </div>
+        <div class="toast-message">${message}</div>
+        <div class="toast-close" onclick="this.parentElement.remove()">
+            <i class="bi bi-x"></i>
+        </div>
+    `;
     
-    // Validate required fields
-    const phoneInput = isDelivery ? document.getElementById('customerPhone') : document.getElementById('dinningPhone');
-    if (!phoneInput.value || phoneInput.value.length !== 10) {
-        showToast('Please enter a valid 10-digit phone number', 'error');
-        phoneInput.focus();
-        return;
-    }
-
-    let customerName, orderDetails;
+    document.body.appendChild(toast);
     
-    if (isDelivery) {
-        customerName = document.getElementById('customerName').value;
-        const customerPhone = phoneInput.value;
-        const customerAddress = document.getElementById('customerAddress').value;
-        const customerNotes = document.getElementById('customerNotes').value;
-        
-        if (!customerName || !customerAddress) {
-            showToast('Please provide your name and address', 'error');
-            return;
-        }
-        
-        orderDetails = `*Delivery Order*\nName: ${customerName}\nPhone: ${customerPhone}\nAddress: ${customerAddress}`;
-        if (customerNotes) orderDetails += `\nNotes: ${customerNotes}`;
-    } else {
-        customerName = document.getElementById('dinningName').value;
-        const customerPhone = phoneInput.value;
-        const tableNumber = document.getElementById('tableNumber').value;
-        const dinningNotes = document.getElementById('dinningNotes').value;
-        
-        if (!customerName || !tableNumber) {
-            showToast('Please provide your name and table number', 'error');
-            return;
-        }
-        
-        orderDetails = `*Dining Order*\nName: ${customerName}\nPhone: ${customerPhone}\nTable No.: ${tableNumber}`;
-        if (dinningNotes) orderDetails += `\nNotes: ${dinningNotes}`;
-    }
-    <?php else: ?>
-    let customerName = 'Guest';
-    let orderDetails = `*Quick Order*`;
-    <?php endif; ?>
-
-    // Get WhatsApp number safely
-    const whatsappLink = <?= json_encode($social_link['whatsapp'] ?? '') ?>;
-    let phoneNumber = whatsappLink.match(/wa\.me\/(\d+)/)?.[1] || <?= json_encode($user['phone'] ?? '') ?>;
-
-    if (!phoneNumber) {
-        showToast('WhatsApp number not available for this business', 'error');
-        return;
-    }
-
-    // Format order date
-    const orderDate = new Date().toLocaleString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-
-    // Calculate order totals
-    let subtotal = 0;
-    cart.forEach(item => {
-        subtotal += item.price * item.quantity;
-    });
-
-    // Business details
-    const businessName = <?= json_encode(htmlspecialchars($business_info['business_name'] ?? '')) ?>;
-    const businessAddress = <?= json_encode(htmlspecialchars($business_info['business_address'] ?? '')) ?>;
-    const businessPhone = <?= json_encode($user['phone'] ?? '') ?>;
-
-    // Build WhatsApp message
-    let message = `*${businessName.toUpperCase()}*\n` +
-                  `${businessAddress}\n` +
-                  `Phone: ${businessPhone}\n\n` +
-                  `Date: ${orderDate}\n` +
-                  `Order Type: ${isDelivery ? 'DELIVERY' : 'DINING'}\n` +
-                  `--------------------------\n` +
-                  `*ITEMS ORDERED*\n` +
-                  `--------------------------\n`;
-
-    // Add cart items
-    cart.forEach(item => {
-        const itemTotal = (item.price * item.quantity).toFixed(2);
-        message += `${item.name} x ${item.quantity}\n` +
-                  `₹${item.price.toFixed(2)} x ${item.quantity} = ₹${itemTotal}\n\n`;
-    });
-
-    // Add pricing summary
-    message += `--------------------------\n` +
-               `Subtotal:        ₹${subtotal.toFixed(2)}\n`;
-    
-    if (discountAmount > 0) {
-        message += `Discount:       -₹${discountAmount.toFixed(2)}\n` +
-                   `(Applied ${discountType})\n`;
-    }
-    
-    if (gstPercent > 0) {
-        const gstAmount = ((subtotal - discountAmount) * gstPercent / 100).toFixed(2);
-        message += `GST (${gstPercent}%):    ₹${gstAmount}\n`;
-    }
-    
-    if (isDelivery) {
-        if (freeDeliveryMin > 0 && (subtotal - discountAmount) >= freeDeliveryMin) {
-            message += `Delivery:       FREE\n` +
-                       `(Order above ₹${freeDeliveryMin.toFixed(2)})\n`;
-        } else {
-            message += `Delivery:       ₹${Number(deliveryCharge).toFixed(2)}\n`;
-            if (freeDeliveryMin > 0) {
-                const neededForFree = freeDeliveryMin - (subtotal - discountAmount);
-                message += `(Add ₹${neededForFree.toFixed(2)} more for FREE delivery)\n`;
-            }
-        }
-    }
-
-    // Calculate total
-    let total = (subtotal - discountAmount) + (gstPercent > 0 ? ((subtotal - discountAmount) * gstPercent / 100) : 0);
-    if (isDelivery && !isNaN(deliveryCharge)) total += Number(deliveryCharge);
-    
-    message += `--------------------------\n` +
-               `*TOTAL:          ₹${total.toFixed(2)}*\n\n` +
-               `*CUSTOMER DETAILS*\n` +
-               `--------------------------\n` +
-               `${orderDetails}\n\n` +
-               `Thank you for your order. We'll process it shortly.`;
-
-    // Safari-compatible WhatsApp opening
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-    
-    // Solution 1: Create and click a hidden link (most reliable for Safari)
-    const link = document.createElement('a');
-    link.href = whatsappUrl;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    
-    try {
-        link.click();
-    } catch (e) {
-        // Fallback if click fails
-        window.location.href = whatsappUrl;
-    }
-    
-    // Clean up
+    // Auto remove after 5 seconds
     setTimeout(() => {
-        document.body.removeChild(link);
-    }, 1000);
-
-    // Reset coupon fields
-    if (cart.coupon) {
-        delete cart.coupon;
-        document.getElementById('couponCode').value = '';
-        document.getElementById('couponMessage').textContent = '';
-        document.getElementById('couponMessage').className = 'text-success';
-    }
-
-    // Reset cart
-    cart = [];
-    saveCart();
-    updateCartUI();
-    closeCart();
-
-    // Reset sticky search container position
-    const stickySearchContainer = document.querySelector('.sticky-search-container');
-    if (stickySearchContainer) {
-        stickySearchContainer.style.bottom = ''; // Reset to original value
-    }
-    
-    // Success popup
-    showOrderSuccessPopup();
-
+        toast.remove();
+    }, 5000);
 }
-    
-    
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    
-    
-    // Toast notification function (add this to your code if you don't have it already)
-    function showToast(message, type = 'success') {
-        const toast = document.createElement('div');
-        toast.className = `toast-notification ${type}`;
-        toast.innerHTML = `
-            <div class="toast-icon">
-                ${type === 'success' ? '<i class="bi bi-check-circle-fill"></i>' : '<i class="bi bi-exclamation-circle-fill"></i>'}
-            </div>
-            <div class="toast-message">${message}</div>
-            <div class="toast-close" onclick="this.parentElement.remove()">
-                <i class="bi bi-x"></i>
-            </div>
-        `;
-        
-        document.body.appendChild(toast);
-        
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            toast.remove();
-        }, 5000);
-    }
-    
-    
-    
-    
-    // Add click handler to the Place Order button
-    document.querySelector('.cart-footer button').addEventListener('click', placeOrder);
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    // Place order on WhatsApp
-    function placeOrderOnWhatsApp() {
-        if (cart.length === 0) {
-            showToast('Your cart is empty', 'error');
-            return;
-        }
-    
-        <?php if ($delivery_active || $dining_active): ?>
-        const isDelivery = <?= $delivery_active ? 'document.getElementById("deliveryBtn").classList.contains("active")' : 'false' ?>;
-        const deliveryCharge = Number(<?= json_encode($delivery_charges['delivery_charge'] ?? 0) ?>);
-        const freeDeliveryMin = Number(<?= json_encode($delivery_charges['free_delivery_minimum'] ?? 0) ?>);
-        const gstPercent = Number(<?= json_encode($gst_percent ?? 0) ?>);
-        
-        // Validate required fields
-        const phoneInput = isDelivery ? document.getElementById('customerPhone') : document.getElementById('dinningPhone');
-        if (!phoneInput.value || phoneInput.value.length !== 10) {
-            showToast('Please enter a valid 10-digit phone number', 'error');
-            phoneInput.focus();
-            return;
-        }
-    
-        let customerName, orderDetails;
-        
-        if (isDelivery) {
-            customerName = document.getElementById('customerName').value;
-            const customerPhone = phoneInput.value;
-            const customerAddress = document.getElementById('customerAddress').value;
-            const customerNotes = document.getElementById('customerNotes').value;
-            
-            if (!customerName || !customerAddress) {
-                showToast('Please provide your name and address', 'error');
-                return;
-            }
-            
-            orderDetails = `*Delivery Order*\nName: ${customerName}\nPhone: ${customerPhone}\nAddress: ${customerAddress}`;
-            if (customerNotes) orderDetails += `\nNotes: ${customerNotes}`;
-        } else {
-            customerName = document.getElementById('dinningName').value;
-            const customerPhone = phoneInput.value;
-            const tableNumber = document.getElementById('tableNumber').value;
-            const dinningNotes = document.getElementById('dinningNotes').value;
-            
-            if (!customerName || !tableNumber) {
-                showToast('Please provide your name and table number', 'error');
-                return;
-            }
-            
-            orderDetails = `*Dining Order*\nName: ${customerName}\nPhone: ${customerPhone}\nTable No.: ${tableNumber}`;
-            if (dinningNotes) orderDetails += `\nNotes: ${dinningNotes}`;
-        }
-        <?php else: ?>
-        let customerName = 'Guest';
-        let orderDetails = `*Quick Order*`;
-        <?php endif; ?>
-    
-        // Get WhatsApp number safely
-        const whatsappLink = <?= json_encode($social_link['whatsapp'] ?? '') ?>;
-        let phoneNumber = whatsappLink.match(/wa\.me\/(\d+)/)?.[1] || <?= json_encode($user['phone'] ?? '') ?>;
-    
-        if (!phoneNumber) {
-            showToast('WhatsApp number not available for this business', 'error');
-            return;
-        }
-    
-        // Format order date
-        const orderDate = new Date().toLocaleString('en-IN', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    
-        // Calculate order totals
-        let subtotal = 0;
-        cart.forEach(item => {
-            subtotal += item.price * item.quantity;
-        });
-    
-        // Business details
-        const businessName = <?= json_encode(htmlspecialchars($business_info['business_name'] ?? '')) ?>;
-        const businessAddress = <?= json_encode(htmlspecialchars($business_info['business_address'] ?? '')) ?>;
-        const businessPhone = <?= json_encode($user['phone'] ?? '') ?>;
-    
-        // Build WhatsApp message
-        let message = `*${businessName.toUpperCase()}*\n` +
-                      `${businessAddress}\n` +
-                      `Phone: ${businessPhone}\n\n` +
-                      `Date: ${orderDate}\n` +
-                      `Order Type: ${isDelivery ? 'DELIVERY' : 'DINING'}\n` +
-                      `--------------------------\n` +
-                      `*ITEMS ORDERED*\n` +
-                      `--------------------------\n`;
-    
-        // Add cart items
-        cart.forEach(item => {
-            const itemTotal = (item.price * item.quantity).toFixed(2);
-            message += `${item.name} x ${item.quantity}\n` +
-                      `₹${item.price.toFixed(2)} x ${item.quantity} = ₹${itemTotal}\n\n`;
-        });
-    
-        // Add pricing summary
-        message += `--------------------------\n` +
-                   `Subtotal:        ₹${subtotal.toFixed(2)}\n`;
-        
-        if (discountAmount > 0) {
-            message += `Discount:       -₹${discountAmount.toFixed(2)}\n` +
-                       `(Applied ${discountType})\n`;
-        }
-        
-        if (gstPercent > 0) {
-            const gstAmount = ((subtotal - discountAmount) * gstPercent / 100).toFixed(2);
-            message += `GST (${gstPercent}%):    ₹${gstAmount}\n`;
-        }
-        
-        if (isDelivery) {
-            if (freeDeliveryMin > 0 && (subtotal - discountAmount) >= freeDeliveryMin) {
-                message += `Delivery:       FREE\n` +
-                           `(Order above ₹${freeDeliveryMin.toFixed(2)})\n`;
-            } else {
-                message += `Delivery:       ₹${Number(deliveryCharge).toFixed(2)}\n`;
-                if (freeDeliveryMin > 0) {
-                    const neededForFree = freeDeliveryMin - (subtotal - discountAmount);
-                    message += `(Add ₹${neededForFree.toFixed(2)} more for FREE delivery)\n`;
-                }
-            }
-        }
-    
-        // Calculate total
-        let total = (subtotal - discountAmount) + (gstPercent > 0 ? ((subtotal - discountAmount) * gstPercent / 100) : 0);
-        if (isDelivery && !isNaN(deliveryCharge)) total += Number(deliveryCharge);
-        
-        message += `--------------------------\n` +
-                   `*TOTAL:          ₹${total.toFixed(2)}*\n\n` +
-                   `*CUSTOMER DETAILS*\n` +
-                   `--------------------------\n` +
-                   `${orderDetails}\n\n` +
-                   `Thank you for your order. We'll process it shortly.`;
-    
-        // Safari-compatible WhatsApp opening
-        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-        
-        // Solution 1: Create and click a hidden link (most reliable for Safari)
-        const link = document.createElement('a');
-        link.href = whatsappUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        
-        try {
-            link.click();
-        } catch (e) {
-            // Fallback if click fails
-            window.location.href = whatsappUrl;
-        }
-        
-        // Clean up
-        setTimeout(() => {
-            document.body.removeChild(link);
-        }, 1000);
-    
-        // Reset cart
-        cart = [];
-        saveCart();
-        updateCartUI();
-        closeCart();
-        
-        // Not Required now! Delay toast to ensure WhatsApp opens first
-        // setTimeout(() => {
-        //     showToast('Order sent via WhatsApp!', 'success');
-        // }, 500);
-    }
-
-
-
-
-
-
-
-
-
-
-
-
+// Add click handler to the Place Order button
+document.querySelector('.cart-footer button').addEventListener('click', placeOrder);
 
 // Add this to your existing JavaScript code
 document.getElementById('viewCartBtn').addEventListener('click', function() {
@@ -2100,11 +1577,43 @@ document.getElementById('viewCartBtn').addEventListener('click', function() {
     fadeOut(this);
 });
 
+// Clear coupon when clicking dining button
+document.getElementById('dinningBtn').addEventListener('click', function() {
+    clearCoupon();
+});
 
+// Clear coupon when clicking close button (assuming it has class .btn-close)
+document.querySelectorAll('.btn-close').forEach(closeBtn => {
+    closeBtn.addEventListener('click', function() {
+        clearCoupon();
+    });
+});
+
+// Function to clear coupon from cart and UI
+function clearCoupon() {
+    // Clear coupon from cart
+    if (cart.coupon) {
+        delete cart.coupon;
+        saveCart();
+    }
+    
+    // Clear coupon input field and message
+    const couponCodeInput = document.getElementById('couponCode');
+    if (couponCodeInput) {
+        couponCodeInput.value = '';
+    }
+    
+    const couponMessage = document.getElementById('couponMessage');
+    if (couponMessage) {
+        couponMessage.textContent = '';
+        couponMessage.className = 'text-success';
+    }
+    
+    // Update cart UI to reflect changes
+    updateCartUI();
+}
 
 </script>
-
-
 
 <!-- Order Success Popup -->
 <div class="order-success-popup" id="orderSuccessPopup">
@@ -2121,5 +1630,3 @@ document.getElementById('viewCartBtn').addEventListener('click', function() {
         <button class="order-success-btn" onclick="closeOrderSuccessPopup()">OK</button>
     </div>
 </div>
-
-
