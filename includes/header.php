@@ -248,47 +248,6 @@
     </style>
 </head>
 <body class="restaurant">
-
-<!-- Loader -->
-<!-- <div class="loader-container" id="loader">
-    <div class="bouncing-loader">
-        <div></div>
-        <div></div>
-        <div></div>
-    </div>
-</div> -->
-<!-- <script>
-    // Hide loader when page is fully loaded
-    window.addEventListener('load', function() {
-        const loader = document.getElementById('loader');
-        // Add fade out effect
-        loader.style.opacity = '0';
-        // Remove loader after fade out completes
-        setTimeout(() => {
-            loader.style.display = 'none';
-        }, 500); // Match this with the CSS transition duration
-    });
-
-    // Optional: Show loader when navigating away
-    window.addEventListener('beforeunload', function() {
-        document.getElementById('loader').style.display = 'flex';
-        document.getElementById('loader').style.opacity = '1';
-    });
-
-    // Add loading class to body immediately
-    document.body.classList.add('loading');
-    
-    window.addEventListener('load', function() {
-        const loader = document.getElementById('loader');
-        loader.style.opacity = '0';
-        setTimeout(() => {
-            loader.style.display = 'none';
-            document.body.classList.remove('loading');
-        }, 500);
-    });
-</script> -->
-
-
 <?php if ($show_subscription_popup): ?>
 <!-- Overlay -->
 <div class="overlay" id="subscriptionOverlay"></div>

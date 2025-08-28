@@ -6,6 +6,8 @@
 require_once 'config/db_connection.php';
 require_once 'functions/profile_functions.php';
 
+date_default_timezone_set('Asia/Kolkata');
+
 // Validate profile URL
 if (!isset($_GET['profile_url'])) {
     header("HTTP/1.0 400 Bad Request");
@@ -15,10 +17,8 @@ if (!isset($_GET['profile_url'])) {
 $profile_url = $_GET['profile_url'];
 
 // Get user ID from profile URL
-// Assuming getUserByProfileUrl handles the PDO connection and returns an array or null
 $profile_data = getUserByProfileUrl($conn, $profile_url);
 if (!$profile_data) {
-    // It's generally better to redirect to a user-friendly 404 page
     header("Location: page-not-found.php");
     exit();
 }
@@ -32,9 +32,8 @@ if ($subscription_stmt) {
     $subscription_stmt->execute([$user_id]);
     $active_subscription = $subscription_stmt->fetch(PDO::FETCH_ASSOC);
 } else {
-    // Handle prepare error, though it's less common for a hardcoded query
     error_log("Failed to prepare subscription SQL statement.");
-    $active_subscription = false; // Assume no active subscription if query fails
+    $active_subscription = false;
 }
 
 $show_subscription_popup = !$active_subscription;
@@ -42,11 +41,10 @@ $show_subscription_popup = !$active_subscription;
 // Get all profile data
 $user = getUserById($conn, $user_id);
 if (!$user) {
-    // This could happen if profile_data was found but getUserById fails for some reason
     die("User not found");
 }
 
-// Fetch theme data using PDO
+// Fetch theme data
 $theme_sql = "SELECT primary_color, secondary_color FROM theme WHERE user_id = ?";
 $theme_stmt = $conn->prepare($theme_sql);
 if ($theme_stmt) {
@@ -54,14 +52,13 @@ if ($theme_stmt) {
     $theme_data = $theme_stmt->fetch(PDO::FETCH_ASSOC);
 } else {
     error_log("Failed to prepare theme SQL statement.");
-    $theme_data = []; // Empty array to prevent errors if fetch fails
+    $theme_data = [];
 }
 
-// Set default colors if no theme exists
 $primary_color = $theme_data['primary_color'] ?? '#000000';
 $secondary_color = $theme_data['secondary_color'] ?? '#ffffff';
 
-// Get delivery charges including free delivery minimum
+// Get delivery charges
 $delivery_charges_sql = "SELECT delivery_charge, free_delivery_minimum FROM delivery_charges WHERE user_id = ?";
 $delivery_charges_stmt = $conn->prepare($delivery_charges_sql);
 if ($delivery_charges_stmt) {
@@ -69,9 +66,8 @@ if ($delivery_charges_stmt) {
     $delivery_charges = $delivery_charges_stmt->fetch(PDO::FETCH_ASSOC);
 } else {
     error_log("Failed to prepare delivery charges SQL statement.");
-    $delivery_charges = ['delivery_charge' => 0, 'free_delivery_minimum' => 0]; // Default values
+    $delivery_charges = ['delivery_charge' => 0, 'free_delivery_minimum' => 0];
 }
-
 
 // Get GST charge
 $gst_sql = "SELECT gst_percent FROM gst_charge WHERE user_id = ? ORDER BY created_at DESC LIMIT 1";
@@ -81,12 +77,11 @@ if ($gst_stmt) {
     $gst_data = $gst_stmt->fetch(PDO::FETCH_ASSOC);
 } else {
     error_log("Failed to prepare GST charge SQL statement.");
-    $gst_data = ['gst_percent' => 0]; // Default value
+    $gst_data = ['gst_percent' => 0];
 }
 $gst_percent = $gst_data['gst_percent'] ?? 0;
 
-// --- START OF THE MODIFIED SECTION FOR DISCOUNTS ---
-// Get discounts for this user, selecting only the requested columns
+// Get discounts
 $discounts_sql = "SELECT min_cart_value, discount_in_percent, discount_in_flat, image_path FROM discount WHERE user_id = ? ORDER BY min_cart_value ASC";
 $discounts_stmt = $conn->prepare($discounts_sql);
 if ($discounts_stmt) {
@@ -94,12 +89,10 @@ if ($discounts_stmt) {
     $discounts = $discounts_stmt->fetchAll(PDO::FETCH_ASSOC);
 } else {
     error_log("Failed to prepare discount SQL statement.");
-    $discounts = []; // Initialize as empty array if query fails
+    $discounts = [];
 }
-// --- END OF THE MODIFIED SECTION FOR DISCOUNTS ---
 
-
-// Get other profile data (assuming these functions are in profile_functions.php and handle PDO)
+// Get other profile data
 $business_info = getBusinessInfo($conn, $user_id);
 $photos = getProfilePhotos($conn, $user_id);
 $social_link = getSocialLinks($conn, $user_id);
@@ -121,11 +114,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_rating'])) {
     ];
 
     if (submitRating($conn, $user_id, $rating_data)) {
-        // Redirect to prevent form resubmission
         header("Location: ?profile_url=" . urlencode($profile_url));
         exit();
     } else {
-        // Handle rating submission error (e.g., display a message)
         echo "<script>alert('Failed to submit rating. Please try again.');</script>";
     }
 }
@@ -138,7 +129,7 @@ if ($table_stmt) {
     $table_data = $table_stmt->fetch(PDO::FETCH_ASSOC);
 } else {
     error_log("Failed to prepare dining tables SQL statement.");
-    $table_data = ['table_count' => 0]; // Default value
+    $table_data = ['table_count' => 0];
 }
 $table_count = $table_data['table_count'] ?? 0;
 
@@ -150,16 +141,14 @@ if ($dining_delivery_stmt) {
     $dining_delivery_data = $dining_delivery_stmt->fetch(PDO::FETCH_ASSOC);
 } else {
     error_log("Failed to prepare dining and delivery SQL statement.");
-    $dining_delivery_data = ['dining_active' => 0, 'delivery_active' => 0]; // Default values
+    $dining_delivery_data = ['dining_active' => 0, 'delivery_active' => 0];
 }
 
 $dining_active = $dining_delivery_data['dining_active'] ?? 0;
 $delivery_active = $dining_delivery_data['delivery_active'] ?? 0;
 
-
-
-// Get tags for this user
-$tags_sql = "SELECT id, tag FROM tags WHERE user_id = ? ORDER BY  position ASC";
+// Get tags
+$tags_sql = "SELECT id, tag FROM tags WHERE user_id = ? ORDER BY position ASC";
 $tags_stmt = $conn->prepare($tags_sql);
 if ($tags_stmt) {
     $tags_stmt->execute([$user_id]);
@@ -169,7 +158,7 @@ if ($tags_stmt) {
     $tags = [];
 }
 
-// In your getProducts function (or wherever you fetch products), join with tags table:
+// Get products with tags
 $products_sql = "SELECT p.*, t.tag 
                  FROM products p 
                  LEFT JOIN tags t ON p.tag_id = t.id 
@@ -177,7 +166,6 @@ $products_sql = "SELECT p.*, t.tag
 $products_stmt = $conn->prepare($products_sql);
 $products_stmt->execute([$user_id]);
 $products = $products_stmt->fetchAll(PDO::FETCH_ASSOC);
-
 
 // Check for active subscription and get package_id
 $subscription_sql = "SELECT package_id FROM subscriptions 
@@ -197,10 +185,75 @@ if ($subscription_stmt) {
 $show_subscription_popup = !$active_subscription;
 $package_id = $active_subscription ? $active_subscription['package_id'] : null;
 
+// ==================== STORE TIMING CHECK ====================
+// Get current date and time
+$current_datetime = new DateTime();
+$current_time = $current_datetime->format('H:i:s');
+$current_day_of_week = $current_datetime->format('w'); // 0=Sunday, 6=Saturday
 
+// Check if store is currently open
+$store_timing_sql = "SELECT open_time, close_time, is_closed 
+                    FROM store_timing 
+                    WHERE user_id = ? AND day_of_week = ?";
+$store_timing_stmt = $conn->prepare($store_timing_sql);
+
+$is_store_open = false;
+$store_timing_data = null;
+$next_opening_time = null;
+
+if ($store_timing_stmt) {
+    $store_timing_stmt->execute([$user_id, $current_day_of_week]);
+    $store_timing_data = $store_timing_stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($store_timing_data && !$store_timing_data['is_closed']) {
+        $open_time = strtotime($store_timing_data['open_time']);
+        $close_time = strtotime($store_timing_data['close_time']);
+        $current_time_stamp = strtotime($current_time);
+        
+        $is_store_open = ($current_time_stamp >= $open_time && $current_time_stamp <= $close_time);
+        
+        // If closed, find next opening time
+        if (!$is_store_open) {
+            if ($current_time_stamp < $open_time) {
+                $next_opening_time = date('g:i A', $open_time);
+            } else {
+                // Store closed for today, find next open day
+                $next_day = ($current_day_of_week + 1) % 7;
+                $next_day_sql = "SELECT open_time FROM store_timing 
+                                WHERE user_id = ? AND day_of_week = ? AND is_closed = 0 
+                                ORDER BY day_of_week ASC LIMIT 1";
+                $next_day_stmt = $conn->prepare($next_day_sql);
+                if ($next_day_stmt) {
+                    $next_day_stmt->execute([$user_id, $next_day]);
+                    $next_day_data = $next_day_stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($next_day_data) {
+                        $next_opening_time = date('g:i A', strtotime($next_day_data['open_time'])) . ' tomorrow';
+                    }
+                }
+            }
+        }
+    }
+} else {
+    error_log("Failed to prepare store timing SQL statement.");
+}
+
+// Get weekly schedule for display
+$weekly_schedule_sql = "SELECT day_of_week, open_time, close_time, is_closed 
+                       FROM store_timing 
+                       WHERE user_id = ? 
+                       ORDER BY day_of_week ASC";
+$weekly_schedule_stmt = $conn->prepare($weekly_schedule_sql);
+$weekly_schedule = [];
+
+if ($weekly_schedule_stmt) {
+    $weekly_schedule_stmt->execute([$user_id]);
+    $weekly_schedule = $weekly_schedule_stmt->fetchAll(PDO::FETCH_ASSOC);
+} else {
+    error_log("Failed to prepare weekly schedule SQL statement.");
+}
+// ==================== END STORE TIMING CHECK ====================
 
 // Include HTML components
-// These files will have access to all the variables defined above (e.g., $user, $discounts, $primary_color, etc.)
 require_once 'includes/header.php';
 require_once 'includes/navigation.php';
 require_once 'includes/profile_header.php';
@@ -216,6 +269,5 @@ require_once 'includes/share_section.php';
 require_once 'includes/footer.php';
 
 // Close connection
-// It's good practice to close the connection when it's no longer needed
 $conn = null;
 ?>

@@ -278,7 +278,10 @@ window.addEventListener('beforeunload', () => {
             <div class="collapse" id="services">
                <ul class="nav sub-navbar-nav">
                   <li class="sub-nav-item">
-                     <a class="sub-nav-link" href="dining_and_delivery.php">Dining & Delivery</a>
+                     <a class="sub-nav-link" href="store_timing.php">Store Timing</a>
+                  </li>
+                  <li class="sub-nav-item">
+                     <a class="sub-nav-link" href="store_on_off.php">Store ON/OFF</a>
                   </li>
                   <li class="sub-nav-item">
                      <a class="sub-nav-link" href="delivery_charges.php">Delivery Charges</a>

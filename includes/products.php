@@ -190,66 +190,72 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     <?php endif; ?>
 
-    <div class="row" id="productsContainer">
-        <?php if (!empty($products)): ?>
-            <?php foreach ($products as $product): ?>
-                <div class="col-sm-12 product-item" 
-     data-name="<?= htmlspecialchars(strtolower($product['product_name'])) ?>" 
-     data-desc="<?= htmlspecialchars(strtolower($product['description'])) ?>"
-     data-tag="<?= isset($product['tag']) ? htmlspecialchars(strtolower($product['tag'])) : '' ?>">
-                    <div class="card product-card">
-                        <div class="card-body">
-                            <h5 class="card-title"><?= htmlspecialchars($product['product_name']) ?></h5>
-                            <p class="card-text">
-                                <?= htmlspecialchars($product['description']) ?>
-                            </p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-primary fw-bold">₹<?= number_format($product['price']) ?></span>
-                                <span class="badge bg-<?= ($product['quantity'] > 0) ? 'success' : 'danger' ?>" style="display: none;">
-                                    <?= ($product['quantity'] > 0) ? 'In Stock' : 'Out of Stock' ?>
-                                </span>
-                            </div>
-                            <?php if ($product['quantity'] > 0): ?>
-                                <small class="text-muted">Quantity: <?= $product['quantity'] ?></small>
-                            <?php endif; ?>
-                            <?php if ($product['quantity'] > 0 && ($delivery_active || $dining_active)): ?>
-                                <div class="mt-3 cart_btn_group <?= empty($product['image_path']) ? 'top' : '' ?>">
-                                    <button class="btn btn-primary w-100 add-to-cart" data-id="<?= htmlspecialchars($product['product_name']) ?>" data-name="<?= htmlspecialchars($product['product_name']) ?>" data-price="<?= $product['price'] ?>" data-max="<?= $product['quantity'] ?>" data-image="<?= htmlspecialchars($product['image_path']) ?>">
-                                        <i class="bi bi-cart-plus"></i> Add
-                                    </button>
-                                </div>
-                            <?php endif; ?>
+<div class="row" id="productsContainer">
+    <?php if (!empty($products)): ?>
+        <?php foreach ($products as $product): ?>
+            <div class="col-sm-12 product-item" 
+ data-name="<?= htmlspecialchars(strtolower($product['product_name'])) ?>" 
+ data-desc="<?= htmlspecialchars(strtolower($product['description'])) ?>"
+ data-tag="<?= isset($product['tag']) ? htmlspecialchars(strtolower($product['tag'])) : '' ?>">
+                <div class="card product-card">
+                    <div class="card-body">
+                        <h5 class="card-title"><?= htmlspecialchars($product['product_name']) ?></h5>
+                        <p class="card-text">
+                            <?= htmlspecialchars($product['description']) ?>
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-primary fw-bold">₹<?= number_format($product['price']) ?></span>
+                            <span class="badge bg-<?= ($product['quantity'] > 0) ? 'success' : 'danger' ?>" style="display: none;">
+                                <?= ($product['quantity'] > 0) ? 'In Stock' : 'Out of Stock' ?>
+                            </span>
                         </div>
-
-                        <?php if (!empty($product['image_path'])): ?>
-                            <div class="img-group">
-                                <img src="<?= htmlspecialchars($product['image_path']) ?>" class="card-img-top product-img" alt="<?= htmlspecialchars($product['product_name']) ?>" onerror="this.style.display='none'">
+                        <?php if ($product['quantity'] > 0): ?>
+                            <small class="text-muted">Quantity: <?= $product['quantity'] ?></small>
+                        <?php endif; ?>
+                        <?php if ($product['quantity'] > 0 && ($delivery_active || $dining_active) && $is_store_open): ?>
+                            <div class="mt-3 cart_btn_group <?= empty($product['image_path']) ? 'top' : '' ?>">
+                                <button class="btn btn-primary w-100 add-to-cart" data-id="<?= htmlspecialchars($product['product_name']) ?>" data-name="<?= htmlspecialchars($product['product_name']) ?>" data-price="<?= $product['price'] ?>" data-max="<?= $product['quantity'] ?>" data-image="<?= htmlspecialchars($product['image_path']) ?>">
+                                    <i class="bi bi-cart-plus"></i> Add
+                                </button>
+                            </div>
+                        <?php elseif ($product['quantity'] > 0 && !$is_store_open): ?>
+                            <div class="mt-3">
+                                <small class="text-muted">
+                                    <i class="bi bi-clock"></i> Currently unavailable (Store closed)
+                                </small>
                             </div>
                         <?php endif; ?>
-
-                        <script>
-                            document.querySelectorAll('.product-img').forEach(img => {
-                              img.addEventListener('error', function() {
-                                // Find the closest parent `.product-card`, then navigate to `.card-body .cart_btn_group`
-                                const productCard = this.closest('.product-card');
-                                if (productCard) {
-                                  const cartBtnGroup = productCard.querySelector('.card-body .cart_btn_group');
-                                  if (cartBtnGroup) {
-                                    cartBtnGroup.classList.add('top'); // Add the "top" class
-                                  }
-                                }
-                              });
-                            });
-                        </script>
                     </div>
+
+                    <?php if (!empty($product['image_path'])): ?>
+                        <div class="img-group">
+                            <img src="<?= htmlspecialchars($product['image_path']) ?>" class="card-img-top product-img" alt="<?= htmlspecialchars($product['product_name']) ?>" onerror="this.style.display='none'">
+                        </div>
+                    <?php endif; ?>
+
+                    <script>
+                        document.querySelectorAll('.product-img').forEach(img => {
+                          img.addEventListener('error', function() {
+                            // Find the closest parent `.product-card`, then navigate to `.card-body .cart_btn_group`
+                            const productCard = this.closest('.product-card');
+                            if (productCard) {
+                              const cartBtnGroup = productCard.querySelector('.card-body .cart_btn_group');
+                              if (cartBtnGroup) {
+                                cartBtnGroup.classList.add('top'); // Add the "top" class
+                              }
+                            }
+                          });
+                        });
+                    </script>
                 </div>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <div class="col-12">
-                <div class="alert alert-info">No products available yet.</div>
             </div>
-        <?php endif; ?>
-    </div>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <div class="col-12">
+            <div class="alert alert-info">No products available yet.</div>
+        </div>
+    <?php endif; ?>
+</div>
 
     <!-- Move search to bottom and make it sticky -->
     <div class="sticky-search-container">
@@ -486,18 +492,21 @@ function placeOrderOnWhatsApp() {
                `*CUSTOMER DETAILS*\n` +
                `--------------------------\n` +
                `${orderDetails}\n\n` +
-               `Thank you for your order. We'll process it shortly.\n\n` +
-               `*STORE INFORMATION*\n` +
-               `--------------------------\n`;
+               `Thank you for your order. We'll process it shortly.\n\n`;
+
+    // Add profile URL
+    message += `Next time, order in one click:\n`;
 
     // Add website if available
     <?php if (!empty($business_info['website'])): ?>
-    message += `Website: ${<?= json_encode($business_info['website']) ?>}\n`;
+    message += `${<?= json_encode($business_info['website']) ?>}\n` +
+               `OR\n`;
     <?php endif; ?>
 
-    // Add profile URL
-    message += `Profile: ${window.location.origin}/<?= $profile_url ?>\n\n` +
-               `Explore our profile for more delicious dishes and offers!`;
+    message += `${window.location.origin}/<?= $profile_url ?>`;
+
+
+
 
     // Safari-compatible WhatsApp opening
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;

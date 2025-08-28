@@ -21,6 +21,7 @@
     </div>
     <?php endif; ?>
     
+    
     <ul class="social_networks">
         <?php foreach (['facebook', 'instagram', 'linkedin', 'youtube', 'telegram'] as $social): ?>
             <?php if (!empty($social_link[$social])): ?>
