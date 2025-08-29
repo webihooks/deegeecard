@@ -454,9 +454,9 @@ function placeOrderOnWhatsApp() {
                   `Phone: ${businessPhone}\n\n` +
                   `Date: ${orderDate}\n` +
                   `Order Type: ${isDelivery ? 'DELIVERY' : 'DINING'}\n` +
-                  `--------------------------\n` +
+                  `--------------------------------------------------\n` +
                   `*ITEMS ORDERED*\n` +
-                  `--------------------------\n`;
+                  `--------------------------------------------------\n`;
 
     // Add cart items
     cart.forEach(item => {
@@ -468,7 +468,7 @@ function placeOrderOnWhatsApp() {
     });
 
     // Add pricing summary
-    message += `--------------------------\n` +
+    message += `--------------------------------------------------\n` +
                `Subtotal:        ₹${subtotal.toFixed(2)}\n`;
     
     if (discountAmount > 0) {
@@ -487,15 +487,15 @@ function placeOrderOnWhatsApp() {
         message += deliveryText;
     }
 
-    message += `--------------------------\n` +
+    message += `--------------------------------------------------\n` +
                `*TOTAL:          ₹${total.toFixed(2)}*\n\n` +
                `*CUSTOMER DETAILS*\n` +
-               `--------------------------\n` +
+               `--------------------------------------------------\n` +
                `${orderDetails}\n\n` +
                `Thank you for your order. We'll process it shortly.\n\n`;
 
     // Add profile URL
-    message += `Next time, order in one click:\n`;
+    message += `Next time, place your order easily through this link 👉`;
 
     // Add website if available
     <?php if (!empty($business_info['website'])): ?>
@@ -1377,14 +1377,15 @@ document.getElementById('dinningBtn').addEventListener('click', function() {
 
 // Show order success popup
 function showOrderSuccessPopup() {
+    createConfetti();
     const popup = document.getElementById('orderSuccessPopup');
     popup.classList.add('active');
 }
 
 // Close order success popup
 function closeOrderSuccessPopup() {
-    const popup = document.getElementById('orderSuccessPopup');
-    popup.classList.remove('active');
+  const popup = document.getElementById('orderSuccessPopup');
+  popup.classList.remove('active');
 }
 
 function placeOrder() {
@@ -1507,7 +1508,10 @@ function placeOrder() {
             closeCart();
             
             if (data.trigger_whatsapp) {
-                placeOrderOnWhatsApp(); // No delay needed
+                // Add 3-second delay before triggering WhatsApp
+                setTimeout(() => {
+                    placeOrderOnWhatsApp();
+                }, 3000);
             } else {
                 placeOrderBtn.innerHTML = originalBtnText;
                 placeOrderBtn.disabled = false;
@@ -1622,19 +1626,70 @@ function clearCoupon() {
     updateCartUI();
 }
 
+
+
+
+
+
+function createConfetti() {
+  const confettiContainer = document.getElementById('confettiContainer');
+  confettiContainer.innerHTML = '';
+  confettiContainer.style.display = 'block';
+  
+  const colors = ['#f94144', '#f3722c', '#f8961e', '#f9c74f', '#90be6d', '#43aa8b', '#577590'];
+  const confettiCount = 150;
+  
+  for (let i = 0; i < confettiCount; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti';
+    
+    // Random properties
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const size = Math.random() * 10 + 5;
+    const left = Math.random() * 100;
+    const animationDelay = Math.random() * 5;
+    const animationDuration = Math.random() * 3 + 3;
+    
+    // Apply styles
+    confetti.style.backgroundColor = color;
+    confetti.style.width = `${size}px`;
+    confetti.style.height = `${size}px`;
+    confetti.style.left = `${left}%`;
+    confetti.style.animationDelay = `${animationDelay}s`;
+    confetti.style.animationDuration = `${animationDuration}s`;
+    
+    // Random shape
+    if (Math.random() > 0.5) {
+      confetti.style.borderRadius = '50%';
+    }
+    
+    confettiContainer.appendChild(confetti);
+  }
+  
+  // Hide confetti after animation completes
+  setTimeout(() => {
+    confettiContainer.style.display = 'none';
+  }, 60000);
+}
 </script>
 
-<!-- Order Success Popup -->
+<!-- Add this to your HTML (before the closing body tag) -->
+<div class="confetti-container" id="confettiContainer"></div>
+
+<!-- Order Success Popup (updated with confetti) -->
 <div class="order-success-popup" id="orderSuccessPopup">
     <div class="order-success-content">
         <div class="order-success-icon">
-            <i class="bi bi-check-circle-fill"></i>
+            <img src="images/success_icon.gif">
         </div>
-        <h3 class="order-success-title">Order Placed Successfully!</h3>
+        <h3 class="order-success-title">
+            Order Received<br>
+            Your food is being prepared!
+        </h3>
         <p class="order-success-message">
-            Thank you for your order. We'll process it shortly. <br>
+            Thank you for your order.<br>
         </p>
-        <h4 class="mb-3">Also share your order with us  <br>
+        <h4 class="mb-3">Also share your order with us<br>
             on WhatsApp — just hit 'Send'.</h4>
         <button class="order-success-btn" onclick="closeOrderSuccessPopup()">OK</button>
     </div>

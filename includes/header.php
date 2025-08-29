@@ -158,6 +158,11 @@
         }
         .btn-success {
             background: var(--primary-color) !important;
+            height: 50px;
+          font-size: 20px;
+          font-weight: 700;
+          text-shadow: 2px 1px 3px #151515;
+          letter-spacing: 0.03em;
         }
         body {
             background-color: var(--secondary-color);
