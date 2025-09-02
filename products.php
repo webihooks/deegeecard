@@ -1,5 +1,6 @@
 <?php
-// Start the session
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 session_start();
 
 // Include the database connection file
@@ -25,6 +26,44 @@ $stmt->execute();
 $stmt->bind_result($user_name);
 $stmt->fetch();
 $stmt->close();
+
+// Create user-specific products table if it doesn't exist
+$user_products_table = "products_" . $user_id;
+$create_table_sql = "CREATE TABLE IF NOT EXISTS $user_products_table (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    product_name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2) NOT NULL,
+    quantity INT(11) NOT NULL,
+    image_path VARCHAR(500),
+    tag_id INT(11),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+)";
+
+if (!$conn->query($create_table_sql)) {
+    $error_message = "Error creating products table: " . $conn->error;
+}
+
+// Check if all required columns exist, if not add them
+$required_columns = ['quantity', 'tag_id', 'image_path'];
+foreach ($required_columns as $column) {
+    $check_column_sql = "SHOW COLUMNS FROM $user_products_table LIKE '$column'";
+    $result = $conn->query($check_column_sql);
+    if ($result->num_rows == 0) {
+        if ($column === 'quantity') {
+            $add_column_sql = "ALTER TABLE $user_products_table ADD COLUMN $column INT(11) NOT NULL DEFAULT 0";
+        } elseif ($column === 'tag_id') {
+            $add_column_sql = "ALTER TABLE $user_products_table ADD COLUMN $column INT(11)";
+        } elseif ($column === 'image_path') {
+            $add_column_sql = "ALTER TABLE $user_products_table ADD COLUMN $column VARCHAR(500)";
+        }
+        
+        if (!$conn->query($add_column_sql)) {
+            $error_message = "Error adding $column column: " . $conn->error;
+        }
+    }
+}
 
 // Check user's subscription and product limits
 $max_products = 0;
@@ -62,10 +101,9 @@ if ($subscription) {
     }
 }
 
-// Get current product count
-$sql = "SELECT COUNT(*) as count FROM products WHERE user_id = ?";
+// Get current product count from user's specific table
+$sql = "SELECT COUNT(*) as count FROM $user_products_table";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $count_data = $result->fetch_assoc();
@@ -135,21 +173,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (empty($error_message)) {
                 if ($product_id) {
-                    // Update existing product
+                    // Update existing product in user's table
                     if (!empty($image_path)) {
-                        $sql = "UPDATE products SET product_name = ?, description = ?, price = ?, quantity = ?, image_path = ?, tag_id = ? WHERE id = ? AND user_id = ?";
+                        $sql = "UPDATE $user_products_table SET product_name = ?, description = ?, price = ?, quantity = ?, image_path = ?, tag_id = ? WHERE id = ?";
                         $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("ssdssiii", $product_name, $description, $price, $quantity, $image_path, $tag_id, $product_id, $user_id);
+                        $stmt->bind_param("ssdssii", $product_name, $description, $price, $quantity, $image_path, $tag_id, $product_id);
                     } else {
-                        $sql = "UPDATE products SET product_name = ?, description = ?, price = ?, quantity = ?, tag_id = ? WHERE id = ? AND user_id = ?";
+                        $sql = "UPDATE $user_products_table SET product_name = ?, description = ?, price = ?, quantity = ?, tag_id = ? WHERE id = ?";
                         $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("ssdiiii", $product_name, $description, $price, $quantity, $tag_id, $product_id, $user_id);
+                        $stmt->bind_param("ssdiii", $product_name, $description, $price, $quantity, $tag_id, $product_id);
                     }
                 } else {
-                    // Add new product
-                    $sql = "INSERT INTO products (user_id, product_name, description, price, quantity, image_path, tag_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                    // Add new product to user's table
+                    $sql = "INSERT INTO $user_products_table (product_name, description, price, quantity, image_path, tag_id) VALUES (?, ?, ?, ?, ?, ?)";
                     $stmt = $conn->prepare($sql);
-                    $stmt->bind_param("issdisi", $user_id, $product_name, $description, $price, $quantity, $image_path, $tag_id);
+                    $stmt->bind_param("ssdisi", $product_name, $description, $price, $quantity, $image_path, $tag_id);
                 }
 
                 if ($stmt->execute()) {
@@ -171,11 +209,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (isset($_GET['edit'])) {
     $product_id = $_GET['edit'];
     $sql = "SELECT p.*, t.tag as tag_name 
-            FROM products p
+            FROM $user_products_table p
             LEFT JOIN tags t ON p.tag_id = t.id
-            WHERE p.id = ? AND p.user_id = ?";
+            WHERE p.id = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ii", $product_id, $user_id);
+    $stmt->bind_param("i", $product_id);
     $stmt->execute();
     $result = $stmt->get_result();
     $product_data = $result->fetch_assoc();
@@ -191,18 +229,18 @@ if (isset($_GET['delete'])) {
     $product_id = $_GET['delete'];
     
     // First get the image path to delete the file
-    $sql = "SELECT image_path FROM products WHERE id = ? AND user_id = ?";
+    $sql = "SELECT image_path FROM $user_products_table WHERE id = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ii", $product_id, $user_id);
+    $stmt->bind_param("i", $product_id);
     $stmt->execute();
     $stmt->bind_result($image_path);
     $stmt->fetch();
     $stmt->close();
     
-    // Delete the product
-    $sql = "DELETE FROM products WHERE id = ? AND user_id = ?";
+    // Delete the product from user's table
+    $sql = "DELETE FROM $user_products_table WHERE id = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ii", $product_id, $user_id);
+    $stmt->bind_param("i", $product_id);
     
     if ($stmt->execute()) {
         // Delete the image file if it exists
@@ -225,9 +263,8 @@ if (isset($_GET['delete_all'])) {
         $error_message = "Security token mismatch. Operation cancelled.";
     } else {
         // First get all image paths to delete the files
-        $sql = "SELECT image_path FROM products WHERE user_id = ?";
+        $sql = "SELECT image_path FROM $user_products_table";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $user_id);
         $stmt->execute();
         $result = $stmt->get_result();
         $image_paths = [];
@@ -238,10 +275,9 @@ if (isset($_GET['delete_all'])) {
         }
         $stmt->close();
         
-        // Delete all products for the current user
-        $sql = "DELETE FROM products WHERE user_id = ?";
+        // Delete all products from user's table
+        $sql = "DELETE FROM $user_products_table";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $user_id);
         
         if ($stmt->execute()) {
             // Delete all image files if they exist
@@ -262,14 +298,12 @@ if (isset($_GET['delete_all'])) {
     }
 }
 
-
 // Fetch all products for the current user with their tag names, ordered by id in ascending order
 $sql = "SELECT p.*, t.tag as tag_name 
-        FROM products p
+        FROM $user_products_table p
         LEFT JOIN tags t ON p.tag_id = t.id
-        WHERE p.user_id = ? ORDER BY p.id ASC";
+        ORDER BY p.id ASC";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
 $stmt->execute();
 $products = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
@@ -281,9 +315,9 @@ if (empty($_SESSION['csrf_token'])) {
 
 // Handle search functionality
 $search_query = '';
-$where_conditions = ["p.user_id = ?"];
-$params = [$user_id];
-$param_types = "i";
+$where_conditions = [];
+$params = [];
+$param_types = "";
 
 if (isset($_GET['search']) && !empty(trim($_GET['search']))) {
     $search_query = trim($_GET['search']);
@@ -299,7 +333,7 @@ if (isset($_GET['search']) && !empty(trim($_GET['search']))) {
 
 // Build the SQL query
 $sql = "SELECT p.*, t.tag as tag_name 
-        FROM products p
+        FROM $user_products_table p
         LEFT JOIN tags t ON p.tag_id = t.id";
         
 if (!empty($where_conditions)) {
@@ -312,17 +346,13 @@ $sql .= " ORDER BY p.id ASC";
 $stmt = $conn->prepare($sql);
 
 // Dynamic binding based on search
-if ($param_types === "i") {
-    $stmt->bind_param($param_types, ...$params);
-} else {
+if (!empty($params)) {
     $stmt->bind_param($param_types, ...$params);
 }
 
 $stmt->execute();
 $products = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
-
-
 
 $conn->close();
 ?>
@@ -427,7 +457,7 @@ $conn->close();
                                 <?php endif; ?>
                                 
                                 <h4 class="card-title"><?php echo $is_edit_mode ? 'Edit Product' : 'Add New Product'; ?></h4>
-                                <form id="productForm" method="POST" action="products.php" enctype="multipart/form-data">
+                                <form id="productForm" method="POST" action="products_new.php" enctype="multipart/form-data">
                                     <input type="hidden" name="product_id" value="<?php echo $is_edit_mode ? $product_data['id'] : ''; ?>">
                                     <input type="hidden" name="existing_image" value="<?php echo $is_edit_mode && !empty($product_data['image_path']) ? $product_data['image_path'] : ''; ?>">
                                     
@@ -489,7 +519,7 @@ $conn->close();
                                         <?php echo $is_edit_mode ? 'Update' : 'Save'; ?> Product
                                     </button>
                                     <?php if ($is_edit_mode): ?>
-                                        <a href="products.php" class="btn btn-secondary">Cancel</a>
+                                        <a href="products_new.php" class="btn btn-secondary">Cancel</a>
                                     <?php endif; ?>
                                 </form>
                             </div>
@@ -498,7 +528,7 @@ $conn->close();
                         <div class="card mt-4">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h4 class="card-title mb-0">Your Products</h4>
-                                <form method="GET" action="products.php" class="d-flex">
+                                <form method="GET" action="products_new.php" class="d-flex">
                                     <input type="hidden" name="search" value="<?php echo htmlspecialchars($search_query); ?>">
                                     <div class="input-group">
                                         <input type="text" class="form-control" placeholder="Search products..." name="search" value="<?php echo htmlspecialchars($search_query); ?>">
@@ -506,18 +536,18 @@ $conn->close();
                                             <i class="fas fa-search"></i>
                                         </button>
                                         <?php if (!empty($search_query)): ?>
-                                            <a href="products.php" class="btn btn-outline-danger">Clear</a>
+                                            <a href="products_new.php" class="btn btn-outline-danger">Clear</a>
                                         <?php endif; ?>
                                     </div>
                                 </form>
                             </div>
                             <div class="card-body">
-                                <a href="export_products.php" class="btn btn-outline-primary mb-3">Download All Products CSV</a>
+                                <a href="export_products_new.php" class="btn btn-outline-primary mb-3">Download All Products CSV</a>
                                 
                                 <?php if ($current_product_count > 0): ?>
-                                    <a href="products.php?delete_all=1&csrf_token=<?php echo $_SESSION['csrf_token']; ?>" 
+                                    <a href="products_new.php?delete_all=1&csrf_token=<?php echo $_SESSION['csrf_token']; ?>" 
                                        class="btn btn-outline-danger mb-3"
-                                       style="display: none;" 
+                                       style="" 
                                        onclick="return confirm('Are you sure you want to delete ALL your products? This action cannot be undone.')">
                                        Remove All Products
                                     </a>
@@ -527,7 +557,7 @@ $conn->close();
                                     <div class="no-results">
                                         <?php if (!empty($search_query)): ?>
                                             <p>No products found matching "<?php echo htmlspecialchars($search_query); ?>".</p>
-                                            <a href="products.php" class="btn btn-primary">View All Products</a>
+                                            <a href="products_new.php" class="btn btn-primary">View All Products</a>
                                         <?php else: ?>
                                             <p>No products found. <?php echo $subscription_active ? 'Add your first product above.' : 'Subscribe to add products.'; ?></p>
                                         <?php endif; ?>
@@ -580,8 +610,8 @@ $conn->close();
                                                         <td><?php echo $product['quantity']; ?></td>
                                                         <td>
                                                             <div class="action-buttons">
-                                                                <a href="products.php?edit=<?php echo $product['id']; ?>" class="btn btn-sm btn-primary">Edit</a>
-                                                                <a href="products.php?delete=<?php echo $product['id']; ?>" class="btn btn-sm btn-danger" 
+                                                                <a href="products_new.php?edit=<?php echo $product['id']; ?>" class="btn btn-sm btn-primary">Edit</a>
+                                                                <a href="products_new.php?delete=<?php echo $product['id']; ?>" class="btn btn-sm btn-danger" 
                                                                     onclick="return confirm('Are you sure you want to delete this product?')">Delete</a>
                                                             </div>
                                                         </td>

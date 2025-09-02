@@ -39,6 +39,26 @@ $stmt->bind_result($user_name);
 $stmt->fetch();
 $stmt->close();
 
+// Create user-specific products table if it doesn't exist
+$table_name = "products_" . $user_id;
+$create_table_sql = "CREATE TABLE IF NOT EXISTS $table_name (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    product_name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2) NOT NULL,
+    quantity INT(11) NOT NULL DEFAULT 0,
+    image_path VARCHAR(255),
+    tag_id INT(11),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_product_name (product_name),
+    INDEX idx_tag_id (tag_id)
+)";
+
+if (!$conn->query($create_table_sql)) {
+    die("Error creating products table: " . $conn->error);
+}
+
 // Handle CSV file upload
 if (isset($_POST['import_csv']) && isset($_FILES['csv_file'])) {
     $file = $_FILES['csv_file'];
@@ -71,18 +91,17 @@ if (isset($_POST['import_csv']) && isset($_FILES['csv_file'])) {
                 $error_count = 0;
                 $errors = [];
                 
-                // Prepare insert and update statements
-                $insert_sql = "INSERT INTO products (
-                    user_id, 
+                // Prepare insert and update statements for user-specific table
+                $insert_sql = "INSERT INTO $table_name (
                     product_name, 
                     description, 
                     price, 
                     quantity, 
                     image_path,
                     tag_id
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                ) VALUES (?, ?, ?, ?, ?, ?)";
                 
-                $update_sql = "UPDATE products SET 
+                $update_sql = "UPDATE $table_name SET 
                     product_name = ?, 
                     description = ?, 
                     price = ?, 
@@ -90,7 +109,7 @@ if (isset($_POST['import_csv']) && isset($_FILES['csv_file'])) {
                     image_path = ?,
                     tag_id = ?,
                     updated_at = NOW()
-                WHERE id = ? AND user_id = ?";
+                WHERE id = ?";
                 
                 $insert_stmt = $conn->prepare($insert_sql);
                 $update_stmt = $conn->prepare($update_sql);
@@ -184,16 +203,15 @@ if (isset($_POST['import_csv']) && isset($_FILES['csv_file'])) {
                         
                         // Process based on whether we have a product_id or not
                         if ($product_id) {
-                            // Update existing product
-                            $update_stmt->bind_param("ssdisiii", 
+                            // Update existing product in user-specific table
+                            $update_stmt->bind_param("ssdisii", 
                                 $product_name, 
                                 $description, 
                                 $price, 
                                 $quantity, 
                                 $image_path,
                                 $tag_id,
-                                $product_id,
-                                $user_id
+                                $product_id
                             );
                             
                             if ($update_stmt->execute()) {
@@ -208,9 +226,8 @@ if (isset($_POST['import_csv']) && isset($_FILES['csv_file'])) {
                                 $error_count++;
                             }
                         } else {
-                            // Insert new product
-                            $insert_stmt->bind_param("issdisi", 
-                                $user_id, 
+                            // Insert new product into user-specific table
+                            $insert_stmt->bind_param("ssdisi", 
                                 $product_name, 
                                 $description, 
                                 $price, 
@@ -266,8 +283,8 @@ if (isset($_GET['download_sample'])) {
         header('Content-Disposition: attachment; filename="products_update_sample.csv"');
         $output = fopen('php://output', 'w');
         fputcsv($output, ['Product ID', 'Product Name', 'Description', 'Price', 'Quantity', 'Image Path', 'Tag ID']);
-        fputcsv($output, ['3647', 'Chicken Manchow Soup', 'Updated description', '400.00', '200', '', '101']);
-        fputcsv($output, ['3648', 'Veg Fried Rice', 'Updated description', '350.00', '150', '', '102']);
+        fputcsv($output, ['1', 'Chicken Manchow Soup', 'Updated description', '400.00', '200', '', '101']);
+        fputcsv($output, ['2', 'Veg Fried Rice', 'Updated description', '350.00', '150', '', '102']);
     } else {
         header('Content-Disposition: attachment; filename="products_new_sample.csv"');
         $output = fopen('php://output', 'w');
@@ -365,8 +382,8 @@ Product Name,Description,Price,Quantity,Image Path,Tag ID
                                     <h6>For Updating Existing Products:</h6>
                                     <pre>
 Product ID,Product Name,Description,Price,Quantity,Image Path,Tag ID
-3647,"Chicken Manchow Soup","Updated description",400.00,200,"images/soup_new.jpg",101
-3648,"Veg Fried Rice","Updated description",350.00,150,"images/rice_new.jpg",102
+1,"Chicken Manchow Soup","Updated description",400.00,200,"images/soup_new.jpg",101
+2,"Veg Fried Rice","Updated description",350.00,150,"images/rice_new.jpg",102
                                     </pre>
                                 </div>
                             </div>

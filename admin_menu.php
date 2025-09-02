@@ -72,6 +72,15 @@
                </li>
 
                <li class="nav-item">
+                    <a class="nav-link" href="ai_image.php">
+                         <span class="nav-icon">
+                              <iconify-icon icon="hugeicons:ai-image"></iconify-icon>
+                         </span>
+                         <span class="nav-text"> AI Image </span>
+                    </a>
+               </li>
+
+               <li class="nav-item">
                     <a class="nav-link" href="image_resizer.php">
                          <span class="nav-icon">
                               <iconify-icon icon="fluent:resize-16-filled"></iconify-icon>

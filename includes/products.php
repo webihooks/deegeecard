@@ -1,3 +1,27 @@
+<?php
+// Get products from user-specific table with tags
+$table_name = "products_" . $user_id;
+
+// Check if the user-specific products table exists
+$check_table = $conn->prepare("SHOW TABLES LIKE ?");
+$check_table->execute([$table_name]);
+$table_exists = $check_table->fetch(PDO::FETCH_ASSOC);
+
+if ($table_exists) {
+    // Fetch products from user-specific table with tags
+    $products_sql = "SELECT p.*, t.tag 
+                     FROM $table_name p 
+                     LEFT JOIN tags t ON p.tag_id = t.id 
+                     ORDER BY p.id ASC";
+    $products_stmt = $conn->prepare($products_sql);
+    $products_stmt->execute();
+    $products = $products_stmt->fetchAll(PDO::FETCH_ASSOC);
+} else {
+    $products = []; // Empty array if table doesn't exist
+}
+?>
+
+
 
 <?php if ($active_subscription): ?>
     <?php if ($active_subscription['package_id'] == 1): ?>

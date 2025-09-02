@@ -29,9 +29,28 @@ function getSocialLinks($conn, $user_id) {
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
+// function getProducts($conn, $user_id) {
+//     $stmt = $conn->prepare("SELECT product_name, description, price, quantity, image_path FROM products WHERE user_id = ?");
+//     $stmt->execute([$user_id]);
+//     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+// }
+
 function getProducts($conn, $user_id) {
-    $stmt = $conn->prepare("SELECT product_name, description, price, quantity, image_path FROM products WHERE user_id = ?");
-    $stmt->execute([$user_id]);
+    // Create the user-specific table name
+    $table_name = "products_" . $user_id;
+    
+    // First check if the user-specific products table exists
+    $check_table = $conn->prepare("SHOW TABLES LIKE ?");
+    $check_table->execute([$table_name]);
+    $table_exists = $check_table->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$table_exists) {
+        return []; // Return empty array if table doesn't exist
+    }
+    
+    // Fetch products from the user-specific table
+    $stmt = $conn->prepare("SELECT id, product_name, description, price, quantity, image_path, tag_id FROM $table_name ORDER BY id ASC");
+    $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 

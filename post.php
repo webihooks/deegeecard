@@ -96,7 +96,6 @@ if ($discounts_stmt) {
 $business_info = getBusinessInfo($conn, $user_id);
 $photos = getProfilePhotos($conn, $user_id);
 $social_link = getSocialLinks($conn, $user_id);
-$products = getProducts($conn, $user_id);
 $services = getServices($conn, $user_id);
 $gallery = getGallery($conn, $user_id);
 $ratings = getRatings($conn, $user_id);
@@ -158,14 +157,34 @@ if ($tags_stmt) {
     $tags = [];
 }
 
-// Get products with tags
-$products_sql = "SELECT p.*, t.tag 
-                 FROM products p 
-                 LEFT JOIN tags t ON p.tag_id = t.id 
-                 WHERE p.user_id = ?";
-$products_stmt = $conn->prepare($products_sql);
-$products_stmt->execute([$user_id]);
-$products = $products_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
+
+
+// Get products from user-specific table with tags
+$table_name = "products_" . $user_id;
+
+// Check if the user-specific products table exists
+$check_table = $conn->prepare("SHOW TABLES LIKE ?");
+$check_table->execute([$table_name]);
+$table_exists = $check_table->fetch(PDO::FETCH_ASSOC);
+
+if ($table_exists) {
+    // Fetch products from user-specific table with tags
+    $products_sql = "SELECT p.*, t.tag 
+                     FROM $table_name p 
+                     LEFT JOIN tags t ON p.tag_id = t.id 
+                     ORDER BY p.created_at DESC";
+    $products_stmt = $conn->prepare($products_sql);
+    $products_stmt->execute();
+    $products = $products_stmt->fetchAll(PDO::FETCH_ASSOC);
+} else {
+    $products = []; // Empty array if table doesn't exist
+}
+
+
+
+
 
 // Check for active subscription and get package_id
 $subscription_sql = "SELECT package_id FROM subscriptions 
