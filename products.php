@@ -118,6 +118,59 @@ $stmt->execute();
 $tags = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 
+// Handle remove image request
+if (isset($_GET['remove_image'])) {
+    $product_id = $_GET['remove_image'];
+    
+    // First get the image path to delete the file
+    $sql = "SELECT image_path FROM $user_products_table WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $product_id);
+    $stmt->execute();
+    $stmt->bind_result($image_path);
+    $stmt->fetch();
+    $stmt->close();
+    
+    if (!empty($image_path)) {
+        // Delete the image file if it exists
+        if (file_exists($image_path)) {
+            if (unlink($image_path)) {
+                // Update the database to remove the image path
+                $sql = "UPDATE $user_products_table SET image_path = NULL WHERE id = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("i", $product_id);
+                
+                if ($stmt->execute()) {
+                    $success_message = "Image removed successfully!";
+                } else {
+                    $error_message = "Error updating database: " . $conn->error;
+                }
+                $stmt->close();
+            } else {
+                $error_message = "Error deleting image file.";
+            }
+        } else {
+            // File doesn't exist, but still update the database
+            $sql = "UPDATE $user_products_table SET image_path = NULL WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("i", $product_id);
+            
+            if ($stmt->execute()) {
+                $success_message = "Image reference removed successfully!";
+            } else {
+                $error_message = "Error updating database: " . $conn->error;
+            }
+            $stmt->close();
+        }
+    } else {
+        $error_message = "No image found for this product.";
+    }
+    
+    // Redirect to avoid form resubmission
+    header("Location: products.php");
+    exit();
+}
+
 // Handle form submission for add/update
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $product_id = isset($_POST['product_id']) ? $_POST['product_id'] : null;
@@ -169,6 +222,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             } elseif ($product_id && !empty($_POST['existing_image'])) {
                 $image_path = $_POST['existing_image'];
+                
+                // Check if user wants to remove the image
+                if (isset($_POST['remove_image']) && $_POST['remove_image'] == '1') {
+                    if (file_exists($image_path)) {
+                        unlink($image_path);
+                    }
+                    $image_path = '';
+                }
             }
             
             if (empty($error_message)) {
@@ -179,7 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt = $conn->prepare($sql);
                         $stmt->bind_param("ssdssii", $product_name, $description, $price, $quantity, $image_path, $tag_id, $product_id);
                     } else {
-                        $sql = "UPDATE $user_products_table SET product_name = ?, description = ?, price = ?, quantity = ?, tag_id = ? WHERE id = ?";
+                        $sql = "UPDATE $user_products_table SET product_name = ?, description = ?, price = ?, quantity = ?, image_path = NULL, tag_id = ? WHERE id = ?";
                         $stmt = $conn->prepare($sql);
                         $stmt->bind_param("ssdiii", $product_name, $description, $price, $quantity, $tag_id, $product_id);
                     }
@@ -457,7 +518,7 @@ $conn->close();
                                 <?php endif; ?>
                                 
                                 <h4 class="card-title"><?php echo $is_edit_mode ? 'Edit Product' : 'Add New Product'; ?></h4>
-                                <form id="productForm" method="POST" action="products_new.php" enctype="multipart/form-data">
+                                <form id="productForm" method="POST" action="products.php" enctype="multipart/form-data">
                                     <input type="hidden" name="product_id" value="<?php echo $is_edit_mode ? $product_data['id'] : ''; ?>">
                                     <input type="hidden" name="existing_image" value="<?php echo $is_edit_mode && !empty($product_data['image_path']) ? $product_data['image_path'] : ''; ?>">
                                     
@@ -506,12 +567,6 @@ $conn->close();
                                         <?php if ($is_edit_mode && !empty($product_data['image_path'])): ?>
                                             <div class="mt-2">
                                                 <img src="<?php echo $product_data['image_path']; ?>" alt="Product Image" style="max-width: 200px; max-height: 200px;">
-                                                <?php if (!empty($product_data['image_path'])): ?>
-                                                    <div class="form-check mt-2">
-                                                        <input class="form-check-input" type="checkbox" id="remove_image" name="remove_image">
-                                                        <label class="form-check-label" for="remove_image">Remove current image</label>
-                                                    </div>
-                                                <?php endif; ?>
                                             </div>
                                         <?php endif; ?>
                                     </div>
@@ -519,7 +574,7 @@ $conn->close();
                                         <?php echo $is_edit_mode ? 'Update' : 'Save'; ?> Product
                                     </button>
                                     <?php if ($is_edit_mode): ?>
-                                        <a href="products_new.php" class="btn btn-secondary">Cancel</a>
+                                        <a href="products.php" class="btn btn-secondary">Cancel</a>
                                     <?php endif; ?>
                                 </form>
                             </div>
@@ -528,7 +583,7 @@ $conn->close();
                         <div class="card mt-4">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h4 class="card-title mb-0">Your Products</h4>
-                                <form method="GET" action="products_new.php" class="d-flex">
+                                <form method="GET" action="products.php" class="d-flex">
                                     <input type="hidden" name="search" value="<?php echo htmlspecialchars($search_query); ?>">
                                     <div class="input-group">
                                         <input type="text" class="form-control" placeholder="Search products..." name="search" value="<?php echo htmlspecialchars($search_query); ?>">
@@ -536,16 +591,16 @@ $conn->close();
                                             <i class="fas fa-search"></i>
                                         </button>
                                         <?php if (!empty($search_query)): ?>
-                                            <a href="products_new.php" class="btn btn-outline-danger">Clear</a>
+                                            <a href="products.php" class="btn btn-outline-danger">Clear</a>
                                         <?php endif; ?>
                                     </div>
                                 </form>
                             </div>
                             <div class="card-body">
-                                <a href="export_products_new.php" class="btn btn-outline-primary mb-3">Download All Products CSV</a>
+                                <a href="export_products.php" class="btn btn-outline-primary mb-3">Download All Products CSV</a>
                                 
                                 <?php if ($current_product_count > 0): ?>
-                                    <a href="products_new.php?delete_all=1&csrf_token=<?php echo $_SESSION['csrf_token']; ?>" 
+                                    <a href="products.php?delete_all=1&csrf_token=<?php echo $_SESSION['csrf_token']; ?>" 
                                        class="btn btn-outline-danger mb-3"
                                        style="" 
                                        onclick="return confirm('Are you sure you want to delete ALL your products? This action cannot be undone.')">
@@ -557,7 +612,7 @@ $conn->close();
                                     <div class="no-results">
                                         <?php if (!empty($search_query)): ?>
                                             <p>No products found matching "<?php echo htmlspecialchars($search_query); ?>".</p>
-                                            <a href="products_new.php" class="btn btn-primary">View All Products</a>
+                                            <a href="products.php" class="btn btn-primary">View All Products</a>
                                         <?php else: ?>
                                             <p>No products found. <?php echo $subscription_active ? 'Add your first product above.' : 'Subscribe to add products.'; ?></p>
                                         <?php endif; ?>
@@ -575,7 +630,7 @@ $conn->close();
                                                     <th>Description</th>
                                                     <th>Price</th>
                                                     <th>Quantity</th>
-                                                    <th>Actions</th>
+                                                    <th width="250">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -610,8 +665,15 @@ $conn->close();
                                                         <td><?php echo $product['quantity']; ?></td>
                                                         <td>
                                                             <div class="action-buttons">
-                                                                <a href="products_new.php?edit=<?php echo $product['id']; ?>" class="btn btn-sm btn-primary">Edit</a>
-                                                                <a href="products_new.php?delete=<?php echo $product['id']; ?>" class="btn btn-sm btn-danger" 
+                                                                <?php if (!empty($product['image_path'])): ?>
+                                                                    <a href="products.php?remove_image=<?php echo $product['id']; ?>" 
+                                                                       class="btn btn-sm btn-warning" 
+                                                                       title="Remove Image"
+                                                                       onclick="return confirm('Are you sure you want to remove the image for this product?')">Remove Image
+                                                                    </a>
+                                                                <?php endif; ?>
+                                                                <a href="products.php?edit=<?php echo $product['id']; ?>" class="btn btn-sm btn-primary">Edit</a>
+                                                                <a href="products.php?delete=<?php echo $product['id']; ?>" class="btn btn-sm btn-danger" 
                                                                     onclick="return confirm('Are you sure you want to delete this product?')">Delete</a>
                                                             </div>
                                                         </td>
