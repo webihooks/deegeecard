@@ -21,8 +21,6 @@ if ($table_exists) {
 }
 ?>
 
-
-
 <?php if ($active_subscription): ?>
     <?php if ($active_subscription['package_id'] == 1): ?>
         <style>#dinningBtn { display: none !important; }</style>
@@ -30,6 +28,7 @@ if ($table_exists) {
         <style>#deliveryBtn { display: none !important; }</style>
     <?php endif; ?>
 <?php endif; ?>
+
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -42,7 +41,89 @@ document.addEventListener('DOMContentLoaded', function() {
     } else if (selectedOrderType === 'dining' && dinningBtn) {
         dinningBtn.classList.add('active');
     }
+    
+    // Initialize lazy loading with fade-in effect
+    initLazyLoading();
 });
+
+// Lazy loading with fade-in effect implementation
+function initLazyLoading() {
+    const lazyImages = document.querySelectorAll('img.product-img-lazy');
+    
+    if ('IntersectionObserver' in window) {
+        // Use IntersectionObserver for modern browsers
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    preloadImage(img);
+                    imageObserver.unobserve(img);
+                }
+            });
+        }, {
+            rootMargin: '0px 0px 200px 0px', // Load images 200px before they enter viewport
+            threshold: 0.01
+        });
+
+        lazyImages.forEach(img => {
+            imageObserver.observe(img);
+        });
+    } else {
+        // Fallback for older browsers - load all images at once with fade effect
+        lazyImages.forEach(img => {
+            preloadImage(img);
+        });
+    }
+}
+
+// Preload image with fade-in effect
+function preloadImage(img) {
+    // Show loading spinner
+    const spinner = img.parentElement.querySelector('.img-loading-spinner');
+    if (spinner) spinner.style.display = 'block';
+    
+    // Create new image to load in background
+    const newImg = new Image();
+    
+    newImg.onload = function() {
+        // Set the actual image source
+        img.src = img.dataset.src;
+        
+        // Remove lazy class and add loaded class for fade effect
+        img.classList.remove('product-img-lazy');
+        img.classList.add('product-img-loaded');
+        
+        // Hide loading spinner
+        if (spinner) spinner.style.display = 'none';
+        
+        // Remove placeholder if it exists
+        if (img.classList.contains('product-img-placeholder')) {
+            setTimeout(() => {
+                img.classList.remove('product-img-placeholder');
+            }, 500);
+        }
+    };
+    
+    newImg.onerror = function() {
+        // Hide image on error
+        img.style.display = 'none';
+        
+        // Hide loading spinner
+        if (spinner) spinner.style.display = 'none';
+        
+        // Adjust button position for missing image
+        const productCard = img.closest('.product-card');
+        if (productCard) {
+            const cartBtnGroup = productCard.querySelector('.card-body .cart_btn_group');
+            if (cartBtnGroup) {
+                cartBtnGroup.classList.add('top');
+            }
+        }
+    };
+    
+    // Start loading the image
+    newImg.src = img.dataset.src;
+}
 
 // Add this to your existing JavaScript code
 document.addEventListener('DOMContentLoaded', function() {
@@ -123,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <!-- View Cart Button -->
                 <button class="btn btn-outline-secondary mb-3 w-100" id="viewCartBtn" style="display: none;">
-                    <i class="bi bi-cart"></i> View Cart
+                    <i class="bi bi-cart blink"></i> View Cart
                 </button>
             </div>
 
@@ -132,13 +213,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="order-type-buttons mb-3">
                     <?php if ($delivery_active): ?>
                         <button class="btn btn-outline-primary w-50" id="deliveryBtn">
-                            <i class="bi bi-truck"></i> Delivery
+                            <i class="bi bi-truck blink"></i> Delivery
                         </button>
                     <?php endif; ?>
                             
                     <?php if ($dining_active): ?>
                         <button class="btn btn-outline-primary w-50" id="dinningBtn">
-                            <i class="bi bi-cup-hot"></i> Dining
+                            <i class="bi bi-cup-hot blink"></i> Dining
                         </button>
                     <?php endif; ?>
                 </div>
@@ -214,72 +295,92 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     <?php endif; ?>
 
+
+
 <div class="row" id="productsContainer">
-    <?php if (!empty($products)): ?>
-        <?php foreach ($products as $product): ?>
-            <div class="col-sm-12 product-item" 
- data-name="<?= htmlspecialchars(strtolower($product['product_name'])) ?>" 
- data-desc="<?= htmlspecialchars(strtolower($product['description'])) ?>"
- data-tag="<?= isset($product['tag']) ? htmlspecialchars(strtolower($product['tag'])) : '' ?>">
-                <div class="card product-card">
-                    <div class="card-body">
-                        <h5 class="card-title"><?= htmlspecialchars($product['product_name']) ?></h5>
-                        <p class="card-text">
-                            <?= htmlspecialchars($product['description']) ?>
-                        </p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="text-primary fw-bold">₹<?= number_format($product['price']) ?></span>
-                            <span class="badge bg-<?= ($product['quantity'] > 0) ? 'success' : 'danger' ?>" style="display: none;">
-                                <?= ($product['quantity'] > 0) ? 'In Stock' : 'Out of Stock' ?>
-                            </span>
-                        </div>
-                        <?php if ($product['quantity'] > 0): ?>
-                            <small class="text-muted">Quantity: <?= $product['quantity'] ?></small>
-                        <?php endif; ?>
-                        <?php if ($product['quantity'] > 0 && ($delivery_active || $dining_active) && $is_store_open): ?>
-                            <div class="mt-3 cart_btn_group <?= empty($product['image_path']) ? 'top' : '' ?>">
-                                <button class="btn btn-primary w-100 add-to-cart" data-id="<?= htmlspecialchars($product['product_name']) ?>" data-name="<?= htmlspecialchars($product['product_name']) ?>" data-price="<?= $product['price'] ?>" data-max="<?= $product['quantity'] ?>" data-image="<?= htmlspecialchars($product['image_path']) ?>">
-                                    <i class="bi bi-cart-plus"></i> Add
-                                </button>
+        <?php if (!empty($products)): ?>
+            <?php foreach ($products as $product): ?>
+                <div class="col-sm-12 product-item" 
+     data-name="<?= htmlspecialchars(strtolower($product['product_name'])) ?>" 
+     data-desc="<?= htmlspecialchars(strtolower($product['description'])) ?>"
+     data-tag="<?= isset($product['tag']) ? htmlspecialchars(strtolower($product['tag'])) : '' ?>">
+                    <div class="card product-card">
+                        <div class="card-body">
+                            <h5 class="card-title"><?= htmlspecialchars($product['product_name']) ?></h5>
+                            <p class="card-text">
+                                <?= htmlspecialchars($product['description']) ?>
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-primary fw-bold">₹<?= number_format($product['price']) ?></span>
+                                <span class="badge bg-<?= ($product['quantity'] > 0) ? 'success' : 'danger' ?>" style="display: none;">
+                                    <?= ($product['quantity'] > 0) ? 'In Stock' : 'Out of Stock' ?>
+                                </span>
                             </div>
-                        <?php elseif ($product['quantity'] > 0 && !$is_store_open): ?>
-                            <div class="mt-3">
-                                <small class="text-muted">
-                                    <i class="bi bi-clock"></i> Currently unavailable (Store closed)
-                                </small>
+                            <?php if ($product['quantity'] > 0): ?>
+                                <small class="text-muted">Quantity: <?= $product['quantity'] ?></small>
+                            <?php endif; ?>
+                            <?php if ($product['quantity'] > 0 && ($delivery_active || $dining_active) && $is_store_open): ?>
+                                <div class="mt-3 cart_btn_group <?= empty($product['image_path']) ? 'top' : '' ?>">
+                                    <button class="btn btn-primary w-100 add-to-cart" 
+                                            data-id="<?= htmlspecialchars($product['product_name']) ?>" 
+                                            data-name="<?= htmlspecialchars($product['product_name']) ?>" 
+                                            data-price="<?= $product['price'] ?>" 
+                                            data-max="<?= $product['quantity'] ?>" 
+                                            data-image="<?= htmlspecialchars($product['image_path']) ?>">
+                                        <i class="bi bi-cart-plus"></i> Add
+                                    </button>
+                                </div>
+                            <?php elseif ($product['quantity'] > 0 && !$is_store_open): ?>
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock"></i> Currently unavailable (Store closed)
+                                    </small>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <?php if (!empty($product['image_path'])): ?>
+                            <div class="img-group">
+                                <!-- Lazy loading with fade-in effect -->
+                                <div class="aspect-ratio-box">
+                                    <img 
+                                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
+                                        data-src="<?= htmlspecialchars($product['image_path']) ?>" 
+                                        class="card-img-top product-img product-img-lazy product-img-placeholder" 
+                                        alt="<?= htmlspecialchars($product['product_name']) ?>" 
+                                        onerror="handleImageError(this)">
+                                    <div class="img-loading-spinner"></div>
+                                </div>
                             </div>
                         <?php endif; ?>
-                    </div>
 
-                    <?php if (!empty($product['image_path'])): ?>
-                        <div class="img-group">
-                            <img src="<?= htmlspecialchars($product['image_path']) ?>" class="card-img-top product-img" alt="<?= htmlspecialchars($product['product_name']) ?>" onerror="this.style.display='none'">
-                        </div>
-                    <?php endif; ?>
-
-                    <script>
-                        document.querySelectorAll('.product-img').forEach(img => {
-                          img.addEventListener('error', function() {
-                            // Find the closest parent `.product-card`, then navigate to `.card-body .cart_btn_group`
-                            const productCard = this.closest('.product-card');
-                            if (productCard) {
-                              const cartBtnGroup = productCard.querySelector('.card-body .cart_btn_group');
-                              if (cartBtnGroup) {
-                                cartBtnGroup.classList.add('top'); // Add the "top" class
-                              }
+                        <script>
+                            // Handle image errors
+                            function handleImageError(img) {
+                                img.style.display = 'none';
+                                const spinner = img.parentElement.querySelector('.img-loading-spinner');
+                                if (spinner) spinner.style.display = 'none';
+                                
+                                // Find the closest parent `.product-card`, then navigate to `.card-body .cart_btn_group`
+                                const productCard = img.closest('.product-card');
+                                if (productCard) {
+                                    const cartBtnGroup = productCard.querySelector('.card-body .cart_btn_group');
+                                    if (cartBtnGroup) {
+                                        cartBtnGroup.classList.add('top');
+                                    }
+                                }
                             }
-                          });
-                        });
-                    </script>
+                        </script>
+                    </div>
                 </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <div class="col-12">
+                <div class="alert alert-info">No products available yet.</div>
             </div>
-        <?php endforeach; ?>
-    <?php else: ?>
-        <div class="col-12">
-            <div class="alert alert-info">No products available yet.</div>
-        </div>
-    <?php endif; ?>
-</div>
+        <?php endif; ?>
+    </div>
+
 
     <!-- Move search to bottom and make it sticky -->
     <div class="sticky-search-container">
@@ -308,6 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <button class="btn btn-primary cart-button" onclick="toggleCart()">
                 <span class="cart-count">0 item added</span>
                 <span class="small discount-message" style="display: none;"></span>
+                <i class="bi bi-cart blink"></i>
             </button>
         </div>
     <?php endif; ?>
@@ -934,7 +1036,7 @@ function validatePhoneNumber(input) {
     }
 }
 
-// Add to cart button click handler
+// Add to cart button click handler with image animation
 document.querySelectorAll('.add-to-cart').forEach(button => {
     button.addEventListener('click', function() {
         // Add this to adjust the sticky search container
@@ -958,6 +1060,11 @@ document.querySelectorAll('.add-to-cart').forEach(button => {
             if (existingItem.quantity < existingItem.max) {
                 existingItem.quantity++;
                 // showToast(`${product.name} quantity increased to ${existingItem.quantity}`);
+                
+                // ADDED: Trigger animation even for existing items
+                if (product.image_path) {
+                    animateProductToCart(this, product.image_path);
+                }
             } else {
                 // showToast(`Maximum quantity reached for ${product.name}`, true);
                 return;
@@ -965,10 +1072,19 @@ document.querySelectorAll('.add-to-cart').forEach(button => {
         } else {
             cart.push(product);
             // showToast(`${product.name} added to cart`);
-            // Add pulse animation to cart button
-            document.querySelector('.cart-button').classList.add('cart-item-added');
+            
+            // Add image animation if product has an image
+            if (product.image_path) {
+                animateProductToCart(this, product.image_path);
+            }
+        }
+        
+        // Add pulse animation to cart button (moved outside of if/else)
+        const cartButton = document.querySelector('.cart-button');
+        if (cartButton) {
+            cartButton.classList.add('cart-item-added');
             setTimeout(() => {
-                document.querySelector('.cart-button').classList.remove('cart-item-added');
+                cartButton.classList.remove('cart-item-added');
             }, 500);
         }
 
@@ -982,6 +1098,57 @@ document.querySelectorAll('.add-to-cart').forEach(button => {
         }
     });
 });
+
+// Function to animate product image flying to cart
+function animateProductToCart(buttonElement, imageSrc) {
+    // Get the product image
+    const productCard = buttonElement.closest('.product-card');
+    const productImage = productCard ? productCard.querySelector('.product-img') : null;
+    
+    if (!productImage) return;
+    
+    // Get cart button container position
+    const cartButtonContainer = document.querySelector('.cart-button-container');
+    if (!cartButtonContainer) return;
+    
+    const cartButtonRect = cartButtonContainer.getBoundingClientRect();
+    
+    // Create flying image clone
+    const flyingImage = document.createElement('img');
+    flyingImage.src = imageSrc;
+    flyingImage.className = 'flying-image';
+    
+    // Set initial position and size
+    const imageRect = productImage.getBoundingClientRect();
+    flyingImage.style.width = `${imageRect.width}px`;
+    flyingImage.style.height = `${imageRect.height}px`;
+    flyingImage.style.left = `${imageRect.left}px`;
+    flyingImage.style.top = `${imageRect.top}px`;
+    
+    // Calculate final position (center of cart button container)
+    const finalX = (cartButtonRect.left + (cartButtonRect.width / 2)) - (imageRect.width / 2);
+    const finalY = (cartButtonRect.top + (cartButtonRect.height / 2)) - (imageRect.height / 2);
+    
+    // Calculate mid position for a curved path
+    const midX = (finalX + imageRect.left) / 2 - 50; // Curve to the left
+    const midY = (finalY + imageRect.top) / 2 - 100; // Curve upward
+    
+    // Set CSS custom properties for animation path
+    flyingImage.style.setProperty('--final-x', `${finalX - imageRect.left}px`);
+    flyingImage.style.setProperty('--final-y', `${finalY - imageRect.top}px`);
+    flyingImage.style.setProperty('--mid-x', `${midX - imageRect.left}px`);
+    flyingImage.style.setProperty('--mid-y', `${midY - imageRect.top}px`);
+    
+    // Add to document
+    document.body.appendChild(flyingImage);
+    
+    // Remove element after animation completes
+    setTimeout(() => {
+        if (flyingImage.parentNode) {
+            flyingImage.parentNode.removeChild(flyingImage);
+        }
+    }, 1000);
+}
 
 function saveCart() {
     localStorage.setItem(cartKey, JSON.stringify({
@@ -1284,7 +1451,7 @@ function updateCartUI() {
 
     document.getElementById('cartTotal').textContent = formatNumber(total);
     const itemCount = cart.filter(item => item.id).reduce((sum, item) => sum + item.quantity, 0);
-    document.querySelector('.cart-count').textContent = itemCount + (itemCount === 1 ? ' item added' : ' items added');
+    document.querySelector('.cart-count').textContent = itemCount + (itemCount === 1 ? ' item added' : ' items added in cart');
 
     // Handle delivery/dining button visibility
     <?php if ($delivery_active && $dining_active): ?>

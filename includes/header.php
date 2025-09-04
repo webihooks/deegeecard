@@ -206,6 +206,9 @@
             animation: rotation 1s linear infinite;
         }
         
+        .img-loading-spinner {
+            border-top-color: <?php echo $primary_color; ?>;
+        }
         @keyframes rotation {
             0% {
                 transform: rotate(0deg);
