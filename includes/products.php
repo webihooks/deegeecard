@@ -530,6 +530,8 @@ function placeOrderOnWhatsApp() {
     message += `${window.location.origin}/<?= $profile_url ?>`;
 
 
+    // Add your requested message
+    message += `\n\nAlso share your order with us on WhatsApp — just hit 'Send' 👉`;
 
 
     // Safari-compatible WhatsApp opening
@@ -1494,7 +1496,8 @@ function placeOrder() {
     // Show loading state
     const placeOrderBtn = document.getElementById('placeOrderBtn');
     const originalBtnText = placeOrderBtn.innerHTML;
-    placeOrderBtn.disabled = false;
+    placeOrderBtn.disabled = true;
+    placeOrderBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Order Processing...';
     
     // Send order data to server
     fetch('place_order.php', {
@@ -1535,7 +1538,7 @@ function placeOrder() {
                 // Add 3-second delay before triggering WhatsApp
                 setTimeout(() => {
                     placeOrderOnWhatsApp();
-                }, 3000);
+                }, 2000);
             } else {
                 placeOrderBtn.innerHTML = originalBtnText;
                 placeOrderBtn.disabled = false;
@@ -1700,7 +1703,7 @@ function createConfetti() {
 <!-- Add this to your HTML (before the closing body tag) -->
 <div class="confetti-container" id="confettiContainer"></div>
 
-<!-- Order Success Popup (updated with confetti) -->
+<!-- Order Success Popup -->
 <div class="order-success-popup" id="orderSuccessPopup">
     <div class="order-success-content">
         <div class="order-success-icon">
@@ -1715,6 +1718,35 @@ function createConfetti() {
         </p>
         <h4 class="mb-3">Also share your order with us<br>
             on WhatsApp — just hit 'Send'.</h4>
-        <button class="order-success-btn" onclick="closeOrderSuccessPopup()">OK</button>
+        <button class="order-success-btn" onclick="redirectToProfile()">OK</button>
     </div>
 </div>
+
+<script>
+// Function to redirect to profile page
+function redirectToProfile() {
+    // Get the profile URL from PHP variable
+    const profileUrl = '<?= $profile_url ?>';
+    
+    // Close the popup first
+    closeOrderSuccessPopup();
+    
+    // Redirect to the profile page after a short delay for smooth UX
+    setTimeout(() => {
+        window.location.href = `/${profileUrl}`;
+    }, 300);
+}
+
+// Function to close the order success popup
+function closeOrderSuccessPopup() {
+    const popup = document.getElementById('orderSuccessPopup');
+    popup.classList.remove('active');
+}
+
+// Function to show the order success popup
+function showOrderSuccessPopup() {
+    createConfetti();
+    const popup = document.getElementById('orderSuccessPopup');
+    popup.classList.add('active');
+}
+</script>
