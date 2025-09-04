@@ -8,16 +8,16 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
+$user_products_table = "products_" . $user_id;
 
 header('Content-Type: text/csv');
 header('Content-Disposition: attachment;filename=products.csv');
 
 $output = fopen('php://output', 'w');
 
-// Column headers - includes Tag ID but not Tag Name
+// Column headers
 fputcsv($output, [
     'ID', 
-    'User ID', 
     'Product Name', 
     'Description', 
     'Price', 
@@ -26,22 +26,20 @@ fputcsv($output, [
     'Tag ID'
 ]);
 
-// Query to get products sorted by ID in ascending order
+// Query to get products from the user-specific table
 $sql = "SELECT 
             p.id, 
-            p.user_id, 
             p.product_name, 
             p.description, 
             p.price, 
             p.quantity, 
             p.image_path,
             p.tag_id
-        FROM products p
-        WHERE p.user_id = ? 
-        ORDER BY p.id ASC";  // Changed to sort by ID ascending
+        FROM $user_products_table p
+        LEFT JOIN tags t ON p.tag_id = t.id
+        ORDER BY p.id ASC";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 

@@ -600,12 +600,12 @@ $conn->close();
                                 <a href="export_products.php" class="btn btn-outline-primary mb-3">Download All Products CSV</a>
                                 
                                 <?php if ($current_product_count > 0): ?>
-                                    <a href="products.php?delete_all=1&csrf_token=<?php echo $_SESSION['csrf_token']; ?>" 
+                                    <!-- <a href="products.php?delete_all=1&csrf_token=<?php //echo $_SESSION['csrf_token']; ?>" 
                                        class="btn btn-outline-danger mb-3"
                                        style="" 
                                        onclick="return confirm('Are you sure you want to delete ALL your products? This action cannot be undone.')">
                                        Remove All Products
-                                    </a>
+                                    </a> -->
                                 <?php endif; ?>
 
                                 <?php if (empty($products)): ?>

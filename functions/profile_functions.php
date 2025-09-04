@@ -29,12 +29,6 @@ function getSocialLinks($conn, $user_id) {
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-// function getProducts($conn, $user_id) {
-//     $stmt = $conn->prepare("SELECT product_name, description, price, quantity, image_path FROM products WHERE user_id = ?");
-//     $stmt->execute([$user_id]);
-//     return $stmt->fetchAll(PDO::FETCH_ASSOC);
-// }
-
 function getProducts($conn, $user_id) {
     // Create the user-specific table name
     $table_name = "products_" . $user_id;
