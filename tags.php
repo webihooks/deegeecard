@@ -30,6 +30,7 @@ $stmt->close();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tag_id = isset($_POST['tag_id']) ? $_POST['tag_id'] : null;
     $tag = trim($_POST['tag']);
+    $is_active = isset($_POST['is_active']) ? 1 : 0;
 
     // Validate inputs
     if (empty($tag)) {
@@ -37,14 +38,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         if ($tag_id) {
             // Update existing tag
-            $sql = "UPDATE tags SET tag = ? WHERE id = ? AND user_id = ?";
+            $sql = "UPDATE tags SET tag = ?, is_active = ? WHERE id = ? AND user_id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("sii", $tag, $tag_id, $user_id);
+            $stmt->bind_param("siii", $tag, $is_active, $tag_id, $user_id);
         } else {
             // Add new tag
-            $sql = "INSERT INTO tags (user_id, tag, position) VALUES (?, ?, (SELECT IFNULL(MAX(position), 0) + 1 FROM (SELECT * FROM tags) AS temp WHERE user_id = ?))";
+            $sql = "INSERT INTO tags (user_id, tag, position, is_active) VALUES (?, ?, (SELECT IFNULL(MAX(position), 0) + 1 FROM (SELECT * FROM tags) AS temp WHERE user_id = ?), ?)";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("isi", $user_id, $tag, $user_id);
+            $stmt->bind_param("isii", $user_id, $tag, $user_id, $is_active);
         }
 
         if ($stmt->execute()) {
@@ -54,6 +55,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $stmt->close();
     }
+}
+
+// Handle toggle active status request
+if (isset($_GET['toggle'])) {
+    $tag_id = $_GET['toggle'];
+    
+    // Get current status
+    $sql = "SELECT is_active FROM tags WHERE id = ? AND user_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ii", $tag_id, $user_id);
+    $stmt->execute();
+    $stmt->bind_result($current_status);
+    $stmt->fetch();
+    $stmt->close();
+    
+    // Toggle status
+    $new_status = $current_status ? 0 : 1;
+    
+    $sql = "UPDATE tags SET is_active = ? WHERE id = ? AND user_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("iii", $new_status, $tag_id, $user_id);
+    
+    if ($stmt->execute()) {
+        $success_message = "Tag status updated successfully!";
+    } else {
+        $error_message = "Error updating tag status: " . $conn->error;
+    }
+    $stmt->close();
 }
 
 // Handle edit request
@@ -71,7 +100,6 @@ if (isset($_GET['edit'])) {
         $is_edit_mode = true;
     }
 }
-
 
 // Handle delete request
 if (isset($_GET['delete'])) {
@@ -138,7 +166,7 @@ $conn->close();
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-       .drag-handle{cursor:move;touch-action:none;padding:8px 12px;display:inline-block}.dragging{opacity:.8;box-shadow:0 0 10px rgba(0,0,0,.2)}.dragging-active{overflow:hidden!important}.ui-sortable-helper{transform:scale(1.02);box-shadow:0 5px 15px rgba(0,0,0,.1);background-color:#fff}@media (pointer:coarse){.drag-handle{width:40px;height:40px;display:flex;align-items:center;justify-content:center}table tbody tr{padding:8px 0}}.table tbody tr{cursor:move;transition:.2s}@media screen and (max-width:768px){.table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch}table{width:100%;font-size:13px}td,th{padding:6px 4px}.drag-handle{width:30px;height:30px;padding:5px}.drag-handle i{font-size:14px}.btn{padding:4px 8px;font-size:12px;margin:2px 0;display:block}.card-body{padding:10px}.form-control{font-size:14px;padding:6px 8px}.form-label{font-size:14px;margin-bottom:5px}.alert{padding:8px 12px;font-size:13px}.ui-sortable-helper{transform:scale(1.01);box-shadow:0 2px 8px rgba(0,0,0,.1)}table tbody tr{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}td:nth-child(4){white-space:nowrap}td:nth-child(3),th:nth-child(3){display:none}}
+        .drag-handle{cursor:move;touch-action:none;padding:8px 12px;display:inline-block}.dragging{opacity:.8;box-shadow:0 0 10px rgba(0,0,0,.2)}.dragging-active{overflow:hidden!important}.ui-sortable-helper{transform:scale(1.02);box-shadow:0 5px 15px rgba(0,0,0,.1);background-color:#fff}@media (pointer:coarse){.drag-handle{width:40px;height:40px;display:flex;align-items:center;justify-content:center}table tbody tr{padding:8px 0}}.table tbody tr{cursor:move;transition:.2s}@media screen and (max-width:768px){.table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch}table{width:100%;font-size:13px}td,th{padding:6px 4px}.drag-handle{width:30px;height:30px;padding:5px}.drag-handle i{font-size:14px}.btn{padding:4px 8px;font-size:12px;margin:2px 0;display:inline-block;min-width:60px}.card-body{padding:10px}.form-control{font-size:14px;padding:6px 8px}.form-label{font-size:14px;margin-bottom:5px}.alert{padding:8px 12px;font-size:13px}.ui-sortable-helper{transform:scale(1.01);box-shadow:0 2px 8px rgba(0,0,0,.1)}table tbody tr{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}td:first-child,td:nth-child(4),th:first-child,th:nth-child(4){display:none}td:nth-child(2),th:nth-child(2){min-width:120px}td:nth-child(3),th:nth-child(3){min-width:80px}td:nth-child(5),th:nth-child(5){min-width:150px;white-space:nowrap}.status-toggle{font-size:11px;padding:3px 6px}}.status-toggle{min-width:70px}
     </style>
 </head>
 
@@ -150,7 +178,7 @@ $conn->close();
         <div class="page-content">
             <div class="container">
                 <div class="row">
-                    <div class="col-xl-9">
+                    <div class="col-xl-12">
                         <?php if ($success_message): ?>
                             <div class="alert alert-success"><?php echo $success_message; ?></div>
                         <?php endif; ?>
@@ -167,12 +195,20 @@ $conn->close();
                                 <form id="tagForm" method="POST" action="tags.php">
                                     <input type="hidden" name="tag_id" value="<?php echo $is_edit_mode ? $tag_data['id'] : ''; ?>">
                                     
-                                    <div class="mb-3">
-                                        <label for="tag" class="form-label">Tag *</label>
-                                        <input type="text" class="form-control" id="tag" name="tag" required 
-                                            value="<?php echo $is_edit_mode ? htmlspecialchars($tag_data['tag']) : ''; ?>">
-                                        <small class="text-muted">Enter a descriptive tag to categorize your content</small>
-                                    </div>
+
+<div class="mb-3">
+    <label for="tag" class="form-label">Tag *</label>
+    <input type="text" class="form-control" id="tag" name="tag" required 
+        value="<?php echo $is_edit_mode ? htmlspecialchars($tag_data['tag']) : ''; ?>">
+    <small class="text-muted">Enter a descriptive tag to categorize your content</small>
+</div>
+
+<div class="mb-3 form-check form-switch">
+    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+        <?php echo ($is_edit_mode && $tag_data['is_active'] == 1) || !$is_edit_mode ? 'checked' : ''; ?>>
+    <label class="form-check-label" for="is_active">Active</label>
+    <small class="text-muted d-block">Inactive tags won't be available for selection</small>
+</div>
                                     
                                     <button type="submit" class="btn btn-primary">
                                         <?php echo $is_edit_mode ? 'Update' : 'Save'; ?> Tag
@@ -202,6 +238,7 @@ $conn->close();
                                                 <tr>
                                                     <th>ID</th>
                                                     <th>Tag</th>
+                                                    <th>Status</th>
                                                     <th>Position</th>
                                                     <th>Actions</th>
                                                 </tr>
@@ -211,6 +248,12 @@ $conn->close();
                                                     <tr>
                                                         <td><?php echo $tag['id']; ?></td>
                                                         <td><?php echo htmlspecialchars($tag['tag']); ?></td>
+                                                        <td>
+                                                            <a href="tags.php?toggle=<?php echo $tag['id']; ?>" 
+                                                               class="btn btn-sm <?php echo $tag['is_active'] ? 'btn-success' : 'btn-secondary'; ?>">
+                                                                <?php echo $tag['is_active'] ? 'Active' : 'Inactive'; ?>
+                                                            </a>
+                                                        </td>
                                                         <td><?php echo $tag['position']; ?></td>
                                                         <td>
                                                             <span class="drag-handle"><i class="fas fa-arrows-alt"></i></span>

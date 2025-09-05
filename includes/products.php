@@ -297,89 +297,121 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-<div class="row" id="productsContainer">
-        <?php if (!empty($products)): ?>
-            <?php foreach ($products as $product): ?>
-                <div class="col-sm-12 product-item" 
-     data-name="<?= htmlspecialchars(strtolower($product['product_name'])) ?>" 
-     data-desc="<?= htmlspecialchars(strtolower($product['description'])) ?>"
-     data-tag="<?= isset($product['tag']) ? htmlspecialchars(strtolower($product['tag'])) : '' ?>">
-                    <div class="card product-card">
-                        <div class="card-body">
-                            <h5 class="card-title"><?= htmlspecialchars($product['product_name']) ?></h5>
-                            <p class="card-text">
-                                <?= htmlspecialchars($product['description']) ?>
-                            </p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-primary fw-bold">₹<?= number_format($product['price']) ?></span>
-                                <span class="badge bg-<?= ($product['quantity'] > 0) ? 'success' : 'danger' ?>" style="display: none;">
-                                    <?= ($product['quantity'] > 0) ? 'In Stock' : 'Out of Stock' ?>
-                                </span>
-                            </div>
-                            <?php if ($product['quantity'] > 0): ?>
-                                <small class="text-muted">Quantity: <?= $product['quantity'] ?></small>
-                            <?php endif; ?>
-                            <?php if ($product['quantity'] > 0 && ($delivery_active || $dining_active) && $is_store_open): ?>
-                                <div class="mt-3 cart_btn_group <?= empty($product['image_path']) ? 'top' : '' ?>">
-                                    <button class="btn btn-primary w-100 add-to-cart" 
-                                            data-id="<?= htmlspecialchars($product['product_name']) ?>" 
-                                            data-name="<?= htmlspecialchars($product['product_name']) ?>" 
-                                            data-price="<?= $product['price'] ?>" 
-                                            data-max="<?= $product['quantity'] ?>" 
-                                            data-image="<?= htmlspecialchars($product['image_path']) ?>">
-                                        <i class="bi bi-cart-plus"></i> Add
-                                    </button>
-                                </div>
-                            <?php elseif ($product['quantity'] > 0 && !$is_store_open): ?>
-                                <div class="mt-3">
-                                    <small class="text-muted">
-                                        <i class="bi bi-clock"></i> Currently unavailable (Store closed)
-                                    </small>
-                                </div>
-                            <?php endif; ?>
-                        </div>
 
-                        <?php if (!empty($product['image_path'])): ?>
-                            <div class="img-group">
-                                <!-- Lazy loading with fade-in effect -->
-                                <div class="aspect-ratio-box">
-                                    <img 
-                                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-                                        data-src="<?= htmlspecialchars($product['image_path']) ?>" 
-                                        class="card-img-top product-img product-img-lazy product-img-placeholder" 
-                                        alt="<?= htmlspecialchars($product['product_name']) ?>" 
-                                        onerror="handleImageError(this)">
-                                    <div class="img-loading-spinner"></div>
-                                </div>
+
+
+
+<div class="row" id="productsContainer">
+    <?php 
+    // Get products from user-specific table with active tags or no tags
+    $table_name = "products_" . $user_id;
+
+    // Check if the user-specific products table exists
+    $check_table = $conn->prepare("SHOW TABLES LIKE ?");
+    $check_table->execute([$table_name]);
+    $table_exists = $check_table->fetch(PDO::FETCH_ASSOC);
+
+    if ($table_exists) {
+        // Fetch products from user-specific table with active tags or no tags
+        $products_sql = "SELECT p.*, t.tag, t.is_active 
+                         FROM $table_name p 
+                         LEFT JOIN tags t ON p.tag_id = t.id 
+                         WHERE t.is_active = 1 OR p.tag_id IS NULL
+                         ORDER BY p.id ASC";
+        $products_stmt = $conn->prepare($products_sql);
+        $products_stmt->execute();
+        $products = $products_stmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $products = []; // Empty array if table doesn't exist
+    }
+    ?>
+
+    <?php if (!empty($products)): ?>
+        <?php foreach ($products as $product): ?>
+            <div class="col-sm-12 product-item" 
+                 data-name="<?= htmlspecialchars(strtolower($product['product_name'])) ?>" 
+                 data-desc="<?= htmlspecialchars(strtolower($product['description'])) ?>"
+                 data-tag="<?= isset($product['tag']) ? htmlspecialchars(strtolower($product['tag'])) : '' ?>">
+                <div class="card product-card">
+                    <div class="card-body">
+                        <h5 class="card-title"><?= htmlspecialchars($product['product_name']) ?></h5>
+                        <p class="card-text">
+                            <?= htmlspecialchars($product['description']) ?>
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-primary fw-bold">₹<?= number_format($product['price']) ?></span>
+                            <span class="badge bg-<?= ($product['quantity'] > 0) ? 'success' : 'danger' ?>" style="display: none;">
+                                <?= ($product['quantity'] > 0) ? 'In Stock' : 'Out of Stock' ?>
+                            </span>
+                        </div>
+                        <?php if ($product['quantity'] > 0): ?>
+                            <small class="text-muted">Quantity: <?= $product['quantity'] ?></small>
+                        <?php endif; ?>
+                        <?php if ($product['quantity'] > 0 && ($delivery_active || $dining_active) && $is_store_open): ?>
+                            <div class="mt-3 cart_btn_group <?= empty($product['image_path']) ? 'top' : '' ?>">
+                                <button class="btn btn-primary w-100 add-to-cart" 
+                                        data-id="<?= htmlspecialchars($product['product_name']) ?>" 
+                                        data-name="<?= htmlspecialchars($product['product_name']) ?>" 
+                                        data-price="<?= $product['price'] ?>" 
+                                        data-max="<?= $product['quantity'] ?>" 
+                                        data-image="<?= htmlspecialchars($product['image_path']) ?>">
+                                    <i class="bi bi-cart-plus"></i> Add
+                                </button>
+                            </div>
+                        <?php elseif ($product['quantity'] > 0 && !$is_store_open): ?>
+                            <div class="mt-3">
+                                <small class="text-muted">
+                                    <i class="bi bi-clock"></i> Currently unavailable (Store closed)
+                                </small>
                             </div>
                         <?php endif; ?>
+                    </div>
 
-                        <script>
-                            // Handle image errors
-                            function handleImageError(img) {
-                                img.style.display = 'none';
-                                const spinner = img.parentElement.querySelector('.img-loading-spinner');
-                                if (spinner) spinner.style.display = 'none';
-                                
-                                // Find the closest parent `.product-card`, then navigate to `.card-body .cart_btn_group`
-                                const productCard = img.closest('.product-card');
-                                if (productCard) {
-                                    const cartBtnGroup = productCard.querySelector('.card-body .cart_btn_group');
-                                    if (cartBtnGroup) {
-                                        cartBtnGroup.classList.add('top');
-                                    }
+                    <?php if (!empty($product['image_path'])): ?>
+                        <div class="img-group">
+                            <!-- Lazy loading with fade-in effect -->
+                            <div class="aspect-ratio-box">
+                                <img 
+                                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
+                                    data-src="<?= htmlspecialchars($product['image_path']) ?>" 
+                                    class="card-img-top product-img product-img-lazy product-img-placeholder" 
+                                    alt="<?= htmlspecialchars($product['product_name']) ?>" 
+                                    onerror="handleImageError(this)">
+                                <div class="img-loading-spinner"></div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <script>
+                        // Handle image errors
+                        function handleImageError(img) {
+                            img.style.display = 'none';
+                            const spinner = img.parentElement.querySelector('.img-loading-spinner');
+                            if (spinner) spinner.style.display = 'none';
+                            
+                            // Find the closest parent `.product-card`, then navigate to `.card-body .cart_btn_group`
+                            const productCard = img.closest('.product-card');
+                            if (productCard) {
+                                const cartBtnGroup = productCard.querySelector('.card-body .cart_btn_group');
+                                if (cartBtnGroup) {
+                                    cartBtnGroup.classList.add('top');
                                 }
                             }
-                        </script>
-                    </div>
+                        }
+                    </script>
                 </div>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <div class="col-12">
-                <div class="alert alert-info">No products available yet.</div>
             </div>
-        <?php endif; ?>
-    </div>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <div class="col-12">
+            <div class="alert alert-info">No products available yet.</div>
+        </div>
+    <?php endif; ?>
+</div>
+
+
+
+
 
 
     <!-- Move search to bottom and make it sticky -->
@@ -387,8 +419,19 @@ document.addEventListener('DOMContentLoaded', function() {
         <!-- Add tags filter above search -->
         <div class="tags-filter-container">
             <div class="tags-scroll">
-                <button class="tag-btn active" data-tag="all">All</button>
-                <?php foreach ($tags as $tag): ?>
+                <?php 
+                // Fetch only active tags
+                $active_tags_sql = "SELECT * FROM tags WHERE user_id = :user_id AND is_active = 1 ORDER BY position ASC";
+                $active_tags_stmt = $conn->prepare($active_tags_sql);
+                $active_tags_stmt->execute([':user_id' => $user_id]);
+                $active_tags = $active_tags_stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                // Only show "All" button if there are active tags
+                if (!empty($active_tags)): ?>
+                    <button class="tag-btn active" data-tag="all">All</button>
+                <?php endif; ?>
+                
+                <?php foreach ($active_tags as $tag): ?>
                     <button class="tag-btn" data-tag="<?= htmlspecialchars(strtolower($tag['tag'])) ?>">
                         <?= htmlspecialchars($tag['tag']) ?>
                     </button>
@@ -403,6 +446,8 @@ document.addEventListener('DOMContentLoaded', function() {
             </button>
         </div>
     </div>
+
+
 
     <?php if ($delivery_active || $dining_active): ?>
         <div class="cart-button-container" style="display: none;">

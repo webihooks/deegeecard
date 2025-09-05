@@ -42,8 +42,13 @@ function getProducts($conn, $user_id) {
         return []; // Return empty array if table doesn't exist
     }
     
-    // Fetch products from the user-specific table
-    $stmt = $conn->prepare("SELECT id, product_name, description, price, quantity, image_path, tag_id FROM $table_name ORDER BY id ASC");
+    // Fetch only active products from the user-specific table
+    $stmt = $conn->prepare("
+        SELECT p.id, p.product_name, p.description, p.price, p.quantity, p.image_path, p.tag_id 
+        FROM $table_name p 
+        WHERE p.is_active = 1 
+        ORDER BY p.id ASC
+    ");
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }

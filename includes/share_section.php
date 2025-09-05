@@ -1,11 +1,12 @@
 <div class="share-section">
     <h6>Share Profile</h6>
     <div class="share-buttons">
+
         <?php 
         $current_url = "https://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-        $share_text = "📱 No waiting, no calling – Just tap & taste! Order online from";
+        $share_text = "🍴 We're Now Online! 🎉\nEnjoy exclusive discounts & offers on all your favourite dishes.\nOrder your cravings in just a click!👇\n\n🔗 Order Now:";
         if ($business_info && !empty($business_info['business_name'])) {
-            $share_text .= " - " . htmlspecialchars($business_info['business_name']);
+            $share_text;
         }
         ?>
         
