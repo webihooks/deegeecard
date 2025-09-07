@@ -176,7 +176,7 @@ $conn->close();
     <div class="card-body">
         <div class="iframe-container">
             <!-- <iframe src="https://gemini.google.com/share/ab63b1b9c0b8" allowfullscreen></iframe> -->
-            <iframe src="http://gemini.google.com/share/bccb685f59ac" allowfullscreen></iframe>
+            <iframe id="dev_1" src="https://gemini.google.com/share/bccb685f59ac" allowfullscreen></iframe>
         </div>
     </div>
 </div>

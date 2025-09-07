@@ -37,6 +37,7 @@ $create_table_sql = "CREATE TABLE IF NOT EXISTS $user_products_table (
     quantity INT(11) NOT NULL,
     image_path VARCHAR(500),
     tag_id INT(11),
+    is_active TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 )";
@@ -46,7 +47,7 @@ if (!$conn->query($create_table_sql)) {
 }
 
 // Check if all required columns exist, if not add them
-$required_columns = ['quantity', 'tag_id', 'image_path'];
+$required_columns = ['quantity', 'tag_id', 'image_path', 'is_active'];
 foreach ($required_columns as $column) {
     $check_column_sql = "SHOW COLUMNS FROM $user_products_table LIKE '$column'";
     $result = $conn->query($check_column_sql);
@@ -57,12 +58,46 @@ foreach ($required_columns as $column) {
             $add_column_sql = "ALTER TABLE $user_products_table ADD COLUMN $column INT(11)";
         } elseif ($column === 'image_path') {
             $add_column_sql = "ALTER TABLE $user_products_table ADD COLUMN $column VARCHAR(500)";
+        } elseif ($column === 'is_active') {
+            $add_column_sql = "ALTER TABLE $user_products_table ADD COLUMN $column TINYINT(1) DEFAULT 1";
         }
         
         if (!$conn->query($add_column_sql)) {
             $error_message = "Error adding $column column: " . $conn->error;
         }
     }
+}
+
+// Handle toggle active status
+if (isset($_GET['toggle_status'])) {
+    $product_id = $_GET['toggle_status'];
+    
+    // Get current status
+    $sql = "SELECT is_active FROM $user_products_table WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $product_id);
+    $stmt->execute();
+    $stmt->bind_result($current_status);
+    $stmt->fetch();
+    $stmt->close();
+    
+    // Toggle status
+    $new_status = $current_status ? 0 : 1;
+    
+    $sql = "UPDATE $user_products_table SET is_active = ? WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ii", $new_status, $product_id);
+    
+    if ($stmt->execute()) {
+        $success_message = "Product status updated successfully!";
+    } else {
+        $error_message = "Error updating product status: " . $conn->error;
+    }
+    $stmt->close();
+    
+    // Redirect to avoid resubmission
+    header("Location: products.php");
+    exit();
 }
 
 // Check user's subscription and product limits
@@ -179,6 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $price = trim($_POST['price']);
     $quantity = trim($_POST['quantity']);
     $tag_id = isset($_POST['tag_id']) && !empty($_POST['tag_id']) ? $_POST['tag_id'] : null;
+    $is_active = isset($_POST['is_active']) ? 1 : 0;
 
     // Validate inputs
     if (empty($product_name) || empty($price) || empty($quantity)) {
@@ -236,19 +272,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($product_id) {
                     // Update existing product in user's table
                     if (!empty($image_path)) {
-                        $sql = "UPDATE $user_products_table SET product_name = ?, description = ?, price = ?, quantity = ?, image_path = ?, tag_id = ? WHERE id = ?";
+                        $sql = "UPDATE $user_products_table SET product_name = ?, description = ?, price = ?, quantity = ?, image_path = ?, tag_id = ?, is_active = ? WHERE id = ?";
                         $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("ssdssii", $product_name, $description, $price, $quantity, $image_path, $tag_id, $product_id);
+                        $stmt->bind_param("ssdssiii", $product_name, $description, $price, $quantity, $image_path, $tag_id, $is_active, $product_id);
                     } else {
-                        $sql = "UPDATE $user_products_table SET product_name = ?, description = ?, price = ?, quantity = ?, image_path = NULL, tag_id = ? WHERE id = ?";
+                        $sql = "UPDATE $user_products_table SET product_name = ?, description = ?, price = ?, quantity = ?, image_path = NULL, tag_id = ?, is_active = ? WHERE id = ?";
                         $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("ssdiii", $product_name, $description, $price, $quantity, $tag_id, $product_id);
+                        $stmt->bind_param("ssdiiii", $product_name, $description, $price, $quantity, $tag_id, $is_active, $product_id);
                     }
                 } else {
                     // Add new product to user's table
-                    $sql = "INSERT INTO $user_products_table (product_name, description, price, quantity, image_path, tag_id) VALUES (?, ?, ?, ?, ?, ?)";
+                    $sql = "INSERT INTO $user_products_table (product_name, description, price, quantity, image_path, tag_id, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)";
                     $stmt = $conn->prepare($sql);
-                    $stmt->bind_param("ssdisi", $product_name, $description, $price, $quantity, $image_path, $tag_id);
+                    $stmt->bind_param("ssdisii", $product_name, $description, $price, $quantity, $image_path, $tag_id, $is_active);
                 }
 
                 if ($stmt->execute()) {
@@ -433,50 +469,7 @@ $conn->close();
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.19.3/jquery.validate.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        select[multiple] {
-            min-height: 100px;
-        }
-        .table th {
-            background-color: #f8f9fa;
-            font-weight: 600;
-        }
-        .product-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .product-table th, 
-        .product-table td {
-            padding: 12px;
-            border: 1px solid #dee2e6;
-            vertical-align: middle;
-        }
-        .product-img {
-            max-width: 60px;
-            max-height: 60px;
-            border-radius: 4px;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-        }
-        .btn-sm {
-            padding: 5px 10px;
-            font-size: 12px;
-        }
-        .search-container {
-            display: flex;
-            margin-bottom: 20px;
-            gap: 10px;
-        }
-        .search-container input {
-            flex: 1;
-        }
-        .no-results {
-            text-align: center;
-            padding: 20px;
-            font-style: italic;
-            color: #6c757d;
-        }
+        select[multiple]{min-height:100px}.table th{background-color:#f8f9fa;font-weight:600}.product-table{width:100%;border-collapse:collapse}.product-table td,.product-table th{padding:12px;border:1px solid #dee2e6;vertical-align:middle}.product-img{max-width:60px;max-height:60px;border-radius:4px}.action-buttons{display:flex;gap:8px}.btn-sm{padding:5px 10px;font-size:12px}.search-container{display:flex;margin-bottom:20px;gap:10px}.search-container input{flex:1}.no-results{text-align:center;padding:20px;font-style:italic;color:#6c757d}.status-toggle{display:inline-block;width:80px;text-align:center}.form-check-input{margin-top:.3rem}.status-col{width:100px}@media (max-width:1200px){.card-header{flex-direction:column;align-items:flex-start!important}.card-header .input-group{width:100%;margin-top:15px}}@media (max-width:992px){.table-responsive{overflow-x:auto}.product-table{min-width:800px}.action-buttons{flex-wrap:nowrap}.action-buttons .btn{white-space:nowrap}}@media (max-width:768px){.form-row,.search-container,.search-form{flex-direction:column}.col-md-4,.col-md-6{width:100%;margin-bottom:15px}.card-header h4{margin-bottom:15px}.btn-group-responsive{display:flex;flex-direction:column;gap:10px}.btn-group-responsive .btn{width:100%;margin-bottom:5px}.action-buttons{flex-direction:row;flex-wrap:wrap;justify-content:center}.search-form .btn{margin-top:10px;margin-left:0!important}}@media (max-width:576px){.container{padding-left:10px;padding-right:10px}.card-body{padding:15px}.product-table td,.product-table th{padding:8px}.btn{padding:8px 12px;font-size:14px}.action-buttons{flex-direction:row;flex-wrap:nowrap;justify-content:center}.action-buttons .btn{padding:6px 10px;font-size:12px}.modal-dialog{margin:10px}.status-toggle{width:70px;font-size:12px}}.mobile-product-card{display:none;border:1px solid #dee2e6;border-radius:5px;padding:15px;margin-bottom:15px;background:#fff}.mobile-product-field{display:flex;justify-content:space-between;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #f1f1f1}.mobile-product-field:last-child{border-bottom:none}.mobile-field-label{font-weight:700;color:#495057;min-width:100px}.mobile-field-value{flex:1;text-align:right}@media (max-width:992px){.product-table{display:none}.mobile-product-card{display:block}}.search-form{display:flex;width:100%}.mobile-actions{display:flex;justify-content:center;gap:8px;margin-top:15px;flex-wrap:wrap}.mobile-actions .btn{flex:1;min-width:80px;max-width:120px}
     </style>
 </head>
 
@@ -550,15 +543,23 @@ $conn->close();
                                             echo $is_edit_mode ? htmlspecialchars($product_data['description']) : ''; ?></textarea>
                                     </div>
                                     <div class="row">
-                                        <div class="col-md-6 mb-3">
+                                        <div class="col-md-4 mb-3">
                                             <label for="price" class="form-label">Price *</label>
                                             <input type="number" step="0.01" class="form-control" id="price" name="price" required 
                                                 value="<?php echo $is_edit_mode ? $product_data['price'] : ''; ?>">
                                         </div>
-                                        <div class="col-md-6 mb-3">
+                                        <div class="col-md-4 mb-3">
                                             <label for="quantity" class="form-label">Quantity *</label>
                                             <input type="number" class="form-control" id="quantity" name="quantity" required 
                                                 value="<?php echo $is_edit_mode ? $product_data['quantity'] : ''; ?>">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Status</label>
+                                            <div class="form-check form-switch mt-2">
+                                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                                    <?php echo ($is_edit_mode && isset($product_data['is_active']) && $product_data['is_active'] == 0) ? '' : 'checked'; ?>>
+                                                <label class="form-check-label" for="is_active">Active</label>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="mb-3">
@@ -570,12 +571,14 @@ $conn->close();
                                             </div>
                                         <?php endif; ?>
                                     </div>
-                                    <button type="submit" class="btn btn-primary" <?php echo (!$subscription_active && !$is_edit_mode) ? 'disabled' : ''; ?>>
-                                        <?php echo $is_edit_mode ? 'Update' : 'Save'; ?> Product
-                                    </button>
-                                    <?php if ($is_edit_mode): ?>
-                                        <a href="products.php" class="btn btn-secondary">Cancel</a>
-                                    <?php endif; ?>
+                                    <div class="btn-group-responsive">
+                                        <button type="submit" class="btn btn-primary" <?php echo (!$subscription_active && !$is_edit_mode) ? 'disabled' : ''; ?>>
+                                            <?php echo $is_edit_mode ? 'Update' : 'Save'; ?> Product
+                                        </button>
+                                        <?php if ($is_edit_mode): ?>
+                                            <a href="products.php" class="btn btn-secondary">Cancel</a>
+                                        <?php endif; ?>
+                                    </div>
                                 </form>
                             </div>
                         </div>
@@ -583,8 +586,7 @@ $conn->close();
                         <div class="card mt-4">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h4 class="card-title mb-0">Your Products</h4>
-                                <form method="GET" action="products.php" class="d-flex">
-                                    <input type="hidden" name="search" value="<?php echo htmlspecialchars($search_query); ?>">
+                                <form method="GET" action="products.php" class="search-form">
                                     <div class="input-group">
                                         <input type="text" class="form-control" placeholder="Search products..." name="search" value="<?php echo htmlspecialchars($search_query); ?>">
                                         <button class="btn btn-outline-secondary" type="submit">
@@ -597,16 +599,17 @@ $conn->close();
                                 </form>
                             </div>
                             <div class="card-body">
-                                <a href="export_products.php" class="btn btn-outline-primary mb-3">Download All Products CSV</a>
-                                
-                                <?php if ($current_product_count > 0): ?>
-                                    <!-- <a href="products.php?delete_all=1&csrf_token=<?php //echo $_SESSION['csrf_token']; ?>" 
-                                       class="btn btn-outline-danger mb-3"
-                                       style="" 
-                                       onclick="return confirm('Are you sure you want to delete ALL your products? This action cannot be undone.')">
-                                       Remove All Products
-                                    </a> -->
-                                <?php endif; ?>
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    <a href="export_products.php" class="btn btn-outline-primary">Download All Products CSV</a>
+                                    
+                                    <?php if ($current_product_count > 0): ?>
+<!-- <a href="products.php?delete_all=1&csrf_token=<?php //echo $_SESSION['csrf_token']; ?>" 
+                                           class="btn btn-outline-danger"
+                                           onclick="return confirm('Are you sure you want to delete ALL your products? This action cannot be undone.')">
+                                           Remove All Products
+                                        </a> -->
+                                    <?php endif; ?>
+                                </div>
 
                                 <?php if (empty($products)): ?>
                                     <div class="no-results">
@@ -623,14 +626,15 @@ $conn->close();
                                             <thead>
                                                 <tr>
                                                     <th>Sr.No.</th>
-                                                    <th>Product ID</th>
+                                                    <th>ID</th>
                                                     <th>Image</th>
                                                     <th>Name</th>
                                                     <th>Tag</th>
                                                     <th>Description</th>
                                                     <th>Price</th>
-                                                    <th>Quantity</th>
-                                                    <th width="250">Actions</th>
+                                                    <th>Qty</th>
+                                                    <th class="status-col">Status</th>
+                                                    <th width="140">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -664,23 +668,126 @@ $conn->close();
                                                         <td>₹<?php echo number_format($product['price']); ?></td>
                                                         <td><?php echo $product['quantity']; ?></td>
                                                         <td>
+                                                            <a href="products.php?toggle_status=<?php echo $product['id']; ?>" 
+                                                               class="btn btn-sm status-toggle <?php echo $product['is_active'] ? 'btn-success' : 'btn-secondary'; ?>"
+                                                               onclick="return confirm('Are you sure you want to <?php echo $product['is_active'] ? 'deactivate' : 'activate'; ?> this product?')">
+                                                                <?php echo $product['is_active'] ? 'Active' : 'Inactive'; ?>
+                                                            </a>
+                                                        </td>
+                                                        <td>
                                                             <div class="action-buttons">
                                                                 <?php if (!empty($product['image_path'])): ?>
                                                                     <a href="products.php?remove_image=<?php echo $product['id']; ?>" 
                                                                        class="btn btn-sm btn-warning" 
                                                                        title="Remove Image"
-                                                                       onclick="return confirm('Are you sure you want to remove the image for this product?')">Remove Image
+                                                                       onclick="return confirm('Are you sure you want to remove the image for this product?')">
+                                                                       <i class="fas fa-trash-alt"></i>
                                                                     </a>
                                                                 <?php endif; ?>
-                                                                <a href="products.php?edit=<?php echo $product['id']; ?>" class="btn btn-sm btn-primary">Edit</a>
+                                                                <a href="products.php?edit=<?php echo $product['id']; ?>" class="btn btn-sm btn-primary">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </a>
                                                                 <a href="products.php?delete=<?php echo $product['id']; ?>" class="btn btn-sm btn-danger" 
-                                                                    onclick="return confirm('Are you sure you want to delete this product?')">Delete</a>
+                                                                    onclick="return confirm('Are you sure you want to delete this product?')">
+                                                                    <i class="fas fa-times"></i>
+                                                                </a>
                                                             </div>
                                                         </td>
                                                     </tr>
                                                 <?php endforeach; ?>
                                             </tbody>
                                         </table>
+                                    </div>
+                                    
+                                    <!-- Mobile product cards (hidden on larger screens) -->
+                                    <div class="mobile-products-list">
+                                        <?php 
+                                        $counter = 1;
+                                        foreach ($products as $product): 
+                                            // Highlight search terms if search is active
+                                            $highlighted_name = $product['product_name'];
+                                            $highlighted_tag = $product['tag_name'] ?? '';
+                                            $highlighted_desc = $product['description'];
+                                            
+                                            if (!empty($search_query)) {
+                                                $highlighted_name = preg_replace("/(" . preg_quote($search_query, '/') . ")/i", "<mark>$1</mark>", $product['product_name']);
+                                                $highlighted_tag = $product['tag_name'] ? preg_replace("/(" . preg_quote($search_query, '/') . ")/i", "<mark>$1</mark>", $product['tag_name']) : '';
+                                                $highlighted_desc = preg_replace("/(" . preg_quote($search_query, '/') . ")/i", "<mark>$1</mark>", $product['description']);
+                                            }
+                                        ?>
+                                            <div class="mobile-product-card">
+                                                <div class="mobile-product-field">
+                                                    <span class="mobile-field-label">Sr.No.</span>
+                                                    <span class="mobile-field-value"><?php echo $counter++; ?></span>
+                                                </div>
+                                                <div class="mobile-product-field">
+                                                    <span class="mobile-field-label">ID</span>
+                                                    <span class="mobile-field-value"><?php echo $product['id']; ?></span>
+                                                </div>
+                                                <div class="mobile-product-field">
+                                                    <span class="mobile-field-label">Image</span>
+                                                    <span class="mobile-field-value">
+                                                        <?php if (!empty($product['image_path'])): ?>
+                                                            <img src="<?php echo $product['image_path']; ?>" alt="Product Image" style="max-width: 60px; max-height: 60px; border-radius: 4px;">
+                                                        <?php else: ?>
+                                                            <span class="text-muted">No image</span>
+                                                        <?php endif; ?>
+                                                    </span>
+                                                </div>
+                                                <div class="mobile-product-field">
+                                                    <span class="mobile-field-label">Name</span>
+                                                    <span class="mobile-field-value"><?php echo $highlighted_name; ?></span>
+                                                </div>
+                                                <div class="mobile-product-field">
+                                                    <span class="mobile-field-label">Tag</span>
+                                                    <span class="mobile-field-value"><?php echo !empty($highlighted_tag) ? $highlighted_tag : '--'; ?></span>
+                                                </div>
+                                                <div class="mobile-product-field">
+                                                    <span class="mobile-field-label">Description</span>
+                                                    <span class="mobile-field-value"><?php echo $highlighted_desc; ?></span>
+                                                </div>
+                                                <div class="mobile-product-field">
+                                                    <span class="mobile-field-label">Price</span>
+                                                    <span class="mobile-field-value">₹<?php echo number_format($product['price']); ?></span>
+                                                </div>
+                                                <div class="mobile-product-field">
+                                                    <span class="mobile-field-label">Qty</span>
+                                                    <span class="mobile-field-value"><?php echo $product['quantity']; ?></span>
+                                                </div>
+                                                <div class="mobile-product-field">
+                                                    <span class="mobile-field-label">Status</span>
+                                                    <span class="mobile-field-value">
+                                                        <a href="products.php?toggle_status=<?php echo $product['id']; ?>" 
+                                                           class="btn btn-sm status-toggle <?php echo $product['is_active'] ? 'btn-success' : 'btn-secondary'; ?>"
+                                                           onclick="return confirm('Are you sure you want to <?php echo $product['is_active'] ? 'deactivate' : 'activate'; ?> this product?')">
+                                                            <?php echo $product['is_active'] ? 'Active' : 'Inactive'; ?>
+                                                        </a>
+                                                    </span>
+                                                </div>
+                                                <div class="mobile-product-field">
+                                                    <span class="mobile-field-label">Actions</span>
+                                                    <span class="mobile-field-value">
+                                                        <div class="action-buttons">
+                                                            <?php if (!empty($product['image_path'])): ?>
+                                                                <a href="products.php?remove_image=<?php echo $product['id']; ?>" 
+                                                                   class="btn btn-sm btn-warning" 
+                                                                   title="Remove Image"
+                                                                   onclick="return confirm('Are you sure you want to remove the image for this product?')">
+                                                                   <i class="fas fa-trash-alt"></i>
+                                                                </a>
+                                                            <?php endif; ?>
+                                                            <a href="products.php?edit=<?php echo $product['id']; ?>" class="btn btn-sm btn-primary">
+                                                                <i class="fas fa-edit"></i>
+                                                            </a>
+                                                            <a href="products.php?delete=<?php echo $product['id']; ?>" class="btn btn-sm btn-danger" 
+                                                                onclick="return confirm('Are you sure you want to delete this product?')">
+                                                                <i class="fas fa-times"></i>
+                                                            </a>
+                                                        </div>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -843,6 +950,21 @@ $conn->close();
             <?php if (!empty($search_query)): ?>
                 $('input[name="search"]').focus();
             <?php endif; ?>
+            
+            // Toggle between table and card view based on screen size
+            function checkScreenSize() {
+                if ($(window).width() < 992) {
+                    $('.product-table').hide();
+                    $('.mobile-products-list').show();
+                } else {
+                    $('.product-table').show();
+                    $('.mobile-products-list').hide();
+                }
+            }
+            
+            // Check on load and resize
+            checkScreenSize();
+            $(window).resize(checkScreenSize);
         });
     </script>
 </body>
