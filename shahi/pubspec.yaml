@@ -43,8 +43,8 @@ flutter_icons:
   android: true
   ios: true
   image_path: "assets/icon/icon.png"
-  android_name: "Taste Special"  # Add this
-  ios_name: "Taste Special"      # Add this
+  android_name: "Pawan Koliwada"  # Add this
+  ios_name: "Pawan Koliwada"      # Add this
 
   # Add these assets if needed
   assets:
