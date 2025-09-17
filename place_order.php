@@ -1,4 +1,34 @@
 <?php
+// deegeecard.com/place_order.php
+
+// List of allowed domains
+$allowedDomains = [
+    'https://goldcoinrestaurant.in',
+    'https://www.goldcoinrestaurant.in',
+    'https://swadishtrasoi.in', 
+    'https://www.swadishtrasoi.in', 
+    'https://tastespecial.in',
+    'https://www.tastespecial.in',
+    'http://localhost:3000' // For development
+];
+
+// Get the origin of the request
+$requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+// Check if the request origin is in the allowed list
+if (in_array($requestOrigin, $allowedDomains)) {
+    header("Access-Control-Allow-Origin: $requestOrigin");
+    header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization");
+    header("Access-Control-Allow-Credentials: true");
+    header("Access-Control-Max-Age: 86400"); // 24 hours
+}
+
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    exit(0);
+}
+
 error_log("Received order data: " . print_r($input, true));
 header('Content-Type: application/json');
 require_once 'config/db_connection.php';

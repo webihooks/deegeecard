@@ -5,19 +5,6 @@
     <div class="bar3"></div>
 </div>
 
-<?php 
-// Check if user has an APK uploaded
-$apk_sql = "SELECT file_path FROM user_apks WHERE user_id = ? LIMIT 1";
-$apk_stmt = $conn->prepare($apk_sql);
-if ($apk_stmt) {
-    $apk_stmt->execute([$user_id]);
-    $apk_data = $apk_stmt->fetch(PDO::FETCH_ASSOC);
-    if ($apk_data && file_exists($apk_data['file_path'])) {
-        echo '<a href="' . htmlspecialchars($apk_data['file_path']) . '" download>Download Android App</a>';
-    }
-}
-?>
-
 <div id="menuOverlay" class="menu-overlay">
     
     <?php if (!empty($business_info)): ?>
@@ -56,14 +43,14 @@ if ($apk_stmt) {
 
     <?php
     // Check if user has an APK uploaded
-    $apk_sql = "SELECT file_path FROM user_apks WHERE user_id = ? LIMIT 1";
-    $apk_stmt = $conn->prepare($apk_sql);
-    if ($apk_stmt) {
-        $apk_stmt->execute([$user_id]);
-        $apk_data = $apk_stmt->fetch(PDO::FETCH_ASSOC);
-        if ($apk_data && file_exists($apk_data['file_path'])) {
-            echo '<a href="' . htmlspecialchars($apk_data['file_path']) . '">Download Android App</a>';
-        }
-    }
+    // $apk_sql = "SELECT file_path FROM user_apks WHERE user_id = ? LIMIT 1";
+    // $apk_stmt = $conn->prepare($apk_sql);
+    // if ($apk_stmt) {
+    //     $apk_stmt->execute([$user_id]);
+    //     $apk_data = $apk_stmt->fetch(PDO::FETCH_ASSOC);
+    //     if ($apk_data && file_exists($apk_data['file_path'])) {
+    //         echo '<a href="' . htmlspecialchars($apk_data['file_path']) . '">Download Android App</a>';
+    //     }
+    // }
     ?>
 </div>

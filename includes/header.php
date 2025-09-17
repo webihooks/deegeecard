@@ -33,7 +33,7 @@
     </script>
 
 
-    <link href="assets/css/main.css?<?php echo time(); ?>" rel="stylesheet">
+    <link href="https://deegeecard.com/assets/css/main.css?<?php echo time(); ?>" rel="stylesheet">
     <script>
         window.addEventListener('scroll', function() {
             const coverPhoto = document.querySelector('.cover_photo');
@@ -253,6 +253,14 @@
         a {
             color: <?php echo $primary_color; ?>;
         }
+        .download_btn {
+            width: 100%;
+              margin: 20px 0 0 0;
+              border-radius: 10px;
+              font-size: 18px;
+              padding-top: 10px;
+        }
+        
     </style>
 </head>
 <body class="restaurant">

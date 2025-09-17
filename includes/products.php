@@ -349,13 +349,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             <small class="text-muted">Quantity: <?= $product['quantity'] ?></small>
                         <?php endif; ?>
                         <?php if ($product['quantity'] > 0 && ($delivery_active || $dining_active) && $is_store_open): ?>
-                            <div class="mt-3 cart_btn_group <?= empty($product['image_path']) ? 'top' : '' ?>">
+                            <div class="mt-3 cart_btn_group https://deegeecard.com/<?= empty($product['image_path']) ? 'top' : '' ?>">
                                 <button class="btn btn-primary w-100 add-to-cart" 
                                         data-id="<?= htmlspecialchars($product['product_name']) ?>" 
                                         data-name="<?= htmlspecialchars($product['product_name']) ?>" 
                                         data-price="<?= $product['price'] ?>" 
                                         data-max="<?= $product['quantity'] ?>" 
-                                        data-image="<?= htmlspecialchars($product['image_path']) ?>">
+                                        data-image="https://deegeecard.com/<?= htmlspecialchars($product['image_path']) ?>">
                                     <i class="bi bi-cart-plus"></i> Add
                                 </button>
                             </div>
@@ -374,7 +374,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="aspect-ratio-box">
                                 <img 
                                     src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" 
-                                    data-src="<?= htmlspecialchars($product['image_path']) ?>" 
+                                    data-src="https://deegeecard.com/<?= htmlspecialchars($product['image_path']) ?>" 
                                     class="card-img-top product-img product-img-lazy product-img-placeholder" 
                                     alt="<?= htmlspecialchars($product['product_name']) ?>" 
                                     onerror="handleImageError(this)">
@@ -674,8 +674,12 @@ function placeOrderOnWhatsApp() {
     message += `${<?= json_encode($business_info['website']) ?>}\n` +
                `OR\n`;
     <?php endif; ?>
-
-    message += `${window.location.origin}/<?= $profile_url ?>`;
+    
+    // At the top of your script, define the base URL
+    const baseUrl = 'https://deegeecard.com';
+    
+    // Then in your WhatsApp message:
+    message += `${baseUrl}/<?= $profile_url ?>`;
 
 
     // Add your requested message
@@ -1627,6 +1631,7 @@ function closeOrderSuccessPopup() {
   popup.classList.remove('active');
 }
 
+// Updated placeOrder function with proper error handling
 function placeOrder() {
     if (cart.length === 0) {
         alert('Your cart is empty');
@@ -1681,7 +1686,7 @@ function placeOrder() {
         }
     }
     
-    // Prepare order data - MAKE SURE DISCOUNT DATA IS INCLUDED
+    // Prepare order data
     const orderData = {
         user_id: <?= $user_id ?>,
         order_type: isDelivery ? 'delivery' : 'dining',
@@ -1695,16 +1700,13 @@ function placeOrder() {
             price: item.price,
             quantity: item.quantity
         })),
-        discount_amount: discountAmount, // ADD THIS
-        discount_type: discountType,     // ADD THIS
+        discount_amount: discountAmount,
+        discount_type: discountType,
         gst_percent: gstPercent,
         delivery_charge: deliveryCharge,
         free_delivery_min: freeDeliveryMin,
         coupon_data: cart.coupon || null
     };
-    
-    // Debug: Log what's being sent to the server
-    console.log('Sending order data:', orderData);
     
     // Show loading state
     const placeOrderBtn = document.getElementById('placeOrderBtn');
@@ -1712,8 +1714,11 @@ function placeOrder() {
     placeOrderBtn.disabled = true;
     placeOrderBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Order Processing...';
     
+    // Use the correct path for place_order.php
+    const placeOrderUrl = 'https://deegeecard.com/place_order.php';
+    
     // Send order data to server
-    fetch('place_order.php', {
+    fetch(placeOrderUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1722,7 +1727,10 @@ function placeOrder() {
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+            // More detailed error information
+            return response.text().then(text => {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}. Response: ${text}`);
+            });
         }
         return response.json();
     })
@@ -1767,7 +1775,19 @@ function placeOrder() {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert(error.message || 'Failed to place order. Please try again.');
+        
+        // More user-friendly error message
+        let errorMessage = 'Failed to place order. ';
+        
+        if (error.message.includes('Failed to fetch')) {
+            errorMessage += 'Network error. Please check your internet connection.';
+        } else if (error.message.includes('CORS')) {
+            errorMessage += 'Cross-origin request blocked. Please contact support.';
+        } else {
+            errorMessage += error.message || 'Please try again.';
+        }
+        
+        alert(errorMessage);
         placeOrderBtn.innerHTML = originalBtnText;
         placeOrderBtn.disabled = false;
     });
@@ -1920,7 +1940,7 @@ function createConfetti() {
 <div class="order-success-popup" id="orderSuccessPopup">
     <div class="order-success-content">
         <div class="order-success-icon">
-            <img src="images/success_icon.gif">
+            <img src="https://deegeecard.com/images/success_icon.gif">
         </div>
         <h3 class="order-success-title">
             Order Received<br>
@@ -1940,13 +1960,28 @@ function createConfetti() {
 function redirectToProfile() {
     // Get the profile URL from PHP variable
     const profileUrl = '<?= $profile_url ?>';
+    const currentDomain = window.location.hostname;
     
     // Close the popup first
     closeOrderSuccessPopup();
     
+    // Determine the correct URL based on current domain
+    let redirectUrl;
+    
+    if (currentDomain === 'goldcoinrestaurant.in') {
+        redirectUrl = `https://goldcoinrestaurant.in`;
+    } else if (currentDomain === 'swadishtrasoi.in') {
+        redirectUrl = `https://swadishtrasoi.in`;
+    } else if (currentDomain === 'tastespecial.in') {
+        redirectUrl = `https://tastespecial.in`;
+    } else {
+        // Fallback to current domain
+        redirectUrl = `${window.location.origin}/${profileUrl}`;
+    }
+    
     // Redirect to the profile page after a short delay for smooth UX
     setTimeout(() => {
-        window.location.href = `/${profileUrl}`;
+        window.location.href = redirectUrl;
     }, 300);
 }
 

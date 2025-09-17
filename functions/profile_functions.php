@@ -99,5 +99,11 @@ function submitRating($conn, $user_id, $data) {
     return false;
 }
 
+function getUserApk($conn, $user_id) {
+    $stmt = $conn->prepare("SELECT id, user_id, file_name, file_path, upload_date FROM user_apks WHERE user_id = ? LIMIT 1");
+    $stmt->execute([$user_id]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
 
 ?>

@@ -5,7 +5,6 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-
 // error_reporting(E_ALL);
 // ini_set('display_errors', 1);
 
@@ -109,6 +108,9 @@ $ratings = getRatings($conn, $user_id);
 $bank_details = getBankDetails($conn, $user_id);
 $qr_codes = getQrCodes($conn, $user_id);
 
+// Get user APK information
+$apk_data = getUserApk($conn, $user_id);
+
 // Handle rating submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_rating'])) {
     $rating_data = [
@@ -164,10 +166,6 @@ if ($tags_stmt) {
     $tags = [];
 }
 
-
-
-
-
 // Get products from user-specific table with tags
 $table_name = "products_" . $user_id;
 
@@ -188,10 +186,6 @@ if ($table_exists) {
 } else {
     $products = []; // Empty array if table doesn't exist
 }
-
-
-
-
 
 // Check for active subscription and get package_id
 $subscription_sql = "SELECT package_id FROM subscriptions 
@@ -283,7 +277,28 @@ if ($weekly_schedule_stmt) {
 require_once 'includes/header.php';
 require_once 'includes/navigation.php';
 require_once 'includes/profile_header.php';
+
+// Add APK Download Section after business info
+if ($apk_data && file_exists($apk_data['file_path'])) {
+    // Get the full URL path
+    $base_domain = 'https://deegeecard.com';
+    $file_path = ltrim($apk_data['file_path'], '/');
+    
+    $full_apk_url = $base_domain . '/' . $file_path;
+    
+    // echo '<div class="apk-download-section">';
+    // echo '<h6 class="mb-3">Download Our Mobile App</h6>';
+    echo '<a href="' . htmlspecialchars($full_apk_url) . '" download class="btn btn-success btn-lg download_btn">';
+    echo '<i class="bi bi-download me-2"></i> Download Our Android App';
+    echo '</a>';
+    // echo '<p class="small text-muted mt-2">' . htmlspecialchars($apk_data['file_name'] ?? 'Mobile Application') . '</p>';
+    // echo '</div>';
+}
+
+
 require_once 'includes/business_info.php';
+
+
 require_once 'includes/offer_popup.php';
 require_once 'includes/products.php';
 require_once 'includes/services.php';
