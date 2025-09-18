@@ -171,11 +171,11 @@ $conn->close();
                         
 <div class="card">
     <div class="card-header">
-        <h4 class="card-title">WhatsApp Marketing</h4>
+        <h4 class="card-title">Bulk WhatsApp Marketing</h4>
     </div>
     <div class="card-body">
         <div class="iframe-container">
-            <iframe src="https://marketing.deegeecard.com/signin.php" allowfullscreen></iframe>
+            <iframe src="https://wapp.deegeecard.com" allowfullscreen></iframe>
         </div>
     </div>
 </div>

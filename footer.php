@@ -7,6 +7,37 @@
        </div>
    </div>
 </footer>
+
+<!-- Scroll to top button -->
+<div class="scroll-to-top">
+    <span class="nav-icon">
+        <iconify-icon icon="ei:arrow-up"></iconify-icon>
+    </span>
+</div>
+
+<script>
+// Scroll to top functionality
+const scrollButton = document.querySelector('.scroll-to-top');
+
+// Show/hide button based on scroll position
+window.addEventListener('scroll', function() {
+    if (window.pageYOffset > 300) {
+        scrollButton.classList.add('show');
+    } else {
+        scrollButton.classList.remove('show');
+    }
+});
+
+// Scroll to top when button is clicked
+scrollButton.addEventListener('click', function() {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+});
+</script>
+
+
 <?php
                                 if (isset($_SESSION['android_logout_button'])) {
                                     echo '<script>document.addEventListener("DOMContentLoaded", function () {

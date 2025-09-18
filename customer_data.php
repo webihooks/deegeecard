@@ -176,53 +176,67 @@ $conn->close();
                                 <?php else: ?>
                                     <div class="row">
                                         <div class="col-md-12">
-                                            <div class="table-responsive">
-                                                <table class="table table-striped">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Sr. No.</th>
-                                                            <th>Customer Name</th>
-                                                            <th>Phone Number</th>
-                                                            <th>Delivery Address</th>
-                                                            <th>Source</th>
-                                                            <th>Last Updated</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <?php 
-                                                        $sr_no = $offset + 1;
-                                                        foreach ($customer_data as $customer): ?>
-                                                            <tr>
-                                                                <td><?php echo $sr_no++; ?></td>
-                                                                <td><?php echo htmlspecialchars($customer['customer_name'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                                                <td><?php echo htmlspecialchars($customer['customer_phone'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                                                <td>
-                                                                    <?php 
-                                                                    $address = trim($customer['delivery_address']);
-                                                                    echo empty($address) || strtoupper($address) === 'NA' 
-                                                                        ? 'N/A' 
-                                                                        : htmlspecialchars($address, ENT_QUOTES, 'UTF-8');
-                                                                    ?>
-                                                                </td>
-                                                                <td>
-                                                                    <span class="badge bg-<?php echo $customer['source'] === 'order' ? 'primary' : 'success'; ?>">
-                                                                        <?php echo ucfirst($customer['source']); ?>
-                                                                    </span>
-                                                                </td>
-                                                                <td>
-                                                                    <?php 
-                                                                    if (isset($customer['updated_at'])) {
-                                                                        echo date('d M Y H:i', strtotime($customer['updated_at']));
-                                                                    } else {
-                                                                        echo 'N/A';
-                                                                    }
-                                                                    ?>
-                                                                </td>
-                                                            </tr>
-                                                        <?php endforeach; ?>
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                                            
+<div class="table-responsive">
+        <table class="table table-striped">
+             <thead>
+                <tr>
+                    <th>Sr. No.</th>
+                    <th>Customer Name</th>
+                    <th>
+                        Phone Number
+                        <br>
+                        <div class="btn-group mt-1">
+                            <button class="btn btn-sm btn-outline-primary copy-page-phones" 
+                                    title="Copy all phone numbers from this page">
+                                <i class="fas fa-copy me-1"></i> Copy Page wise
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary copy-all-phones" 
+                                    title="Copy all phone numbers from all pages">
+                                <i class="fas fa-copy me-1"></i> Copy All Numbers
+                            </button>
+                        </div>
+                    </th>
+                    <th>Delivery Address</th>
+                    <th>Source</th>
+                    <th style="display: none;">Last Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php 
+                $sr_no = $offset + 1;
+                foreach ($customer_data as $customer): ?>
+                    <tr>
+                        <td><?php echo $sr_no++; ?></td>
+                        <td><?php echo htmlspecialchars($customer['customer_name'], ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td class="phone-number"><?php echo htmlspecialchars($customer['customer_phone'], ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td>
+                            <?php 
+                            $address = trim($customer['delivery_address']);
+                            echo empty($address) || strtoupper($address) === 'NA' 
+                                ? 'N/A' 
+                                : htmlspecialchars($address, ENT_QUOTES, 'UTF-8');
+                            ?>
+                        </td>
+                        <td>
+                            <span class="badge bg-<?php echo $customer['source'] === 'order' ? 'primary' : 'success'; ?>">
+                                <?php echo ucfirst($customer['source']); ?>
+                            </span>
+                        </td>
+                        <td style="display: none;">
+                            <?php 
+                            if (isset($customer['updated_at'])) {
+                                echo date('d M Y H:i', strtotime($customer['updated_at']));
+                            } else {
+                                echo 'N/A';
+                            }
+                            ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
 
                                             <!-- Pagination -->
                                             <nav aria-label="Page navigation">
@@ -264,9 +278,10 @@ $conn->close();
         </div>
     </div>
 
+
     <script src="assets/js/vendor.js"></script>
     <script src="assets/js/app.js"></script>
-    <script>
+<script>
         // Auto-submit on Enter
         $(document).ready(function () {
             $('input[name="search"]').keypress(function (e) {
@@ -275,6 +290,78 @@ $conn->close();
                     return false;
                 }
             });
+            
+            // Copy page phone numbers
+            $('.copy-page-phones').click(function() {
+                let phoneNumbers = [];
+                $('table tbody tr').each(function() {
+                    const phone = $(this).find('td:eq(2)').text().trim();
+                    if (phone && phone !== 'N/A') {
+                        phoneNumbers.push(phone);
+                    }
+                });
+                
+                if (phoneNumbers.length > 0) {
+                    const textToCopy = phoneNumbers.join('\n');
+                    copyToClipboard(textToCopy);
+                    alert('Copied ' + phoneNumbers.length + ' phone numbers from this page!');
+                } else {
+                    alert('No phone numbers found on this page.');
+                }
+            });
+            
+            // Copy all phone numbers (requires AJAX to fetch all records)
+            $('.copy-all-phones').click(function() {
+                // Show loading indicator
+                const originalText = $(this).html();
+                $(this).html('<i class="fas fa-spinner fa-spin"></i> Loading...');
+                $(this).prop('disabled', true);
+                
+                // Fetch all phone numbers via AJAX
+                $.ajax({
+                    url: 'get_all_phones.php',
+                    type: 'GET',
+                    data: {
+                        search: '<?php echo isset($search) ? addslashes($search) : ''; ?>'
+                    },
+                    success: function(response) {
+                        $('.copy-all-phones').html(originalText);
+                        $('.copy-all-phones').prop('disabled', false);
+                        
+                        try {
+                            const data = typeof response === 'string' ? JSON.parse(response) : response;
+                            
+                            if (data.success && data.phones && data.phones.length > 0) {
+                                const textToCopy = data.phones.join('\n');
+                                copyToClipboard(textToCopy);
+                                alert('Copied ' + data.phones.length + ' phone numbers from all pages!');
+                            } else {
+                                alert('No phone numbers found. ' + (data.message || ''));
+                            }
+                        } catch (e) {
+                            console.error('Error parsing response:', response);
+                            alert('Error processing response. Please check console for details.');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        $('.copy-all-phones').html(originalText);
+                        $('.copy-all-phones').prop('disabled', false);
+                        console.error('AJAX Error:', status, error);
+                        alert('Error fetching phone numbers. Please try again. Error: ' + error);
+                    }
+                });
+            });
+            
+            // Helper function to copy text to clipboard
+            function copyToClipboard(text) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            }
+            
         });
     </script>
 </body>
